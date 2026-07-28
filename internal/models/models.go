@@ -25,13 +25,6 @@ type User struct {
 	GamesWonTypes   []string  `json:"games_won_types"`
 	LastDailyClaim  string    `json:"last_daily_claim"`
 	CreatedAt       time.Time `json:"created_at"`
-
-	// КСПОЯ fields (B5)
-	KspoяBanUntil     string   `json:"kspoя_ban_until"`
-	KspoяViolations   int      `json:"kspoя_violations"`
-	KspoяLastAttempt  string   `json:"kspoя_last_attempt"`
-	KspoяBadges       []string `json:"kspoя_badges"`
-	ActiveKspoяBadge  string   `json:"active_kspoя_badge"`
 }
 
 type LeaderboardEntry struct {
@@ -50,7 +43,7 @@ type PromoCode struct {
 	Value      int    `json:"value"`
 	BadgeName  string `json:"badge_name"`
 	AvatarName string `json:"avatar_name"`
-	Uses       int    `json:"uses"`      // -1 = unlimited
+	Uses       int    `json:"uses"` // -1 = unlimited
 	UsedCount  int    `json:"used_count"`
 }
 
@@ -82,48 +75,50 @@ type CaseResult struct {
 	PlayedAt     string `json:"played_at"`
 }
 
-// ── КСПОЯ Models ──────────────────────────────────────────────────────────────
+// ── КСПОЯ ─────────────────────────────────────────────────────────────────────
 
-// KspoяSession — активная или завершённая сессия теста
-type KspoяSession struct {
+// KspoyaSession — попытка прохождения теста. Список вопросов хранится на
+// сервере: клиент никогда не получает правильные ответы до завершения теста.
+type KspoyaSession struct {
 	ID          string    `json:"id"`
-	UserID      int64     `json:"user_id"`
 	Username    string    `json:"username"`
-	QuestionIDs []int     `json:"question_ids"` // 40 индексов из пула
+	QuestionIDs []int     `json:"-"`
 	StartedAt   time.Time `json:"started_at"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	Status      string    `json:"status"` // active | completed | aborted
-	Score       int       `json:"score"`
+	RawScore    int       `json:"raw_score"`
+	Percent     int       `json:"percent"`
 	LevelKey    string    `json:"level_key"`
-	FinishedAt  time.Time `json:"finished_at"`
 }
 
-// KspoяQuestion — один вопрос из банка (не передаём correct_idx клиенту в сессии)
-type KspoяQuestion struct {
+// KspoyaQuestionClient — вопрос в том виде, в каком он уходит в браузер:
+// без правильного ответа, без разбора и без метки сложности.
+type KspoyaQuestionClient struct {
+	ID      int      `json:"id"`
+	Text    string   `json:"question"`
+	Options []string `json:"options"`
+	Topic   string   `json:"topic"`
+}
+
+// KspoyaReviewItem — разбор одного вопроса, отдаётся ТОЛЬКО после завершения.
+type KspoyaReviewItem struct {
 	ID         int      `json:"id"`
-	Question   string   `json:"question"`
+	Text       string   `json:"question"`
 	Options    []string `json:"options"`
-	CorrectIdx int      `json:"-"` // скрыто от клиента
-	Category   string   `json:"category"`
+	Topic      string   `json:"topic"`
+	Level      string   `json:"level"`
+	UserAnswer int      `json:"user_answer"` // -1 = не ответил
+	Correct    int      `json:"correct"`
+	IsCorrect  bool     `json:"is_correct"`
+	Explain    string   `json:"explain"`
 }
 
-// KspoяQuestionClient — версия без ответа для фронта
-type KspoяQuestionClient struct {
-	ID       int      `json:"id"`
-	Question string   `json:"question"`
-	Options  []string `json:"options"`
-	Category string   `json:"category"`
-}
+// KspoyaStartRequest пустой: набор вопросов выбирает сервер.
 
-// KspoяResult — запись в истории
-type KspoяResult struct {
-	UserID     int64     `json:"user_id"`
-	Username   string    `json:"username"`
-	Score      int       `json:"score"`
-	LevelKey   string    `json:"level_key"`
-	CoinsGiven int       `json:"coins_given"`
-	XPGiven    int       `json:"xp_given"`
-	FinishedAt time.Time `json:"finished_at"`
+// KspoyaSubmitRequest — ответы на выданные вопросы в порядке выдачи.
+type KspoyaSubmitRequest struct {
+	SessionID string `json:"session_id"`
+	Answers   []int  `json:"answers"` // -1 = вопрос пропущен
 }
 
 // API request/response types
@@ -159,20 +154,11 @@ type GameSubmitRequest struct {
 	Score    int    `json:"score"`
 }
 
-type TestSubmitRequest struct {
-	Answers []int `json:"answers"`
-}
-
 type CaseOpenRequest struct {
 	CaseType   string `json:"case_type"`
 	Price      int    `json:"price"`
 	ItemEmoji  string `json:"item_emoji"`
 	ItemRarity string `json:"item_rarity"`
-}
-
-// KspoяSubmitRequest — ответы на 40 вопросов (индексы выбранных вариантов)
-type KspoяSubmitRequest struct {
-	Answers []int `json:"answers"` // len = 40, значения 0-3 (или -1 = не ответил)
 }
 
 type ErrorResponse struct {
