@@ -40,19 +40,18 @@ type LevelThreshold struct {
 // LevelThresholds — шкала «балл → уровень», как в IELTS: сколько вопросов
 // решил, такой уровень и получил. Никаких скрытых весов и коэффициентов.
 //
-// Пороги посчитаны под квоту выше и шесть вариантов ответа. Ученик уровня X
-// уверенно решает всё до X включительно и угадывает то, что выше, то есть
-// набирает примерно 9 / 13 / 18 / 25 / 32 / 38 баллов для A1...C2. Границы
-// поставлены посередине между этими ожиданиями.
+// Диапазоны заданы вручную. Они хорошо ложатся на ожидаемый результат:
+// ученик уровня X уверенно решает всё до X включительно и угадывает то,
+// что выше, набирая примерно 9 / 13 / 18 / 25 / 32 / 38 баллов для A1...C2.
 //
 // Порядок — от высокого уровня к низкому, Grade берёт первый подходящий.
 var LevelThresholds = []LevelThreshold{
-	{Level: "C2", MinScore: 35, MaxScore: 40},
-	{Level: "C1", MinScore: 29, MaxScore: 34},
-	{Level: "B2", MinScore: 22, MaxScore: 28},
-	{Level: "B1", MinScore: 16, MaxScore: 21},
-	{Level: "A2", MinScore: 11, MaxScore: 15},
-	{Level: "A1", MinScore: 0, MaxScore: 10},
+	{Level: "C2", MinScore: 38, MaxScore: 40},
+	{Level: "C1", MinScore: 32, MaxScore: 37},
+	{Level: "B2", MinScore: 24, MaxScore: 31},
+	{Level: "B1", MinScore: 18, MaxScore: 23},
+	{Level: "A2", MinScore: 10, MaxScore: 17},
+	{Level: "A1", MinScore: 0, MaxScore: 9},
 }
 
 // Reward — награда за подтверждённый уровень.

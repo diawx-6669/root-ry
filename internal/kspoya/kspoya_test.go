@@ -243,8 +243,11 @@ func TestLevelDependsOnlyOnScore(t *testing.T) {
 	if a.Level != b.Level {
 		t.Errorf("одинаковый балл дал разные уровни: %s и %s", a.Level, b.Level)
 	}
-	if a.Level != "B2" {
-		t.Errorf("23 из 40 дали уровень %s, по шкале ожидался B2", a.Level)
+	if want := LevelForScore(23); a.Level != want {
+		t.Errorf("23 из 40 дали уровень %s, по шкале ожидался %s", a.Level, want)
+	}
+	if a.Level != "B1" {
+		t.Errorf("по текущей шкале 23 из 40 — это B1, а получено %s", a.Level)
 	}
 }
 
