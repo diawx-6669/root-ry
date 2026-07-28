@@ -274,6 +274,75 @@ func TestPerfectRunGivesC2(t *testing.T) {
 	}
 }
 
+// answersWithBands собирает бланк, в котором на каждой ступени ровно
+// столько верных ответов, сколько указано в want.
+func answersWithBands(sessionID string, ids []int, want map[string]int) []int {
+	done := map[string]int{}
+	answers := make([]int, len(ids))
+	for i, id := range ids {
+		question := ByID[id]
+		_, correct := ShuffleOptions(sessionID, question)
+		if done[question.Level] < want[question.Level] {
+			answers[i] = correct
+			done[question.Level]++
+		} else {
+			answers[i] = (correct + 1) % 4
+		}
+	}
+	return answers
+}
+
+// Реальный случай из жизни: 23 верных из 40 при слабой нижней ступени.
+// Раньше провал A1 обнулял всё и выдавал A1, хотя A2 и B1 закрыты.
+func TestWeakBottomBandDoesNotSinkResult(t *testing.T) {
+	const sid = "weak-bottom"
+	ids := selectQuestions(rand.New(rand.NewSource(11)))
+
+	out := Grade(sid, ids, answersWithBands(sid, ids, map[string]int{
+		"A1": 2, "A2": 5, "B1": 5, "B2": 4, "C1": 4, "C2": 3,
+	}))
+
+	if out.Correct != 23 {
+		t.Fatalf("ожидалось 23 верных, получено %d", out.Correct)
+	}
+	if out.Level != "B1" {
+		t.Errorf("23 из 40 с закрытыми A2 и B1 дали уровень %s, ожидался B1", out.Level)
+	}
+	if LevelIndex(out.Level) < LevelIndex("A2") {
+		t.Errorf("уровень %s ниже A2 — одна слабая ступень снова обнуляет результат", out.Level)
+	}
+}
+
+// Сильный ученик, провалившийся на одной узкой теме посередине,
+// не должен падать на две ступени.
+func TestSingleWeakBandIsForgivenWhenRestIsStrong(t *testing.T) {
+	const sid = "one-gap"
+	ids := selectQuestions(rand.New(rand.NewSource(12)))
+
+	out := Grade(sid, ids, answersWithBands(sid, ids, map[string]int{
+		"A1": 6, "A2": 7, "B1": 7, "B2": 2, "C1": 7, "C2": 2,
+	}))
+
+	if LevelIndex(out.Level) < LevelIndex("C1") {
+		t.Errorf("при полностью закрытых A1-B1 и C1 получен уровень %s, ожидался C1", out.Level)
+	}
+}
+
+// Обратная проверка: одна удачно угаданная верхняя ступень не должна
+// поднимать уровень, если ступень под ней провалена.
+func TestLuckyTopBandDoesNotLiftLevel(t *testing.T) {
+	const sid = "lucky-top"
+	ids := selectQuestions(rand.New(rand.NewSource(13)))
+
+	out := Grade(sid, ids, answersWithBands(sid, ids, map[string]int{
+		"A1": 6, "A2": 7, "B1": 7, "B2": 1, "C1": 6, "C2": 0,
+	}))
+
+	if LevelIndex(out.Level) > LevelIndex("B2") {
+		t.Errorf("угаданная ступень C1 при проваленной B2 дала уровень %s", out.Level)
+	}
+}
+
 // Максимальная серия верных ответов подряд.
 func TestBestStreak(t *testing.T) {
 	ids := SelectQuestions()
