@@ -160,7 +160,7 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		"level":         outcome.Level,
 		"level_label":   reward.Label,
 		"level_badge":   reward.Badge,
-		"capped":        outcome.Capped,
+		"level_scale":   kspoya.LevelThresholds,
 		"by_level":      outcome.ByLevel,
 		"by_topic":      outcome.ByTopic,
 		"xp_earned":     xpEarned,
@@ -240,6 +240,7 @@ func (h *Handler) KspoyaAttempt(w http.ResponseWriter, r *http.Request) {
 		"level":       session.LevelKey,
 		"level_label": reward.Label,
 		"level_badge": reward.Badge,
+		"level_scale": kspoya.LevelThresholds,
 		"by_level":    outcome.ByLevel,
 		"by_topic":    outcome.ByTopic,
 		"review":      buildReview(session.ID, session.QuestionIDs, session.Answers),
@@ -270,9 +271,12 @@ func (h *Handler) KspoyaStatus(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCtx(r)
 
 	resp := map[string]any{
-		"has_active": false,
-		"bank_size":  len(kspoya.Bank),
-		"per_test":   kspoya.QuestionsPerTest,
+		"has_active":   false,
+		"bank_size":    len(kspoya.Bank),
+		"per_test":     kspoya.QuestionsPerTest,
+		"options":      kspoya.OptionsPerQuestion,
+		"level_scale":  kspoya.LevelThresholds,
+		"time_minutes": kspoya.TestMinutes,
 	}
 	if session, ok := h.store.ActiveKspoyaSession(username); ok {
 		secondsLeft := int(time.Until(session.ExpiresAt).Seconds())

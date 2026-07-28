@@ -12,47 +12,46 @@ import (
 // QuestionsPerTest — сколько вопросов получает ученик из банка в 120 штук.
 const QuestionsPerTest = 40
 
-// TestDuration — сколько минут даётся на тест.
+// TestMinutes — сколько минут даётся на тест.
 const TestMinutes = 40
 
 // Quota — сколько вопросов каждого уровня попадает в один тест.
-// Сумма = QuestionsPerTest. В каждой группе минимум 6 вопросов, иначе
-// точность оценки уровня внутри группы была бы слишком грубой.
-var Quota = map[string]int{
-	"A1": 6,
-	"A2": 7,
-	"B1": 7,
-	"B2": 7,
-	"C1": 7,
-	"C2": 6,
-}
-
-// weight — «вес» вопроса при подсчёте итогового индекса уровня.
-// Чем сложнее вопрос, тем дороже правильный ответ.
-var weight = map[string]int{
-	"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6,
-}
-
-// thresholds — минимальный индекс (в процентах) для каждого уровня.
+// Сумма = QuestionsPerTest.
 //
-// Пороги выведены из принципа: ученик, который уверенно решает всё до уровня X
-// включительно и угадывает наугад всё, что выше, должен получить ровно X.
-// При квоте 6/7/7/7/7/6 максимальный вес теста равен 140, а накопленный вес
-// «полного владения» по уровням составляет 6 / 20 / 41 / 69 / 104 / 140 баллов.
-// С учётом того, что живой ученик ошибается примерно в 5% «своих» вопросов,
-// ожидаемый индекс для уровней равен 4 / 14 / 28 / 47 / 71 / 95 процентов.
-// Порог для каждого уровня стоит посередине между соседними ожиданиями —
-// так случайный разброс реже перекидывает результат на соседнюю ступень.
-var thresholds = []struct {
-	level  string
-	minPct int
-}{
-	{"C2", 83},
-	{"C1", 59},
-	{"B2", 37},
-	{"B1", 21},
-	{"A2", 9},
-	{"A1", 0},
+// Перекос в сторону сложных: лёгких вопросов немного, потому что они почти
+// никого не различают, а основную работу по определению уровня делают
+// ступени B2 и C1.
+var Quota = map[string]int{
+	"A1": 3,
+	"A2": 5,
+	"B1": 7,
+	"B2": 9,
+	"C1": 9,
+	"C2": 7,
+}
+
+// LevelThreshold — минимальный балл для уровня.
+type LevelThreshold struct {
+	Level    string `json:"level"`
+	MinScore int    `json:"min_score"`
+	MaxScore int    `json:"max_score"`
+}
+
+// LevelThresholds — шкала «балл → уровень», как в IELTS: сколько вопросов
+// решил, такой уровень и получил. Никаких скрытых весов и коэффициентов.
+//
+// Диапазоны заданы вручную. Они хорошо ложатся на ожидаемый результат:
+// ученик уровня X уверенно решает всё до X включительно и угадывает то,
+// что выше, набирая примерно 9 / 13 / 18 / 25 / 32 / 38 баллов для A1...C2.
+//
+// Порядок — от высокого уровня к низкому, Grade берёт первый подходящий.
+var LevelThresholds = []LevelThreshold{
+	{Level: "C2", MinScore: 38, MaxScore: 40},
+	{Level: "C1", MinScore: 32, MaxScore: 37},
+	{Level: "B2", MinScore: 24, MaxScore: 31},
+	{Level: "B1", MinScore: 18, MaxScore: 23},
+	{Level: "A2", MinScore: 10, MaxScore: 17},
+	{Level: "A1", MinScore: 0, MaxScore: 9},
 }
 
 // Reward — награда за подтверждённый уровень.
@@ -84,21 +83,29 @@ func LevelIndex(level string) int {
 	return 0
 }
 
+// LevelForScore возвращает уровень по числу верных ответов.
+func LevelForScore(correct int) string {
+	for _, t := range LevelThresholds {
+		if correct >= t.MinScore {
+			return t.Level
+		}
+	}
+	return "A1"
+}
+
 // newRand создаёт генератор, засеянный из crypto/rand, — чтобы наборы вопросов
 // нельзя было предсказать по времени запроса.
 func newRand() *rand.Rand {
 	var b [8]byte
 	if _, err := crand.Read(b[:]); err != nil {
-		// crypto/rand недоступен — используем нулевой сид, тест всё равно
-		// останется работоспособным.
+		// crypto/rand недоступен — тест всё равно должен работать.
 		return rand.New(rand.NewSource(1))
 	}
 	return rand.New(rand.NewSource(int64(binary.LittleEndian.Uint64(b[:]))))
 }
 
-// SelectQuestions отбирает 40 вопросов: по квоте из каждого уровня сложности,
+// SelectQuestions отбирает 40 вопросов по квоте из каждого уровня сложности,
 // затем перемешивает итоговый список, чтобы вопросы не шли от простых к сложным.
-// Возвращает идентификаторы вопросов в том порядке, в каком их увидит ученик.
 func SelectQuestions() []int {
 	return selectQuestions(newRand())
 }
@@ -133,8 +140,8 @@ func selectQuestions(rng *rand.Rand) []int {
 //
 // Порядок зависит от пары (сессия, вопрос) и потому одинаков при выдаче
 // вопроса и при проверке ответа — хранить перестановку в базе не нужно.
-// Благодаря перемешиванию правильный ответ равномерно распределён по позициям
-// A/B/C/D, и стратегия «всегда жать один и тот же вариант» не работает.
+// Благодаря перемешиванию правильный ответ равномерно распределён по позициям,
+// и стратегия «всегда жать один и тот же вариант» не работает.
 func ShuffleOptions(sessionID string, question Question) (options []string, correct int) {
 	h := fnv.New64a()
 	h.Write([]byte(sessionID))
@@ -159,9 +166,8 @@ type Outcome struct {
 	Total      int             // сколько вопросов было задано
 	Answered   int             // на сколько вопросов ученик вообще ответил
 	BestStreak int             // самая длинная серия верных ответов подряд
-	Percent    int             // индекс уровня, 0..100
+	Percent    int             // доля верных ответов, 0..100
 	Level      string          // итоговый уровень A1..C2
-	Capped     bool            // уровень был ограничен «потолком»
 	ByLevel    map[string]Band // разбивка по уровням сложности
 	ByTopic    map[string]Band // разбивка по разделам грамматики
 }
@@ -179,11 +185,8 @@ type Band struct {
 // questionIDs — вопросы в том порядке, в каком они были выданы;
 // answers[i] — выбранный вариант для questionIDs[i], либо -1, если ответа нет.
 //
-// Подсчёт с поправкой на угадывание: правильный ответ приносит полный вес
-// вопроса, неправильный отнимает треть веса (вариантов 4, вероятность
-// случайного попадания 1/4), пропуск не штрафуется. При таком счёте
-// математическое ожидание для того, кто отвечает наугад, равно нулю, поэтому
-// «натыкать» высокий уровень случайными кликами невозможно.
+// Уровень определяется только числом верных ответов по шкале LevelThresholds.
+// Разбивка по ступеням и темам считается для аналитики и на уровень не влияет.
 func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 	out := Outcome{
 		Total:   len(questionIDs),
@@ -191,17 +194,12 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 		ByTopic: map[string]Band{},
 	}
 
-	earned := 0.0
-	maxScore := 0.0
 	streak := 0
-
 	for i, id := range questionIDs {
 		question, ok := ByID[id]
 		if !ok {
 			continue
 		}
-		w := float64(weight[question.Level])
-		maxScore += w
 
 		levelBand := out.ByLevel[question.Level]
 		topicBand := out.ByTopic[question.Topic]
@@ -220,7 +218,6 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 		case answer == correctIdx:
 			out.Correct++
 			out.Answered++
-			earned += w
 			levelBand.Correct++
 			topicBand.Correct++
 
@@ -232,7 +229,6 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 			}
 		case answer >= 0 && answer < len(question.Options):
 			out.Answered++
-			earned -= w / 3 // поправка на угадывание
 			streak = 0
 		default:
 			streak = 0
@@ -242,79 +238,9 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 		out.ByTopic[question.Topic] = topicBand
 	}
 
-	if maxScore <= 0 {
-		out.Level = "A1"
-		return out
+	if out.Total > 0 {
+		out.Percent = int(float64(out.Correct) / float64(out.Total) * 100)
 	}
-	if earned < 0 {
-		earned = 0
-	}
-	out.Percent = int(earned / maxScore * 100)
-
-	// ── Определение уровня ───────────────────────────────────────────────
-	//
-	// Ступень L засчитывается, когда выполнены сразу два условия:
-	//
-	//   1) сама ступень решена не меньше чем на 60% — значит вопросы
-	//      этой сложности ученику действительно по силам;
-	//   2) накопительно от A1 до L включительно решено не меньше 60% —
-	//      значит дело не в одном удачном куске;
-	//   3) ступень прямо под ней тоже пройдена — иначе одна случайно
-	//      угаданная верхняя ступень поднимала бы уровень на пустом месте.
-	//      Условие снимается, если накопительно набрано 80% и больше:
-	//      сильный ученик, споткнувшийся на одной узкой теме, не должен
-	//      проваливаться из-за неё на две ступени.
-	//
-	// Итоговый уровень — самая высокая засчитанная ступень.
-	//
-	// Накопительный счёт важен: он не даёт одной слабой ступени обнулить
-	// весь результат. Ученик, у которого A1 2/6, но A2 и B1 по 5/7,
-	// получит B1 — накопительно это 12 из 20. Прежнее правило требовало
-	// проходить каждую ступень отдельно и отправляло такого ученика в A1.
-	const bandMin = 0.6
-	const cumulativeMin = 0.6
-	const strongCumulative = 0.80
-
-	ladder := 0
-	cumCorrect, cumTotal := 0, 0
-	prevBandOK := true // у самой нижней ступени предыдущей нет
-	for i, level := range Levels {
-		band := out.ByLevel[level]
-		if band.Total == 0 {
-			continue
-		}
-		cumCorrect += band.Correct
-		cumTotal += band.Total
-
-		bandOK := float64(band.Correct)/float64(band.Total) >= bandMin
-		cumulative := float64(cumCorrect) / float64(cumTotal)
-
-		if bandOK && cumulative >= cumulativeMin &&
-			(prevBandOK || cumulative >= strongCumulative) {
-			ladder = i
-		}
-		prevBandOK = bandOK
-	}
-
-	// Страховка: уровень не может превышать оценку по взвешенному индексу
-	// больше чем на одну ступень. Отсекает случай, когда ступени «пройдены»
-	// удачей, а тест в целом решён плохо.
-	byIndex := 0
-	for _, t := range thresholds {
-		if out.Percent >= t.minPct {
-			byIndex = LevelIndex(t.level)
-			break
-		}
-	}
-	ceiling := byIndex + 1
-	if ceiling > len(Levels)-1 {
-		ceiling = len(Levels) - 1
-	}
-	if ladder > ceiling {
-		ladder = ceiling
-		out.Capped = true
-	}
-
-	out.Level = Levels[ladder]
+	out.Level = LevelForScore(out.Correct)
 	return out
 }

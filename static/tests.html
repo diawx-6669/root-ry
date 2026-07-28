@@ -1189,54 +1189,55 @@
                         <div>
                             <div class="start-title">Казахстанская система проверки и оценивания языка</div>
                             <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong>120
-                                вопросов</strong> сервер случайно выбирает <strong>40</strong> — по 6–7 на каждую
-                                ступень сложности, на всё 40 минут. Правильные ответы и разбор открываются
-                                только после сдачи. За результат выдаётся <strong>защищённый значок
-                                    уровня</strong>, недоступный через промокоды и кейсы.</div>
+                                вопросов</strong> сервер случайно выбирает <strong>40</strong>, у каждого
+                                <strong>6 вариантов</strong> ответа, на всё 40 минут. Уровень зависит только
+                                от числа верных ответов — шкала ниже. Правильные ответы и разбор
+                                открываются после сдачи, а за результат выдаётся <strong>защищённый
+                                    значок уровня</strong>, недоступный через промокоды и кейсы.</div>
                         </div>
                     </div>
 
                     <div class="levels-grid">
-                        <div class="level-item li-a1 lv-a1">
+                        <div class="level-item li-a1 lv-a1" data-level="A1">
                             <div class="badge-icon">🔰</div>
                             <div>
                                 <div class="level-text">A1 — Начальный</div>
-                                <div class="level-score">Базовая грамотность</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
-                        <div class="level-item li-a2 lv-a2">
+                        <div class="level-item li-a2 lv-a2" data-level="A2">
                             <div class="badge-icon">📗</div>
                             <div>
                                 <div class="level-text">A2 — Элементарный</div>
-                                <div class="level-score">Правила 5–6 класса</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
-                        <div class="level-item li-b1 lv-b1">
+                        <div class="level-item li-b1 lv-b1" data-level="B1">
                             <div class="badge-icon">📘</div>
                             <div>
                                 <div class="level-text">B1 — Средний</div>
-                                <div class="level-score">Причастия, Н/НН, обособление</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
-                        <div class="level-item li-b2 lv-b2">
+                        <div class="level-item li-b2 lv-b2" data-level="B2">
                             <div class="badge-icon">🏅</div>
                             <div>
                                 <div class="level-text">B2 — Выше среднего</div>
-                                <div class="level-score">Сложное предложение, нормы речи</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
-                        <div class="level-item li-c1 lv-c1">
+                        <div class="level-item li-c1 lv-c1" data-level="C1">
                             <div class="badge-icon">🔮</div>
                             <div>
                                 <div class="level-text">C1 — Продвинутый</div>
-                                <div class="level-score">Уровень ЕГЭ и олимпиад</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
-                        <div class="level-item li-c2 lv-c2">
+                        <div class="level-item li-c2 lv-c2" data-level="C2">
                             <div class="badge-icon">🌈</div>
                             <div>
                                 <div class="level-text">C2 — Мастерство</div>
-                                <div class="level-score">Тонкие случаи нормы</div>
+                                <div class="level-score">—</div>
                             </div>
                         </div>
                     </div>
@@ -1342,6 +1343,44 @@
                 if (el) el.classList.toggle('active', el.id === id);
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ── Шкала «балл → уровень» ──
+        // Диапазоны берутся с сервера, чтобы подписи на странице и реальная
+        // проверка не могли разойтись.
+        let levelScale = [];
+
+        async function loadScale() {
+            const r = await API.get('/api/kspoya/status');
+            if (!r.ok || !r.data.level_scale) return;
+            levelScale = r.data.level_scale;
+            applyScale();
+        }
+        loadScale();
+
+        function applyScale() {
+            const total = levelScale.length ? levelScale[0].max_score : 40;
+            levelScale.forEach(item => {
+                const card = document.querySelector(`.level-item[data-level="${item.level}"]`);
+                if (!card) return;
+                const label = card.querySelector('.level-score');
+                if (label) label.textContent = `${item.min_score}–${item.max_score} из ${total}`;
+            });
+        }
+
+        // Сколько баллов не хватает до следующего уровня.
+        function nextLevelGap(data) {
+            const scale = data.level_scale || levelScale;
+            if (!scale.length) return null;
+            // Шкала приходит от высокого уровня к низкому.
+            const ordered = scale.slice().sort((a, b) => a.min_score - b.min_score);
+            for (const item of ordered) {
+                if (item.min_score > data.correct) {
+                    return { level: item.level, need: item.min_score,
+                             gap: item.min_score - data.correct };
+                }
+            }
+            return null;
         }
 
         // ── Прошлые попытки ──
@@ -1666,13 +1705,11 @@
 
             body.appendChild(buildStats(data));
 
-            if (data.capped) {
-                const note = document.createElement('div');
-                note.className = 'result-note';
-                note.textContent = 'Сложные вопросы, похоже, частично угаданы: ' +
-                    'уровень ограничен по общему результату.';
-                body.appendChild(note);
-            }
+            const scaleNote = document.createElement('div');
+            scaleNote.className = 'result-note';
+            scaleNote.textContent = `Уровень зависит только от числа верных ответов: ` +
+                `${data.correct} из ${data.total} — это ${data.level}.`;
+            body.appendChild(scaleNote);
 
             if (data.reward_repeat) {
                 const note = document.createElement('div');
@@ -1710,7 +1747,7 @@
             row.className = 'stat-row';
 
             const tiles = [
-                { value: data.percent, unit: '%', label: 'Индекс уровня' },
+                { value: data.percent, unit: '%', label: 'Процент верных' },
                 { value: data.best_streak || 0, unit: '', label: 'Верных подряд, максимум' },
                 { value: data.answered, unit: '/' + data.total, label: 'Дано ответов' },
             ];
@@ -1756,16 +1793,12 @@
 
             const tips = [];
 
-            // 1. Ближайшая цель по уровню.
-            const idx = LEVEL_ORDER.indexOf(data.level);
-            const next = idx >= 0 && idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : null;
-            if (next) {
-                const band = (data.by_level || {})[next];
-                const need = band ? Math.ceil(band.total * 0.6) : 0;
-                tips.push(band
-                    ? `Следующая ступень — <b>${next}</b>. Её вопросов нужно решать не меньше ` +
-                      `60%: это <b>${need} из ${band.total}</b>, сейчас верно ${band.correct}.`
-                    : `Следующая ступень — <b>${next}</b>.`);
+            // 1. Ближайшая цель: сколько баллов не хватает до следующего уровня.
+            const gap = nextLevelGap(data);
+            if (gap) {
+                tips.push(`До уровня <b>${gap.level}</b> не хватает <b>${gap.gap}</b> ` +
+                    `${plural(gap.gap, 'балла', 'баллов', 'баллов')}: нужно ` +
+                    `<b>${gap.need} из ${data.total}</b>, у вас ${data.correct}.`);
             } else {
                 tips.push('Это максимальный уровень. Дальше — поддерживать форму: ' +
                     'проходите тест время от времени, наборы вопросов каждый раз разные.');
@@ -1787,12 +1820,11 @@
                     'Смотрите разбор ниже: там к каждому вопросу приложено правило.');
             }
 
-            // 3. Пропуски. Пропуск не штрафуется, но и баллов не даёт.
+            // 3. Пропуски: пустой ответ — гарантированный ноль.
             const skipped = data.total - data.answered;
             if (skipped > 0) {
-                tips.push(`Без ответа осталось <b>${skipped}</b>. Пропуск не штрафуется, но и ` +
-                    'баллов не приносит: если получается отбросить хотя бы один вариант, ' +
-                    'отвечать уже выгоднее, чем пропускать.');
+                tips.push(`Без ответа осталось <b>${skipped}</b>. Неверный ответ ничего не ` +
+                    'отнимает, так что пропускать смысла нет — отвечайте даже наугад.');
             }
 
             // 4. Ровность результата.
@@ -1803,11 +1835,6 @@
                     'чем в незнании: перечитывайте вопрос до конца.');
             } else if (streak >= 12) {
                 tips.push(`Серия из <b>${streak}</b> верных подряд — уверенный кусок теста.`);
-            }
-
-            if (data.capped) {
-                tips.push('Часть сложных вопросов, похоже, угадана: уровень ограничен по общему ' +
-                    'результату. Наугад его не поднять — неверный ответ отнимает больше, чем даёт.');
             }
 
             tips.slice(0, 4).forEach(html => {
@@ -1826,6 +1853,16 @@
             });
 
             return box;
+        }
+
+        // Склонение существительного после числительного.
+        function plural(n, one, few, many) {
+            const mod100 = n % 100;
+            if (mod100 >= 11 && mod100 <= 14) return many;
+            const mod10 = n % 10;
+            if (mod10 === 1) return one;
+            if (mod10 >= 2 && mod10 <= 4) return few;
+            return many;
         }
 
         // Названия тем приходят с сервера, но раз уж они попадают в innerHTML —
