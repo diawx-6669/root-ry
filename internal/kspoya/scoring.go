@@ -155,14 +155,15 @@ func ShuffleOptions(sessionID string, question Question) (options []string, corr
 
 // Outcome — результат проверки одной попытки.
 type Outcome struct {
-	Correct  int             // сколько верных ответов из 40
-	Total    int             // сколько вопросов было задано
-	Answered int             // на сколько вопросов ученик вообще ответил
-	Percent  int             // индекс уровня, 0..100
-	Level    string          // итоговый уровень A1..C2
-	Capped   bool            // уровень был ограничен «потолком»
-	ByLevel  map[string]Band // разбивка по уровням сложности
-	ByTopic  map[string]Band // разбивка по разделам грамматики
+	Correct    int             // сколько верных ответов из 40
+	Total      int             // сколько вопросов было задано
+	Answered   int             // на сколько вопросов ученик вообще ответил
+	BestStreak int             // самая длинная серия верных ответов подряд
+	Percent    int             // индекс уровня, 0..100
+	Level      string          // итоговый уровень A1..C2
+	Capped     bool            // уровень был ограничен «потолком»
+	ByLevel    map[string]Band // разбивка по уровням сложности
+	ByTopic    map[string]Band // разбивка по разделам грамматики
 }
 
 // Band — сколько верных ответов из скольких в одной группе.
@@ -192,6 +193,7 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 
 	earned := 0.0
 	maxScore := 0.0
+	streak := 0
 
 	for i, id := range questionIDs {
 		question, ok := ByID[id]
@@ -221,9 +223,19 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 			earned += w
 			levelBand.Correct++
 			topicBand.Correct++
+
+			// Серия считается по порядку выдачи вопросов; пропуск и
+			// неверный ответ одинаково её обрывают.
+			streak++
+			if streak > out.BestStreak {
+				out.BestStreak = streak
+			}
 		case answer >= 0 && answer < len(question.Options):
 			out.Answered++
 			earned -= w / 3 // поправка на угадывание
+			streak = 0
+		default:
+			streak = 0
 		}
 
 		out.ByLevel[question.Level] = levelBand
@@ -241,45 +253,51 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 
 	// ── Определение уровня ───────────────────────────────────────────────
 	//
-	// Основной критерий — «лестница освоенных групп»: уровень засчитывается,
-	// если ученик решил не меньше 60% вопросов этой группы.
+	// Ступень L засчитывается, когда выполнены сразу два условия:
 	//
-	// Одна провальная группа ниже прощается, но только начиная с B2: сильный
-	// ученик может споткнуться на узкой теме, и это не должно отбрасывать его
-	// на две ступени. А вот заявить B1, провалив при этом основы, нельзя —
-	// иначе редкая удача на средней группе давала бы завышенный уровень.
+	//   1) сама ступень решена не меньше чем на 60% — значит вопросы
+	//      этой сложности ученику действительно по силам;
+	//   2) накопительно от A1 до L включительно решено не меньше 60% —
+	//      значит дело не в одном удачном куске;
+	//   3) ступень прямо под ней тоже пройдена — иначе одна случайно
+	//      угаданная верхняя ступень поднимала бы уровень на пустом месте.
+	//      Условие снимается, если накопительно набрано 80% и больше:
+	//      сильный ученик, споткнувшийся на одной узкой теме, не должен
+	//      проваливаться из-за неё на две ступени.
 	//
-	// Такой критерий гораздо устойчивее к угадыванию, чем общий процент:
-	// чтобы случайно «набрать» группу из 7 вопросов, нужно угадать 5 из них,
-	// а это происходит примерно в одном случае из восьмидесяти.
-	const bandPass = 0.6
-	const forgiveFrom = 3 // B2 и выше
+	// Итоговый уровень — самая высокая засчитанная ступень.
+	//
+	// Накопительный счёт важен: он не даёт одной слабой ступени обнулить
+	// весь результат. Ученик, у которого A1 2/6, но A2 и B1 по 5/7,
+	// получит B1 — накопительно это 12 из 20. Прежнее правило требовало
+	// проходить каждую ступень отдельно и отправляло такого ученика в A1.
+	const bandMin = 0.6
+	const cumulativeMin = 0.6
+	const strongCumulative = 0.80
 
 	ladder := 0
-	failures := 0
+	cumCorrect, cumTotal := 0, 0
+	prevBandOK := true // у самой нижней ступени предыдущей нет
 	for i, level := range Levels {
 		band := out.ByLevel[level]
 		if band.Total == 0 {
 			continue
 		}
-		if float64(band.Correct)/float64(band.Total) >= bandPass {
-			allowed := 0
-			if i >= forgiveFrom {
-				allowed = 1
-			}
-			if failures <= allowed {
-				ladder = i
-			}
-		} else {
-			failures++
-			if failures > 1 {
-				break
-			}
+		cumCorrect += band.Correct
+		cumTotal += band.Total
+
+		bandOK := float64(band.Correct)/float64(band.Total) >= bandMin
+		cumulative := float64(cumCorrect) / float64(cumTotal)
+
+		if bandOK && cumulative >= cumulativeMin &&
+			(prevBandOK || cumulative >= strongCumulative) {
+			ladder = i
 		}
+		prevBandOK = bandOK
 	}
 
 	// Страховка: уровень не может превышать оценку по взвешенному индексу
-	// больше чем на одну ступень. Отсекает случай, когда группы «пройдены»
+	// больше чем на одну ступень. Отсекает случай, когда ступени «пройдены»
 	// удачей, а тест в целом решён плохо.
 	byIndex := 0
 	for _, t := range thresholds {
