@@ -188,14 +188,17 @@ func simulate(rng *rand.Rand, trueLevel int, sessionID string, ids []int) []int 
 // Ключевая проверка: тест должен возвращать примерно тот уровень,
 // которым ученик реально владеет.
 func TestGradeCalibration(t *testing.T) {
+	// Оба генератора с фиксированным сидом: и выбор вопросов, и ответы
+	// ученика. Иначе тест плавает от запуска к запуску и ничего не проверяет.
 	rng := rand.New(rand.NewSource(42))
+	pick := rand.New(rand.NewSource(2024))
 	const runs = 400
 
 	for trueLevel, levelName := range Levels {
 		hits, offByOne, offByMore := 0, 0, 0
 		for i := 0; i < runs; i++ {
 			sid := "calib-" + strconv.Itoa(trueLevel) + "-" + strconv.Itoa(i)
-			ids := SelectQuestions()
+			ids := selectQuestions(pick)
 			out := Grade(sid, ids, simulate(rng, trueLevel, sid, ids))
 			switch diff := LevelIndex(out.Level) - trueLevel; {
 			case diff == 0:
@@ -227,9 +230,10 @@ func TestGradeCalibration(t *testing.T) {
 // Тыканье наугад не должно давать ничего выше A2.
 func TestRandomGuesserGetsLowestLevel(t *testing.T) {
 	rng := rand.New(rand.NewSource(7))
-	for i := 0; i < 300; i++ {
+	pick := rand.New(rand.NewSource(99))
+	for i := 0; i < 2000; i++ {
 		sid := "guess-" + strconv.Itoa(i)
-		ids := SelectQuestions()
+		ids := selectQuestions(pick)
 		answers := make([]int, len(ids))
 		for j := range answers {
 			answers[j] = rng.Intn(4)

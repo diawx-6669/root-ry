@@ -9,6 +9,35 @@ import (
 	"rootry/internal/store"
 )
 
+// buildReview собирает разбор попытки: правильные ответы и объяснения.
+// Используется и при сдаче теста, и при открытии прошлой попытки.
+func buildReview(sessionID string, questionIDs, answers []int) []models.KspoyaReviewItem {
+	review := make([]models.KspoyaReviewItem, 0, len(questionIDs))
+	for i, id := range questionIDs {
+		question, ok := kspoya.ByID[id]
+		if !ok {
+			continue
+		}
+		answer := -1
+		if i < len(answers) {
+			answer = answers[i]
+		}
+		options, correctIdx := kspoya.ShuffleOptions(sessionID, question)
+		review = append(review, models.KspoyaReviewItem{
+			ID:         question.ID,
+			Text:       question.Text,
+			Options:    options,
+			Topic:      question.Topic,
+			Level:      question.Level,
+			UserAnswer: answer,
+			Correct:    correctIdx,
+			IsCorrect:  answer == correctIdx,
+			Explain:    question.Explain,
+		})
+	}
+	return review
+}
+
 // POST /api/kspoya/start
 //
 // Создаёт попытку и отдаёт 40 вопросов БЕЗ правильных ответов и без пометок
@@ -98,7 +127,7 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 	// Закрываем сессию. Если она уже была закрыта параллельным запросом или
 	// просрочена, награда не начисляется, но разбор ученик всё равно увидит.
 	awarded := h.store.FinishKspoyaSession(
-		session.ID, username, outcome.Correct, outcome.Percent, outcome.Level)
+		session.ID, username, outcome.Correct, outcome.Percent, outcome.Level, req.Answers)
 
 	reward := kspoya.Rewards[outcome.Level]
 	xpEarned, coinsEarned, badgeEarned := 0, 0, ""
@@ -122,31 +151,6 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Разбор: правильные ответы и объяснения уходят клиенту только здесь.
-	review := make([]models.KspoyaReviewItem, 0, len(session.QuestionIDs))
-	for i, id := range session.QuestionIDs {
-		question, exists := kspoya.ByID[id]
-		if !exists {
-			continue
-		}
-		answer := -1
-		if i < len(req.Answers) {
-			answer = req.Answers[i]
-		}
-		options, correctIdx := kspoya.ShuffleOptions(session.ID, question)
-		review = append(review, models.KspoyaReviewItem{
-			ID:         question.ID,
-			Text:       question.Text,
-			Options:    options,
-			Topic:      question.Topic,
-			Level:      question.Level,
-			UserAnswer: answer,
-			Correct:    correctIdx,
-			IsCorrect:  answer == correctIdx,
-			Explain:    question.Explain,
-		})
-	}
-
 	writeJSON(w, http.StatusOK, map[string]any{
 		"correct":       outcome.Correct,
 		"total":         outcome.Total,
@@ -164,7 +168,79 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		"reward_repeat": awarded && badgeEarned == "",
 		"new_xp":        user.XP,
 		"new_balance":   user.Balance,
-		"review":        review,
+		"review":        buildReview(session.ID, session.QuestionIDs, req.Answers),
+	})
+}
+
+// GET /api/kspoya/history — список прошлых попыток для стартового экрана.
+func (h *Handler) KspoyaHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	username := getUsernameFromCtx(r)
+	attempts := h.store.ListKspoyaAttempts(username, 20)
+
+	best := ""
+	for i := range attempts {
+		reward := kspoya.Rewards[attempts[i].Level]
+		attempts[i].LevelLabel = reward.Label
+		attempts[i].LevelBadge = reward.Badge
+		if best == "" || kspoya.LevelIndex(attempts[i].Level) > kspoya.LevelIndex(best) {
+			best = attempts[i].Level
+		}
+	}
+	if attempts == nil {
+		attempts = []models.KspoyaAttempt{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"attempts":   attempts,
+		"best_level": best,
+	})
+}
+
+// GET /api/kspoya/attempt?id=... — детальный разбор завершённой попытки.
+func (h *Handler) KspoyaAttempt(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	username := getUsernameFromCtx(r)
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "Не указана попытка")
+		return
+	}
+
+	session, ok := h.store.GetKspoyaSession(id, username)
+	if !ok {
+		writeError(w, http.StatusNotFound, "Попытка не найдена")
+		return
+	}
+	if session.Status != "completed" {
+		writeError(w, http.StatusConflict, "Эта попытка не была завершена")
+		return
+	}
+
+	// Пересчитываем разбивку из сохранённых ответов.
+	outcome := kspoya.Grade(session.ID, session.QuestionIDs, session.Answers)
+	reward := kspoya.Rewards[session.LevelKey]
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"id":          session.ID,
+		"started_at":  session.StartedAt,
+		"correct":     session.RawScore,
+		"total":       len(session.QuestionIDs),
+		"answered":    outcome.Answered,
+		"percent":     session.Percent,
+		"level":       session.LevelKey,
+		"level_label": reward.Label,
+		"level_badge": reward.Badge,
+		"by_level":    outcome.ByLevel,
+		"by_topic":    outcome.ByTopic,
+		"review":      buildReview(session.ID, session.QuestionIDs, session.Answers),
 	})
 }
 
@@ -190,19 +266,9 @@ func (h *Handler) KspoyaStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
-	levels, attempts := h.store.BestKspoyaLevel(username)
-
-	best := ""
-	for _, level := range levels {
-		if best == "" || kspoya.LevelIndex(level) > kspoya.LevelIndex(best) {
-			best = level
-		}
-	}
 
 	resp := map[string]any{
 		"has_active": false,
-		"attempts":   attempts,
-		"best_level": best,
 		"bank_size":  len(kspoya.Bank),
 		"per_test":   kspoya.QuestionsPerTest,
 	}

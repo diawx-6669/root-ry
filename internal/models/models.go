@@ -83,12 +83,25 @@ type KspoyaSession struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
 	QuestionIDs []int     `json:"-"`
+	Answers     []int     `json:"-"` // сохраняются, чтобы можно было открыть разбор позже
 	StartedAt   time.Time `json:"started_at"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	Status      string    `json:"status"` // active | completed | aborted
 	RawScore    int       `json:"raw_score"`
 	Percent     int       `json:"percent"`
 	LevelKey    string    `json:"level_key"`
+}
+
+// KspoyaAttempt — строка в списке прошлых попыток.
+type KspoyaAttempt struct {
+	ID         string    `json:"id"`
+	FinishedAt time.Time `json:"finished_at"`
+	Level      string    `json:"level"`
+	LevelLabel string    `json:"level_label"`
+	LevelBadge string    `json:"level_badge"`
+	Correct    int       `json:"correct"`
+	Total      int       `json:"total"`
+	Percent    int       `json:"percent"`
 }
 
 // KspoyaQuestionClient — вопрос в том виде, в каком он уходит в браузер:

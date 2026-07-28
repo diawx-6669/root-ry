@@ -2,7 +2,6 @@ package store
 
 import (
 	crand "crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -21,23 +20,39 @@ func newSessionID() (string, error) {
 	return hex.EncodeToString(b[:]), nil
 }
 
+func intsToArray(v []int) pq.Int64Array {
+	out := make(pq.Int64Array, len(v))
+	for i, n := range v {
+		out[i] = int64(n)
+	}
+	return out
+}
+
+func arrayToInts(v pq.Int64Array) []int {
+	out := make([]int, len(v))
+	for i, n := range v {
+		out[i] = int(n)
+	}
+	return out
+}
+
 const kspoyaSelect = `
-	SELECT id, username, question_ids, started_at, expires_at, status,
+	SELECT id, username, question_ids, COALESCE(answers, '{}'),
+	       started_at, expires_at, status,
 	       COALESCE(raw_score,0), COALESCE(percent,0), COALESCE(level_key,'')
 	FROM kspoya_sessions`
 
 func scanKspoyaSession(row interface{ Scan(dest ...any) error }) (*models.KspoyaSession, error) {
 	var s models.KspoyaSession
-	var ids pq.Int64Array
-	err := row.Scan(&s.ID, &s.Username, &ids, &s.StartedAt, &s.ExpiresAt,
-		&s.Status, &s.RawScore, &s.Percent, &s.LevelKey)
+	var ids, answers pq.Int64Array
+	err := row.Scan(&s.ID, &s.Username, &ids, &answers,
+		&s.StartedAt, &s.ExpiresAt, &s.Status,
+		&s.RawScore, &s.Percent, &s.LevelKey)
 	if err != nil {
 		return nil, err
 	}
-	s.QuestionIDs = make([]int, len(ids))
-	for i, v := range ids {
-		s.QuestionIDs[i] = int(v)
-	}
+	s.QuestionIDs = arrayToInts(ids)
+	s.Answers = arrayToInts(answers)
 	return &s, nil
 }
 
@@ -78,16 +93,14 @@ func (s *Store) StartKspoyaSession(username string, questionIDs []int, ttl time.
 	if err != nil {
 		return nil, err
 	}
-	ids := make(pq.Int64Array, len(questionIDs))
-	for i, v := range questionIDs {
-		ids[i] = int64(v)
-	}
 
 	row := s.db.QueryRow(`
 		INSERT INTO kspoya_sessions (id, username, question_ids, expires_at)
 		VALUES ($1, $2, $3::integer[], now() + $4::interval)
-		RETURNING id, username, question_ids, started_at, expires_at, status, 0, 0, ''`,
-		id, username, ids, fmt.Sprintf("%d seconds", int(ttl.Seconds())),
+		RETURNING id, username, question_ids, '{}'::integer[],
+		          started_at, expires_at, status, 0, 0, ''`,
+		id, username, intsToArray(questionIDs),
+		fmt.Sprintf("%d seconds", int(ttl.Seconds())),
 	)
 	session, err := scanKspoyaSession(row)
 	if err != nil {
@@ -110,17 +123,17 @@ func (s *Store) GetKspoyaSession(id, username string) (*models.KspoyaSession, bo
 	return session, true
 }
 
-// FinishKspoyaSession закрывает попытку. Возвращает true только если сессия
-// действительно была активной — благодаря этому повторная отправка тех же
-// ответов не начислит награду второй раз.
-func (s *Store) FinishKspoyaSession(id, username string, raw, percent int, level string) bool {
+// FinishKspoyaSession закрывает попытку и сохраняет ответы, чтобы разбор можно
+// было открыть позже. Возвращает true только если сессия действительно была
+// активной — благодаря этому повторная отправка не начислит награду дважды.
+func (s *Store) FinishKspoyaSession(id, username string, raw, percent int, level string, answers []int) bool {
 	res, err := s.db.Exec(`
 		UPDATE kspoya_sessions
 		SET status = 'completed', raw_score = $1, percent = $2,
-		    level_key = $3, finished_at = now()
-		WHERE id = $4 AND username = $5 AND status = 'active'
+		    level_key = $3, answers = $4::integer[], finished_at = now()
+		WHERE id = $5 AND username = $6 AND status = 'active'
 		  AND expires_at + interval '2 minutes' > now()`,
-		raw, percent, level, id, username,
+		raw, percent, level, intsToArray(answers), id, username,
 	)
 	if err != nil {
 		log.Printf("FinishKspoyaSession(%s): %v", id, err)
@@ -150,25 +163,30 @@ func (s *Store) AbortKspoyaSession(id, username string) {
 	}
 }
 
-// BestKspoyaLevel возвращает лучший подтверждённый уровень пользователя
-// и число завершённых попыток.
-func (s *Store) BestKspoyaLevel(username string) (levels []string, attempts int) {
+// ListKspoyaAttempts возвращает завершённые попытки, новые сверху.
+func (s *Store) ListKspoyaAttempts(username string, limit int) []models.KspoyaAttempt {
 	rows, err := s.db.Query(`
-		SELECT level_key FROM kspoya_sessions
-		WHERE username = $1 AND status = 'completed' AND level_key <> ''`, username)
+		SELECT id, finished_at, COALESCE(level_key,''),
+		       COALESCE(raw_score,0), COALESCE(percent,0),
+		       COALESCE(array_length(question_ids, 1), 0)
+		FROM kspoya_sessions
+		WHERE username = $1 AND status = 'completed' AND level_key <> ''
+		ORDER BY finished_at DESC
+		LIMIT $2`, username, limit)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Printf("BestKspoyaLevel(%s): %v", username, err)
-		}
-		return nil, 0
+		log.Printf("ListKspoyaAttempts(%s): %v", username, err)
+		return nil
 	}
 	defer rows.Close()
+
+	var out []models.KspoyaAttempt
 	for rows.Next() {
-		var level string
-		if rows.Scan(&level) == nil {
-			levels = append(levels, level)
-			attempts++
+		var a models.KspoyaAttempt
+		if err := rows.Scan(&a.ID, &a.FinishedAt, &a.Level,
+			&a.Correct, &a.Percent, &a.Total); err != nil {
+			continue
 		}
+		out = append(out, a)
 	}
-	return levels, attempts
+	return out
 }

@@ -36,6 +36,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS kspoya_sessions_active_user
 CREATE INDEX IF NOT EXISTS idx_kspoya_sessions_user
     ON kspoya_sessions (username, finished_at DESC);
 
+-- Ответы ученика сохраняются, чтобы разбор попытки можно было открыть позже
+-- из истории. Порядок совпадает с question_ids.
+ALTER TABLE kspoya_sessions
+    ADD COLUMN IF NOT EXISTS answers INTEGER[];
+
 -- Если ранее была запущена старая миграция с кириллическими именами,
 -- эти таблицы можно удалить — код их не использует:
 --   DROP TABLE IF EXISTS "kspoя_sessions", "kspoя_questions", "kspoя_results";
