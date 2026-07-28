@@ -168,7 +168,8 @@ func (s *Store) ListKspoyaAttempts(username string, limit int) []models.KspoyaAt
 	rows, err := s.db.Query(`
 		SELECT id, finished_at, COALESCE(level_key,''),
 		       COALESCE(raw_score,0), COALESCE(percent,0),
-		       COALESCE(array_length(question_ids, 1), 0)
+		       COALESCE(array_length(question_ids, 1), 0),
+		       COALESCE(array_length(answers, 1), 0) > 0
 		FROM kspoya_sessions
 		WHERE username = $1 AND status = 'completed' AND level_key <> ''
 		ORDER BY finished_at DESC
@@ -183,7 +184,7 @@ func (s *Store) ListKspoyaAttempts(username string, limit int) []models.KspoyaAt
 	for rows.Next() {
 		var a models.KspoyaAttempt
 		if err := rows.Scan(&a.ID, &a.FinishedAt, &a.Level,
-			&a.Correct, &a.Percent, &a.Total); err != nil {
+			&a.Correct, &a.Percent, &a.Total, &a.HasReview); err != nil {
 			continue
 		}
 		out = append(out, a)

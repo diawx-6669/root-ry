@@ -1289,14 +1289,23 @@
                 main.appendChild(lvl);
                 main.appendChild(sub);
 
-                const btn = document.createElement('button');
-                btn.className = 'history-btn';
-                btn.textContent = 'Анализ';
-                btn.onclick = () => openAnalysis(a.id, btn);
-
                 row.appendChild(emoji);
                 row.appendChild(main);
-                row.appendChild(btn);
+
+                // У попыток, сделанных до появления колонки answers,
+                // разбор восстановить нечем — кнопку не показываем.
+                if (a.has_review) {
+                    const btn = document.createElement('button');
+                    btn.className = 'history-btn';
+                    btn.textContent = 'Анализ';
+                    btn.onclick = () => openAnalysis(a.id, btn);
+                    row.appendChild(btn);
+                } else {
+                    const note = document.createElement('div');
+                    note.className = 'history-meta';
+                    note.textContent = 'разбор недоступен';
+                    row.appendChild(note);
+                }
                 wrap.appendChild(row);
             });
         }

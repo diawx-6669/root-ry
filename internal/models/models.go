@@ -102,6 +102,9 @@ type KspoyaAttempt struct {
 	Correct    int       `json:"correct"`
 	Total      int       `json:"total"`
 	Percent    int       `json:"percent"`
+	// HasReview = false у попыток, сделанных до появления колонки answers:
+	// разбор для них восстановить нечем, кнопку «Анализ» показывать не нужно.
+	HasReview bool `json:"has_review"`
 }
 
 // KspoyaQuestionClient — вопрос в том виде, в каком он уходит в браузер:
