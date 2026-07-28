@@ -637,6 +637,218 @@
             align-items: center;
             width: 100%;
         }
+    
+        /* ── Пояснение к системе оценивания ── */
+        .grading-note {
+            margin: 14px 0 0;
+            padding: 12px 16px;
+            background: #f1f7fa;
+            border-left: 3px solid #0099cc;
+            border-radius: 10px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #4a6572;
+        }
+
+        .status-strip {
+            margin: 12px 0 0;
+            padding: 10px 16px;
+            background: #023e50;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .topic-chip {
+            display: inline-block;
+            margin: 0 0 10px;
+            padding: 4px 12px;
+            background: #eef4f7;
+            color: #55707d;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .prev-btn {
+            padding: 13px 24px;
+            border: 1.5px solid #cfdde4;
+            background: #fff;
+            color: #55707d;
+            border-radius: 14px;
+            font-family: Montserrat, sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .prev-btn:hover:not(:disabled) { border-color: #0099cc; color: #023e50; }
+        .prev-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .result-note {
+            margin: 8px auto 0;
+            max-width: 460px;
+            font-size: 12.5px;
+            color: #b45309;
+            background: #fef6e7;
+            border-radius: 10px;
+            padding: 8px 14px;
+        }
+
+        /* ── Разбивка по темам и сложности ── */
+        .breakdown { margin: 26px 0 0; text-align: left; }
+
+        .breakdown-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #023e50;
+            margin-bottom: 12px;
+        }
+
+        .bd-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 90px 44px;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .bd-label {
+            font-size: 12.5px;
+            color: #4a6572;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bd-bar { height: 8px; background: #e8eef1; border-radius: 6px; overflow: hidden; }
+        .bd-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+        .bd-fill.ok { background: linear-gradient(90deg, #22c55e, #0099cc); }
+        .bd-fill.weak { background: linear-gradient(90deg, #f59e0b, #e74c3c); }
+
+        .bd-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #55707d;
+            text-align: right;
+        }
+
+        /* ── Разбор ответов ── */
+        .review-wrap { margin: 30px 0 0; text-align: left; }
+
+        .review-head {
+            font-size: 15px;
+            font-weight: 700;
+            color: #023e50;
+            margin-bottom: 4px;
+        }
+
+        .review-sub { font-size: 12.5px; color: #7c8f99; margin-bottom: 14px; }
+
+        .review-toggle {
+            padding: 8px 16px;
+            margin-bottom: 16px;
+            border: 1.5px solid #0099cc;
+            background: #fff;
+            color: #0099cc;
+            border-radius: 20px;
+            font-family: Montserrat, sans-serif;
+            font-weight: 600;
+            font-size: 12.5px;
+            cursor: pointer;
+        }
+
+        .review-toggle:hover { background: #0099cc; color: #fff; }
+
+        .review-empty { font-size: 13px; color: #22c55e; font-weight: 600; padding: 10px 0; }
+
+        .review-item {
+            border: 1.5px solid #e4ecf0;
+            border-left-width: 4px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+
+        .review-item.rv-ok { border-left-color: #22c55e; }
+        .review-item.rv-bad { border-left-color: #e74c3c; }
+
+        .rv-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .rv-num { font-size: 12px; font-weight: 700; color: #023e50; }
+        .rv-topic { font-size: 11.5px; color: #8ba0ab; flex: 1 1 auto; min-width: 0; }
+        .rv-mark { font-size: 11.5px; font-weight: 700; }
+        .rv-ok .rv-mark { color: #22c55e; }
+        .rv-bad .rv-mark { color: #e74c3c; }
+
+        .rv-q {
+            font-size: 14px;
+            font-weight: 600;
+            color: #12303d;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .rv-opt {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 9px;
+            font-size: 13px;
+            color: #4a6572;
+            line-height: 1.45;
+        }
+
+        .rv-opt.rv-correct { background: #e8f8ee; color: #157347; font-weight: 600; }
+        .rv-opt.rv-wrong { background: #fdecea; color: #b02a1c; }
+
+        .rv-letter {
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            background: #eef4f7;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rv-tag {
+            margin-left: auto;
+            padding-left: 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        .rv-explain {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #f5f9fb;
+            border-radius: 10px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #4a6572;
+        }
+
+        @media (max-width: 600px) {
+            .bd-row { grid-template-columns: minmax(0, 1fr) 60px 40px; }
+            .rv-tag { display: none; }
+        }
     </style>
 </head>
 
@@ -677,63 +889,73 @@
                         <div class="start-icon"><i class="fa-solid fa-file-invoice"></i></div>
                         <div>
                             <div class="start-title">Казахстанская система проверки и оценивания языка</div>
-                            <div class="start-desc">Финальный экзамен по русскому языку. Из базы 100 вопросов случайно
-                                выбираются <strong>40</strong> — за 40 минут. За прохождение выдаётся <strong>защищённый
-                                    значок уровня</strong>, недоступный через промокоды.</div>
+                            <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong>120
+                                вопросов</strong> сервер случайно выбирает <strong>40</strong> — по 6–7 на каждую
+                                ступень сложности, на всё 40 минут. Правильные ответы и разбор открываются
+                                только после сдачи. За результат выдаётся <strong>защищённый значок
+                                    уровня</strong>, недоступный через промокоды и кейсы.</div>
                         </div>
                     </div>
 
                     <div class="levels-grid">
                         <div class="level-item li-a1">
-                            <div class="badge-icon">🎓</div>
+                            <div class="badge-icon">🔰</div>
                             <div>
                                 <div class="level-text">A1 — Начальный</div>
-                                <div class="level-score">0–4 из 40</div>
+                                <div class="level-score">Базовая грамотность</div>
                             </div>
                         </div>
                         <div class="level-item li-a2">
-                            <div class="badge-icon">📖</div>
+                            <div class="badge-icon">📗</div>
                             <div>
                                 <div class="level-text">A2 — Элементарный</div>
-                                <div class="level-score">5–14 из 40</div>
+                                <div class="level-score">Правила 5–6 класса</div>
                             </div>
                         </div>
                         <div class="level-item li-b1">
-                            <div class="badge-icon">✨</div>
+                            <div class="badge-icon">📘</div>
                             <div>
                                 <div class="level-text">B1 — Средний</div>
-                                <div class="level-score">15–24 из 40</div>
+                                <div class="level-score">Причастия, Н/НН, обособление</div>
                             </div>
                         </div>
                         <div class="level-item li-b2">
-                            <div class="badge-icon">💎</div>
+                            <div class="badge-icon">🏅</div>
                             <div>
                                 <div class="level-text">B2 — Выше среднего</div>
-                                <div class="level-score">25–31 из 40</div>
+                                <div class="level-score">Сложное предложение, нормы речи</div>
                             </div>
                         </div>
                         <div class="level-item li-c1">
                             <div class="badge-icon">🔮</div>
                             <div>
                                 <div class="level-text">C1 — Продвинутый</div>
-                                <div class="level-score">32–37 из 40</div>
+                                <div class="level-score">Уровень ЕГЭ и олимпиад</div>
                             </div>
                         </div>
                         <div class="level-item li-c2">
                             <div class="badge-icon">🌈</div>
                             <div>
                                 <div class="level-text">C2 — Мастерство</div>
-                                <div class="level-score">38–40 из 40</div>
+                                <div class="level-score">Тонкие случаи нормы</div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="grading-note">
+                        Уровень присваивается не по числу баллов, а по тому, какие ступени сложности вы
+                        закрыли: ступень засчитана, если решено не меньше 60% её вопросов. Неверный ответ
+                        стоит дороже пропуска, поэтому наугад набрать высокий уровень не получится.
+                    </div>
+
+                    <div class="status-strip" id="statusStrip" style="display:none;"></div>
 
                     <div class="anticheat-strip">
                         <i class="fa-solid fa-eye-slash"></i>
                         Античит: переключение вкладки немедленно аннулирует тест
                     </div>
 
-                    <button class="start-btn" onclick="startTest()">
+                    <button class="start-btn" id="startBtn" onclick="startTest()">
                         <i class="fa-solid fa-play"></i> Начать тест (40 вопросов)
                     </button>
                 </div>
@@ -744,7 +966,8 @@
                 <div class="test-wrap">
                     <div class="test-topbar">
                         <div>
-                            <div class="test-progress-label">Вопрос <span id="qNum">1</span> из 40</div>
+                            <div class="test-progress-label">Вопрос <span id="qNum">1</span> из <span
+                                    id="qTotal">40</span> · отвечено <span id="answeredCount">0</span></div>
                             <div class="test-bar-wrap">
                                 <div class="test-bar-fill" id="testBar" style="width:2.5%;"></div>
                             </div>
@@ -755,7 +978,10 @@
                     </div>
                     <div class="question-card" id="questionCard"></div>
                     <div class="next-row">
-                        <button class="next-btn" id="nextBtn" onclick="nextQuestion()" disabled>
+                        <button class="prev-btn" id="prevBtn" onclick="prevQuestion()" disabled>
+                            ← Назад
+                        </button>
+                        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">
                             Следующий вопрос →
                         </button>
                     </div>
@@ -784,234 +1010,123 @@
         initHeader();
 
         // ══════════════════════════════════════════════════════════════
-        //  100-QUESTION BANK
+        //  Банка вопросов на этой странице НЕТ.
+        //  Вопросы, проверку и уровень выдаёт сервер (/api/kspoya/*),
+        //  правильные ответы приходят только вместе с результатом.
         // ══════════════════════════════════════════════════════════════
-        const ALL_QUESTIONS = [
-            // 1-10: Правописание НЕ
-            { q: 'НЕ пишется слитно с прилагательным в предложении:', opts: ['Этот поступок (не)красивый, а отвратительный.', '(Не)добрый взгляд хозяина смутил гостей.', 'Он был вовсе (не)готов к экзамену.', 'Задача оказалась (не)решённой.'], correct: 1 },
-            { q: 'В каком предложении НЕ пишется раздельно?', opts: ['Это был (не)большой, но уютный домик.', '(Не)ряшливый вид отталкивал.', 'Он вернулся (не)скоро.', 'Работа оказалась (не)выполнена в срок.'], correct: 3 },
-            { q: 'НЕ с причастием пишется раздельно в предложении:', opts: ['(Не)скошенная трава стояла стеной.', '(Не)законченное письмо лежало на столе.', 'Задача, (не)решённая учеником, осталась.', '(Не)прочитанный роман пылился на полке.'], correct: 2 },
-            { q: 'Выберите строку, в которой все слова пишутся с НЕ слитно:', opts: ['(не)весёлый, (не)правда, (не)мог', '(не)взгоды, (не)здоровится, (не)правда', '(не)смотря на, (не)нависть, (не)думая', '(не)умело, (не)вежда, (не)решительность'], correct: 3 },
-            { q: 'Как правильно написать: «он был __добрый»?', opts: ['недобрый (прилагательное, без противопоставления)', 'не добрый (прилагательное, нейтральный контекст)', 'не-добрый', 'недобрый или не добрый — оба варианта всегда равнозначны'], correct: 0 },
-            { q: 'НЕ пишется раздельно с наречием в:', opts: ['говорил (не)громко', 'шёл (не)медленно', 'вовсе (не)хорошо', 'сделал (не)плохо'], correct: 2 },
-            { q: 'Укажите верное написание: «работа (не)зачтена»:', opts: ['незачтена — всегда слитно', 'не зачтена — краткое причастие, всегда раздельно', 'не зачтена — только если есть зависимое слово', 'незачтена — нет противопоставления'], correct: 1 },
-            { q: 'В каком случае НЕ с существительным пишется слитно?', opts: ['Это был не друг, а враг.', 'Перед нами была неправда.', 'Это было не горе, а мелкая неудача.', 'Не судьба решила за нас.'], correct: 1 },
-            { q: 'НЕ с деепричастием пишется:', opts: ['слитно всегда', 'раздельно всегда', 'слитно, если нет зависимых слов', 'слитно, если образует новое слово'], correct: 1 },
-            { q: 'Какое слово не имеет формы без НЕ?', opts: ['небольшой', 'нехороший', 'нелепый', 'ненастный'], correct: 2 },
 
-            // 11-20: Ударение
-            { q: 'Выберите правильное ударение в слове «звонит»:', opts: ['зво́нит', 'звони́т', 'звонит (оба варианта верны)', 'зво́нит (разговорный)'], correct: 1 },
-            { q: 'В каком слове ударение стоит верно?', opts: ['до́говор', 'догово́р', 'оба варианта равноправны', 'до́говор — книжный вариант'], correct: 1 },
-            { q: 'Правильное ударение в слове «каталог»:', opts: ['катало́г', 'ката́лог', 'каталог (на первый слог)', 'ката́лог — устаревшее'], correct: 0 },
-            { q: 'Как правильно ставить ударение в слове «красивее»?', opts: ['краси́вее', 'красивéе', 'краси́вее (единственный верный вариант)', 'красивéе (разговорный вариант допустим)'], correct: 0 },
-            { q: 'Ударение в слове «торты»:', opts: ['то́рты', 'торты́', 'оба варианта верны', 'то́рты — разговорный'], correct: 0 },
-            { q: 'Правильное ударение: «она́ пра́ва» или «она права́»?', opts: ['она́ пра́ва', 'она права́', 'оба варианта верны', 'зависит от смысла'], correct: 1 },
-            { q: 'Ударение в слове «аэропорты» (мн. ч.):', opts: ['аэропо́рты', 'аэропорты́', 'аэропо́рты — устаревшее', 'аэропо́рты и аэропорты́ равноправны'], correct: 1 },
-            { q: 'Верное ударение в слове «начатый»:', opts: ['нача́тый', 'на́чатый', 'начаты́й', 'на́чатый — разговорный вариант'], correct: 0 },
-            { q: 'Ударение в глаголе «облегчить»:', opts: ['облегчи́ть', 'облегча́ть', 'о́блегчить', 'облегча́ть и облегчи́ть равнозначны'], correct: 0 },
-            { q: 'Правильное ударение в слове «банты» (мн. ч.):', opts: ['ба́нты', 'банты́', 'оба варианта верны', 'ба́нты — разговорный'], correct: 0 },
-
-            // 21-30: Правописание приставок и корней
-            { q: 'Как правильно: «прик_снуться»?', opts: ['прикоснуться (кос- без ударения)', 'прикасаться (кас- + суффикс А)', 'прикосноться', 'прекоснуться'], correct: 0 },
-            { q: 'В каком слове пишется приставка ПРЕ-?', opts: ['(пре/при)вокзальный', '(пре/при)образить', '(пре/при)открыть дверь', '(пре/при)морский посёлок'], correct: 1 },
-            { q: 'Укажите слово с приставкой РАЗ- (не РАС-):', opts: ['ра_сказ', 'ра_бить', 'ра_сцвет', 'ра_шифровать'], correct: 1 },
-            { q: 'Правильное написание корня в слове «подр_стать»:', opts: ['подрАстать (раст- перед ст)', 'подрОстать', 'подрАщать', 'подрАстать или подрОстать — зависит от суффикса'], correct: 0 },
-            { q: 'В каком слове пишется буква О в корне?', opts: ['г_реть', 'к_снуться', 'з_ря', 'кл_нить'], correct: 2 },
-            { q: 'Выберите верное написание: «бе_порядочный»:', opts: ['беспорядочный (перед п — глухой)', 'безпорядочный', 'бес-порядочный', 'без-порядочный'], correct: 0 },
-            { q: 'Правильно написанное слово с чередованием А/О в корне:', opts: ['зарасти', 'зарОсти', 'зОрасти', 'зАросли'], correct: 3 },
-            { q: 'В каком слове пишется И в корне -БИР-/-БЕР-?', opts: ['соберу', 'выбери', 'забирать', 'берёт'], correct: 2 },
-            { q: 'Верное написание: «пр_стол»?', opts: ['прЕстол (= высший)', 'прИстол', 'прЕсталь', 'прИстал'], correct: 0 },
-            { q: 'Слово с непроверяемой гласной в корне:', opts: ['звезда', 'гористый', 'горизонт', 'вода'], correct: 2 },
-
-            // 31-40: Орфография Н/НН
-            { q: 'В каком слове пишется НН?', opts: ['стира(н/нн)ое бельё', 'кова(н/нн)ый меч', 'броше(н/нн)ый камень', 'реше(н/нн)ая задача'], correct: 2 },
-            { q: 'Укажите слово, в котором пишется Н (одна буква):', opts: ['стекля(н/нн)ый', 'дрова(н/нн)ой', 'лимо(н/нн)ый', 'оловя(н/нн)ый'], correct: 2 },
-            { q: 'НН пишется в краткой форме прилагательного в примере:', opts: ['девочка воспита(н/нн)а', 'ночь туманна', 'она образова(н/нн)а', 'дорога длинна'], correct: 2 },
-            { q: 'Выберите строку, где все слова пишутся с НН:', opts: ['ветре(н/нн)ый, оловя(н/нн)ый, дерея(н/нн)ый', 'написа(н/нн)ый, обветре(н/нн)ый, запрещё(н/нн)ый', 'искусстве(н/нн)ый, организова(н/нн)ый, квалифицирова(н/нн)ый', 'дли(н/нн)ый, ю(н/нн)ый, стари(н/нн)ый'], correct: 2 },
-            { q: 'В каком отглагольном прилагательном пишется НН?', opts: ['вяза(н/нн)ая шапка', 'рва(н/нн)ый рукав', 'куплен(н)ый билет (причастие)', 'соло(н/нн)ый огурец'], correct: 2 },
-            { q: 'Сколько Н в слове «масляный»?', opts: ['одна Н (маслян-)', 'две НН', 'зависит от контекста', 'нулевое окончание'], correct: 0 },
-            { q: 'Верное написание: «ране(н/нн)ый солдат»?', opts: ['раненый (прил., без зависимых слов — Н)', 'ранненый', 'ра(НН)еный — всегда', 'зависит от приставки'], correct: 0 },
-            { q: 'В каком примере пишется НН в кратком причастии?', opts: ['работа выполне(н/нн)а', 'задача реше(н/нн)а', 'дети воспита(н/нн)ы', 'книга прочита(н/нн)а'], correct: 0 },
-            { q: 'Слово «ветреный» пишется с:', opts: ['Н (исключение: суффикс -ен-)', 'НН', 'зависит от смысла', 'только в сочетании «ветреный день»'], correct: 0 },
-            { q: 'В каком слове НН пишется по правилу суффикса -ОНН-/-ЕНН-?', opts: ['лимонный', 'карманный', 'революционный', 'туманный'], correct: 2 },
-
-            // 41-50: Синтаксис и пунктуация
-            { q: 'Укажите предложение с пунктуационной ошибкой:', opts: ['Солнце, выглянув из-за туч, осветило поле.', 'Он читал, и она слушала музыку.', 'Наступила осень, листья, пожелтев, начали опадать.', 'Несмотря на усталость, они продолжали идти.'], correct: 2 },
-            { q: 'Где нужно поставить запятую перед КАК?', opts: ['Он поступил как настоящий друг.', 'Лес как море шумел вокруг.', 'Он быстр как ветер.', 'Задача решена как следует.'], correct: 1 },
-            { q: 'Определите тип сказуемого: «Небо было тёмным»:', opts: ['Простое глагольное', 'Составное глагольное', 'Составное именное', 'Нет сказуемого'], correct: 2 },
-            { q: 'В каком предложении тире между подлежащим и сказуемым ставится?', opts: ['Он студент нашего университета.', 'Трижды три девять.', 'Небо голубое.', 'Мать устала.'], correct: 1 },
-            { q: 'Укажите предложение с обособленным обстоятельством:', opts: ['Он шёл, опустив голову.', 'Я читал интересную книгу.', 'Они встретились вчера.', 'Она пела красиво.'], correct: 0 },
-            { q: 'Где нужна запятая при однородных членах?', opts: ['Купил хлеб и молоко.', 'Он пел и танцевал и читал.', 'Купил хлеб, молоко и масло.', 'Она смеялась и плакала.'], correct: 2 },
-            { q: 'Укажите сложноподчинённое предложение:', opts: ['Он пришёл, и мы обрадовались.', 'Она пела, а он молчал.', 'Когда наступил вечер, зажглись огни.', 'Он учится, работает и отдыхает.'], correct: 2 },
-            { q: 'В каком предложении нет грамматической основы?', opts: ['Светает.', 'Морозит.', 'Тишина в лесу.', 'Ему не спится.'], correct: 2 },
-            { q: 'Двоеточие ставится в предложении:', opts: ['Пришёл, увидел, победил.', 'Он думал: как это исправить?', 'Наступило лето — пришло тепло.', 'Ни снега, ни льда не осталось.'], correct: 1 },
-            { q: 'Укажите вводное слово (требующее запятых):', opts: ['однако', 'будто', 'словно', 'что'], correct: 0 },
-
-            // 51-60: Лексика и фразеология
-            { q: 'Какое выражение является фразеологизмом?', opts: ['сказал правду', 'бить баклуши', 'читал книгу', 'пришёл домой'], correct: 1 },
-            { q: 'Укажите пример плеоназма (речевой избыточности):', opts: ['моргать глазами', 'красивый цветок', 'быстрый бег', 'тихая музыка'], correct: 0 },
-            { q: 'Синоним к слову «апатия»:', opts: ['радость', 'безразличие', 'злость', 'тревога'], correct: 1 },
-            { q: 'Антоним к слову «лаконичный»:', opts: ['краткий', 'многословный', 'точный', 'ёмкий'], correct: 1 },
-            { q: 'Какое слово является паронимом к «одеть»?', opts: ['раздеть', 'надеть', 'носить', 'снять'], correct: 1 },
-            { q: 'В каком предложении слово употреблено в переносном значении?', opts: ['Железная ограда окружала сад.', 'Железная воля помогла ему выстоять.', 'Железная дорога прошла через лес.', 'Железный гвоздь торчал из стены.'], correct: 1 },
-            { q: 'Укажите устаревшее слово (архаизм):', opts: ['компьютер', 'десница', 'интернет', 'экран'], correct: 1 },
-            { q: 'Что такое эпитет?', opts: ['Перенос значения по сходству', 'Образное определение, характеризующее предмет', 'Противопоставление двух явлений', 'Повторение слов для усиления'], correct: 1 },
-            { q: 'Какое слово имеет иноязычное происхождение?', opts: ['берёза', 'телефон', 'изба', 'каша'], correct: 1 },
-            { q: 'Укажите правильное употребление паронима:', opts: ['Надень шапку на ребёнка.', 'Одень шапку.', 'Одень ребёнка в пальто.', 'Надень ребёнка.'], correct: 2 },
-
-            // 61-70: Морфология
-            { q: 'Укажите слово, которое не изменяется по падежам:', opts: ['пальто', 'книга', 'стол', 'окно'], correct: 0 },
-            { q: 'В каком слове суффикс -ЧИК- (а не -ЩИК-)?', opts: ['сварщик', 'грузчик', 'разведчик', 'каменщик'], correct: 1 },
-            { q: 'Определите разряд местоимения «никто»:', opts: ['Отрицательное', 'Неопределённое', 'Относительное', 'Вопросительное'], correct: 0 },
-            { q: 'В каком существительном нулевое окончание?', opts: ['книга', 'стол', 'мышь', 'время'], correct: 1 },
-            { q: 'Укажите глагол совершенного вида:', opts: ['читать', 'прочитать', 'писать', 'думать'], correct: 1 },
-            { q: 'Степень сравнения прилагательного «наилучший»:', opts: ['Положительная', 'Сравнительная', 'Превосходная', 'Составная сравнительная'], correct: 2 },
-            { q: 'Какое числительное является порядковым?', opts: ['пятеро', 'пять', 'пятый', 'пятнадцать'], correct: 2 },
-            { q: 'Определите тип наречия «вдаль»:', opts: ['Наречие меры и степени', 'Наречие образа действия', 'Наречие места', 'Наречие времени'], correct: 2 },
-            { q: 'В каком слове приставка является частью корня?', opts: ['убежать', 'забыть', 'вобрать', 'забор'], correct: 3 },
-            { q: 'Укажите слово с суффиксом -ЕК- (с беглой гласной):', opts: ['замочек', 'ключик', 'домик', 'столик'], correct: 0 },
-
-            // 71-80: Правописание слитно/раздельно/дефис
-            { q: 'Укажите строку, где все слова пишутся через дефис:', opts: ['(пол)арбуза, (светло)синий, (кое)кто', '(пол)дня, по(русски), (горько)солёный', 'юго(запад), мало(помалу), (пол)Москвы', '(пол)стакана, тёмно(синий), (кое)как'], correct: 2 },
-            { q: 'Как пишется «(в)течение дня»?', opts: ['в течение (предлог — раздельно)', 'втечение', 'в течении', 'втечении'], correct: 0 },
-            { q: 'Слово «(по)этому» пишется слитно, если:', opts: ['Это союз', 'Это наречие', 'Это местоимение с предлогом', 'Стоит в начале предложения'], correct: 0 },
-            { q: 'Как пишется: «он сделал это (не)смотря на запрет»?', opts: ['несмотря на (производный предлог)', 'не смотря на', 'несмотря, на', 'не_смотря на'], correct: 0 },
-            { q: 'Правильное написание: «(в)виду» в значении «из-за»:', opts: ['ввиду (слитно — предлог)', 'в виду', 'в-виду', 'в виду (раздельно всегда)'], correct: 0 },
-            { q: 'Слово «(на)встречу» пишется раздельно, если:', opts: ['Это наречие', 'Это предлог', 'Это существительное с предлогом', 'Это союз'], correct: 2 },
-            { q: 'Как пишется «(пол)литра»?', opts: ['полтора', 'пол-литра (перед л — дефис)', 'пол литра', 'полЛитра'], correct: 1 },
-            { q: 'Верное написание: «(кое)(у)(кого)»:', opts: ['кое у кого (раздельно с предлогом)', 'коеукого', 'кое-у-кого', 'кое у-кого'], correct: 0 },
-            { q: 'Как пишется «(по)немногу»?', opts: ['понемногу (наречие, слитно)', 'по немногу', 'по-немногу', 'понемногу или по немногу — равнозначно'], correct: 0 },
-            { q: 'Верное написание «(за)то» в роли союза:', opts: ['зато (слитно)', 'за то', 'за-то', 'зависит от ударения'], correct: 0 },
-
-            // 81-90: Стилистика и культура речи
-            { q: 'Какое предложение написано правильно?', opts: ['Он не смог прийти, не смотря на обещание.', 'Он не смог прийти, несмотря на обещание.', 'Он не смог придти несмотря на обещание.', 'Он несмог прийти, несмотря на обещание.'], correct: 1 },
-            { q: 'В каком предложении нарушена норма управления?', opts: ['Согласно приказу директора.', 'Благодаря усилиям команды.', 'Согласно приказа директора.', 'Вопреки ожиданиям.'], correct: 2 },
-            { q: 'Укажите предложение без речевой ошибки:', opts: ['Он одел пальто и вышел.', 'Он надел пальто и вышел.', 'Он оделся пальто.', 'Пальто было надето на него.'], correct: 1 },
-            { q: 'Какой вариант является нормативным?', opts: ['Ложи книгу на стол.', 'Клади книгу на стол.', 'Положи книгу на стол.', 'Покладай книгу на стол.'], correct: 2 },
-            { q: 'Укажите тавтологию (повтор однокоренных слов):', opts: ['Он читал интересную книгу.', 'Рассказать рассказ.', 'Он сказал правду.', 'Работа была сделана.'], correct: 1 },
-            { q: 'Правильная форма родительного падежа мн. числа: «носки»:', opts: ['носков', 'носок (разговорно)', 'носкей', 'носоков'], correct: 0 },
-            { q: 'Верная форма: «пара ботинок» или «пара ботинков»?', opts: ['пара ботинок', 'пара ботинков', 'оба варианта верны', 'зависит от контекста'], correct: 0 },
-            { q: 'Укажите нарушение норм: неправильное образование формы слова:', opts: ['красивее', 'более красивее', 'красивейший', 'самый красивый'], correct: 1 },
-            { q: 'Какое словосочетание является плеоназмом?', opts: ['белая бумага', 'красная линия', 'главная суть', 'быстрый темп'], correct: 2 },
-            { q: 'Верная форма глагола в предложении «Нужно (ехать/едь/езжай) быстрее»:', opts: ['едь', 'езжай', 'ехай', 'поехай'], correct: 1 },
-
-            // 91-100: Комплексные задания
-            { q: 'В каком слове все буквы произносятся?', opts: ['солнце', 'сердце', 'сентябрь', 'здравствуй'], correct: 2 },
-            { q: 'Какое предложение является сложносочинённым?', opts: ['Хотя шёл дождь, они вышли гулять.', 'Он пришёл, и все обрадовались.', 'Она думала, что он придёт.', 'Когда наступила ночь, стало тихо.'], correct: 1 },
-            { q: 'Укажите слово, в котором Ь не пишется:', opts: ['мощ_', 'рож_', 'ключ_', 'тиш_'], correct: 2 },
-            { q: 'В каком слове ударная гласная O, а пишется Ё?', opts: ['подъём', 'свёкла', 'жёлтый', 'звёзды'], correct: 1 },
-            { q: 'Укажите слово с непроизносимой согласной:', opts: ['опасный', 'интересный', 'ужасный', 'грустный'], correct: 3 },
-            { q: 'Правильное написание: «в_пятых» (порядковое числительное)?', opts: ['в-пятых', 'впятых', 'в пятых', 'в пятых (всегда раздельно)'], correct: 0 },
-            { q: 'Укажите предложение с ошибкой в употреблении деепричастного оборота:', opts: ['Читая книгу, я делал заметки.', 'Прочитав книгу, мне стало интересно.', 'Подготовившись к экзамену, он сдал его хорошо.', 'Решая задачу, она не спешила.'], correct: 1 },
-            { q: 'В каком слове буква Е обозначает два звука?', opts: ['лес', 'ель', 'дело', 'перо'], correct: 1 },
-            { q: 'Укажите предложение с составным именным сказуемым:', opts: ['Он бежал быстро.', 'Он казался усталым.', 'Она пела громко.', 'Дети играли весело.'], correct: 1 },
-            { q: 'В каком предложении верно расставлены знаки препинания?', opts: ['Он сказал, что устал, и лёг спать.', 'Он сказал что устал и лёг спать.', 'Он, сказал что устал, и лёг спать.', 'Он сказал, что, устал, и лёг спать.'], correct: 0 },
-        ];
-
-        // ══════════════════════════════════════════════════════════════
-        //  LEVEL CONFIG
-        // ══════════════════════════════════════════════════════════════
         const LEVELS = {
-            C2: { min: 38, label: 'C2 — Мастерство', badgeClass: 'c2', xp: 2000, coins: 500, color: '#a855f7' },
-            C1: { min: 32, label: 'C1 — Продвинутый', badgeClass: 'c1', xp: 1500, coins: 400, color: '#f59e0b' },
-            B2: { min: 25, label: 'B2 — Выше среднего', badgeClass: 'b2', xp: 1000, coins: 300, color: '#8b5cf6' },
-            B1: { min: 15, label: 'B1 — Средний', badgeClass: 'b1', xp: 750, coins: 200, color: '#3b82f6' },
-            A2: { min: 5, label: 'A2 — Элементарный', badgeClass: 'a2', xp: 300, coins: 80, color: '#22c55e' },
-            A1: { min: 0, label: 'A1 — Начальный', badgeClass: 'a1', xp: 0, coins: 0, color: '#8e9fae' },
+            C2: { label: 'C2 — Мастерство', emoji: '🌈', color: '#a855f7' },
+            C1: { label: 'C1 — Продвинутый', emoji: '🔮', color: '#f59e0b' },
+            B2: { label: 'B2 — Выше среднего', emoji: '🏅', color: '#8b5cf6' },
+            B1: { label: 'B1 — Средний', emoji: '📘', color: '#3b82f6' },
+            A2: { label: 'A2 — Элементарный', emoji: '📗', color: '#22c55e' },
+            A1: { label: 'A1 — Начальный', emoji: '🔰', color: '#8e9fae' },
         };
+        const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-        // Badge image paths (placeholders — replace with real PNGs)
-        const BADGE_IMAGES = {
-            c2: 'badges/badge_c2.png',
-            c1: 'badges/badge_c1.png',
-            b2: 'badges/badge_b2.png',
-            b1: 'badges/badge_b1.png',
-            a2: 'badges/badge_a2.png',
-            a1: 'badges/badge_a1.png',
-        };
-        // Fallback emojis while real PNGs are not added
-        const BADGE_EMOJI = { c2: '🌈', c1: '🔮', b2: '💎', b1: '✨', a2: '📖', a1: '🎓' };
-
-        // ══════════════════════════════════════════════════════════════
-        //  STATE
-        // ══════════════════════════════════════════════════════════════
+        let sessionId = null;
         let questions = [];
         let userAnswers = [];
-        let questionCorrectMap = []; // stores correct index for server submission order
         let currentQ = 0;
         let timerInterval = null;
-        let timeLeft = 40 * 60;
+        let timeLeft = 0;
         let testActive = false;
-
-        // ── Utils ──
-        function shuffle(arr) {
-            const a = [...arr];
-            for (let i = a.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [a[i], a[j]] = [a[j], a[i]];
-            }
-            return a;
-        }
+        let submitting = false;
 
         function showScreen(id) {
-            ['startScreen', 'testScreen', 'resultScreen'].forEach(s => {
-                const el = document.getElementById(s);
-                el.classList.toggle('active', el.id === id);
+            ['startScreen', 'testScreen', 'resultScreen'].forEach(name => {
+                const el = document.getElementById(name);
+                if (el) el.classList.toggle('active', el.id === id);
             });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function getLevel(score) {
-            if (score >= 38) return 'C2';
-            if (score >= 32) return 'C1';
-            if (score >= 25) return 'B2';
-            if (score >= 15) return 'B1';
-            if (score >= 5) return 'A2';
-            return 'A1';
-        }
+        // ── Стартовый экран ──
+        async function loadStatus() {
+            const r = await API.get('/api/kspoya/status');
+            if (!r.ok) return;
+            const box = document.getElementById('statusStrip');
+            if (!box) return;
 
-        // ── Start ──
-        function startTest() {
-            questions = shuffle(ALL_QUESTIONS).slice(0, 40);
-            userAnswers = new Array(40).fill(-1);
+            const parts = [];
+            if (r.data.best_level && LEVELS[r.data.best_level]) {
+                const lvl = LEVELS[r.data.best_level];
+                parts.push(`Лучший результат: ${lvl.emoji} ${lvl.label}`);
+            }
+            if (r.data.attempts) parts.push(`попыток: ${r.data.attempts}`);
+            if (r.data.has_active) parts.push('есть незавершённая попытка — она продолжится');
+
+            box.textContent = parts.join(' · ');
+            box.style.display = parts.length ? 'block' : 'none';
+        }
+        loadStatus();
+
+        async function startTest() {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.textContent = 'Готовим вопросы…';
+
+            const r = await API.post('/api/kspoya/start', {});
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-play"></i> Начать тест (40 вопросов)';
+
+            if (!r.ok) {
+                showToast((r.data && r.data.error) || 'Не удалось начать тест', 'error');
+                return;
+            }
+
+            sessionId = r.data.session_id;
+            questions = r.data.questions || [];
+            userAnswers = new Array(questions.length).fill(-1);
             currentQ = 0;
-            timeLeft = 40 * 60;
+            timeLeft = r.data.seconds_left != null ? r.data.seconds_left : 40 * 60;
             testActive = true;
+            submitting = false;
+
             showScreen('testScreen');
             renderQuestion();
             startTimer();
         }
 
-        // ── Render ──
+        // ── Вопрос ──
         function renderQuestion() {
             const q = questions[currentQ];
-            document.getElementById('qNum').textContent = currentQ + 1;
-            document.getElementById('testBar').style.width = ((currentQ + 1) / 40 * 100) + '%';
+            if (!q) return;
+            const total = questions.length;
 
-            const nextBtn = document.getElementById('nextBtn');
-            nextBtn.disabled = userAnswers[currentQ] === -1;
-            nextBtn.textContent = currentQ < 39 ? 'Следующий вопрос →' : 'Завершить тест ✓';
+            document.getElementById('qNum').textContent = currentQ + 1;
+            document.getElementById('qTotal').textContent = total;
+            document.getElementById('answeredCount').textContent =
+                userAnswers.filter(a => a !== -1).length;
+            document.getElementById('testBar').style.width = ((currentQ + 1) / total * 100) + '%';
 
             const card = document.getElementById('questionCard');
             card.innerHTML = '';
 
             const label = document.createElement('div');
             label.className = 'q-label';
-            label.textContent = `Вопрос ${currentQ + 1} из 40`;
+            label.textContent = `Вопрос ${currentQ + 1} из ${total}`;
             card.appendChild(label);
+
+            if (q.topic) {
+                const chip = document.createElement('div');
+                chip.className = 'topic-chip';
+                chip.textContent = q.topic;
+                card.appendChild(chip);
+            }
 
             const qText = document.createElement('div');
             qText.className = 'q-text';
-            qText.textContent = q.q;
+            qText.textContent = q.question;
             card.appendChild(qText);
 
             const optsList = document.createElement('div');
             optsList.className = 'options-list';
-
-            q.opts.forEach((opt, i) => {
+            (q.options || []).forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'opt-btn' + (userAnswers[currentQ] === i ? ' selected' : '');
-                btn.disabled = userAnswers[currentQ] !== -1;
-
                 const letter = document.createElement('span');
                 letter.className = 'opt-letter';
                 letter.textContent = String.fromCharCode(65 + i);
@@ -1022,155 +1137,154 @@
             });
             card.appendChild(optsList);
 
-            if (userAnswers[currentQ] !== -1) highlightAnswers();
+            document.getElementById('prevBtn').disabled = currentQ === 0;
+            const next = document.getElementById('nextBtn');
+            next.textContent = currentQ < total - 1 ? 'Следующий вопрос →' : 'Завершить тест ✓';
         }
 
+        // Ответ можно менять и возвращаться назад: во время теста
+        // правильный вариант не подсвечивается.
         function selectAnswer(idx) {
-            if (userAnswers[currentQ] !== -1) return;
+            if (!testActive) return;
             userAnswers[currentQ] = idx;
-            document.getElementById('nextBtn').disabled = false;
-            highlightAnswers();
+            renderQuestion();
         }
 
-        function highlightAnswers() {
-            const q = questions[currentQ];
-            const btns = document.querySelectorAll('.opt-btn');
-            btns.forEach((btn, i) => {
-                btn.disabled = true;
-                btn.classList.remove('selected');
-                if (i === q.correct) btn.classList.add('correct');
-                else if (i === userAnswers[currentQ] && i !== q.correct) btn.classList.add('wrong');
-            });
+        function prevQuestion() {
+            if (currentQ > 0) { currentQ--; renderQuestion(); }
         }
 
         function nextQuestion() {
-            if (currentQ < 39) { currentQ++; renderQuestion(); }
-            else { finishTest(); }
+            if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); }
+            else { confirmFinish(); }
         }
 
-        // ── Timer ──
+        function confirmFinish() {
+            const unanswered = userAnswers.filter(a => a === -1).length;
+            if (unanswered > 0 &&
+                !confirm(`Без ответа осталось вопросов: ${unanswered}. Завершить тест?`)) {
+                return;
+            }
+            finishTest(false);
+        }
+
+        // ── Таймер ──
         function startTimer() {
             clearInterval(timerInterval);
+            updateTimer();
             timerInterval = setInterval(() => {
                 timeLeft--;
-                const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const sec = (timeLeft % 60).toString().padStart(2, '0');
-                const timerEl = document.getElementById('timerText');
-                const timerWrap = document.getElementById('testTimer');
-                if (timerEl) {
-                    timerEl.textContent = `${min}:${sec}`;
-                    timerWrap.className = 'test-timer' + (timeLeft < 60 ? ' urgent' : '');
-                }
+                updateTimer();
                 if (timeLeft <= 0) { clearInterval(timerInterval); finishTest(true); }
             }, 1000);
         }
 
-        // ── Finish ──
-        async function finishTest(timeout = false) {
+        function updateTimer() {
+            const safe = Math.max(0, timeLeft);
+            const min = Math.floor(safe / 60).toString().padStart(2, '0');
+            const sec = (safe % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById('timerText');
+            const timerWrap = document.getElementById('testTimer');
+            if (timerEl) timerEl.textContent = `${min}:${sec}`;
+            if (timerWrap) timerWrap.className = 'test-timer' + (safe < 60 ? ' urgent' : '');
+        }
+
+        // ── Завершение ──
+        async function finishTest(timeout) {
+            if (submitting) return;
+            submitting = true;
             clearInterval(timerInterval);
             testActive = false;
 
-            let correct = 0;
-            questions.forEach((q, i) => { if (userAnswers[i] === q.correct) correct++; });
+            const r = await API.post('/api/kspoya/submit', {
+                session_id: sessionId,
+                answers: userAnswers,
+            });
 
-            const levelKey = getLevel(correct);
-            const lvl = LEVELS[levelKey];
-
-            // Build answers array aligned to server's question bank
-            // We send score directly (server validates independently)
-            let serverResp = { xp_earned: lvl.xp, coins_earned: lvl.coins, badge_earned: '', new_xp: 0, new_balance: 0 };
-            try {
-                const r = await API.post('/api/test/submit', { answers: userAnswers, score: correct, level: levelKey });
-                if (r.ok) serverResp = { ...serverResp, ...r.data };
-            } catch (e) { }
-
-            showScreen('resultScreen');
-            renderResult(correct, levelKey, lvl, serverResp, timeout);
-
-            if (serverResp.new_balance) {
-                document.getElementById('userBalance').textContent = serverResp.new_balance;
-                API.refreshUser();
+            if (!r.ok) {
+                submitting = false;
+                showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
+                showScreen('startScreen');
+                loadStatus();
+                return;
             }
+
+            sessionId = null;
+            showScreen('resultScreen');
+            renderResult(r.data, timeout);
+
+            API.refreshUser().then(u => {
+                const bal = document.getElementById('userBalance');
+                if (u && bal) bal.textContent = u.balance != null ? u.balance : 0;
+            });
         }
 
-        function renderResult(correct, levelKey, lvl, serverResp, timeout) {
+        function renderResult(data, timeout) {
             const card = document.getElementById('resultCard');
             card.innerHTML = '';
 
-            const badgeClass = lvl.badgeClass;
-            const hasImage = false; // set true when real PNGs are placed in badges/
-            const badgeEmoji = BADGE_EMOJI[badgeClass];
+            const lvl = LEVELS[data.level] || LEVELS.A1;
 
-            // Header
-            const msgEl = document.createElement('p');
-            msgEl.className = 'result-msg';
-            msgEl.textContent = timeout ? 'Время вышло' : correct >= 5 ? 'Тест завершён' : 'Нужно больше практики';
-            card.appendChild(msgEl);
+            const msg = document.createElement('p');
+            msg.className = 'result-msg';
+            msg.textContent = timeout ? 'Время вышло — принят текущий бланк' : 'Тест завершён';
+            card.appendChild(msg);
 
-            // Score
-            const scoreEl = document.createElement('div');
-            scoreEl.className = 'result-score';
-            scoreEl.textContent = correct;
-            card.appendChild(scoreEl);
-            const totalEl = document.createElement('div');
-            totalEl.className = 'result-total';
-            totalEl.textContent = `из 40 вопросов`;
-            card.appendChild(totalEl);
+            const score = document.createElement('div');
+            score.className = 'result-score';
+            score.textContent = data.correct;
+            card.appendChild(score);
 
-            // Badge
+            const total = document.createElement('div');
+            total.className = 'result-total';
+            total.textContent = `правильных ответов из ${data.total}`;
+            card.appendChild(total);
+
             const badgeWrap = document.createElement('div');
             badgeWrap.className = 'result-badge-wrap';
-
-            // Add ring for C2 and C1
-            if (badgeClass === 'c2') {
+            if (data.level === 'C2' || data.level === 'C1') {
                 const ring = document.createElement('div');
-                ring.className = 'badge-c2-ring';
-                badgeWrap.appendChild(ring);
-            } else if (badgeClass === 'c1') {
-                const ring = document.createElement('div');
-                ring.className = 'badge-c1-ring';
+                ring.className = data.level === 'C2' ? 'badge-c2-ring' : 'badge-c1-ring';
                 badgeWrap.appendChild(ring);
             }
-
-            if (hasImage) {
-                const img = document.createElement('img');
-                img.className = `result-badge-img badge-${badgeClass}-glow`;
-                img.src = BADGE_IMAGES[badgeClass];
-                img.alt = levelKey;
-                badgeWrap.appendChild(img);
-            } else {
-                // Emoji fallback styled as circle
-                const emojiDiv = document.createElement('div');
-                emojiDiv.style.cssText = `font-size:72px;animation:popBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;display:inline-block;filter:drop-shadow(0 0 16px ${lvl.color});`;
-                emojiDiv.textContent = badgeEmoji;
-                badgeWrap.appendChild(emojiDiv);
-            }
-
+            const emoji = document.createElement('div');
+            emoji.style.cssText = 'font-size:72px;display:inline-block;animation:popBounce 0.6s ' +
+                'cubic-bezier(0.34,1.56,0.64,1) 0.2s both;filter:drop-shadow(0 0 16px ' + lvl.color + ');';
+            emoji.textContent = data.level_badge || lvl.emoji;
+            badgeWrap.appendChild(emoji);
             card.appendChild(badgeWrap);
 
-            // Level label
             const levelLabel = document.createElement('div');
             levelLabel.className = 'result-level-label';
             levelLabel.style.color = lvl.color;
-            levelLabel.textContent = lvl.label;
+            levelLabel.textContent = data.level_label || lvl.label;
             card.appendChild(levelLabel);
 
-            if (serverResp.badge_earned) {
-                const sub = document.createElement('div');
-                sub.className = 'result-level-sub';
-                sub.textContent = `Значок "${serverResp.badge_earned || levelKey}" добавлен в профиль!`;
-                card.appendChild(sub);
+            const index = document.createElement('div');
+            index.className = 'result-level-sub';
+            index.textContent = `Индекс уровня: ${data.percent}% · отвечено ${data.answered} из ${data.total}`;
+            card.appendChild(index);
+
+            if (data.capped) {
+                const note = document.createElement('div');
+                note.className = 'result-note';
+                note.textContent = 'Сложные вопросы, похоже, частично угаданы: уровень ограничен по общему результату.';
+                card.appendChild(note);
             }
 
-            // Rewards
-            if (correct >= 5) {
+            // Награды
+            if (data.badge_earned) {
+                const sub = document.createElement('div');
+                sub.className = 'result-level-sub';
+                sub.textContent = `Значок ${data.badge_earned} добавлен в профиль!`;
+                card.appendChild(sub);
+
                 const rewardsRow = document.createElement('div');
                 rewardsRow.className = 'rewards-row';
-                const chips = [
-                    { icon: 'fa-star', color: '#0099cc', text: `+${serverResp.xp_earned ?? lvl.xp} XP` },
-                    { icon: 'fa-coins', color: '#f59e0b', text: `+${serverResp.coins_earned ?? lvl.coins} монет` },
-                ];
-                chips.forEach(c => {
+                [
+                    { icon: 'fa-star', color: '#0099cc', text: `+${data.xp_earned} XP` },
+                    { icon: 'fa-coins', color: '#f59e0b', text: `+${data.coins_earned} монет` },
+                ].forEach(c => {
                     const chip = document.createElement('div');
                     chip.className = 'reward-chip';
                     chip.innerHTML = `<i class="fa-solid ${c.icon}" style="color:${c.color}"></i>`;
@@ -1178,14 +1292,33 @@
                     rewardsRow.appendChild(chip);
                 });
                 card.appendChild(rewardsRow);
-            } else {
-                const failMsg = document.createElement('p');
-                failMsg.style.cssText = 'color:#e74c3c;font-size:14px;font-weight:600;margin:12px 0;';
-                failMsg.textContent = 'Для получения награды необходимо набрать 5+ правильных ответов.';
-                card.appendChild(failMsg);
+            } else if (data.reward_repeat) {
+                const note = document.createElement('div');
+                note.className = 'result-note';
+                note.textContent = 'Значок этого уровня уже получен ранее, поэтому награда не начисляется. ' +
+                    'Монеты и XP даются только за новый уровень.';
+                card.appendChild(note);
             }
 
-            // Retry button
+            // Разбивка по ступеням сложности
+            const levelRows = LEVEL_ORDER
+                .filter(l => data.by_level && data.by_level[l])
+                .map(l => ({ name: (LEVELS[l] || {}).label || l, band: data.by_level[l] }));
+            if (levelRows.length) {
+                card.appendChild(buildBreakdown('Как решены ступени сложности', levelRows));
+            }
+
+            // Слабые темы
+            const topics = Object.keys(data.by_topic || {})
+                .map(name => ({ name, band: data.by_topic[name] }))
+                .sort((a, b) => (a.band.correct / a.band.total) - (b.band.correct / b.band.total));
+            if (topics.length) {
+                card.appendChild(buildBreakdown('Темы — начните с верхних', topics));
+            }
+
+            // Полный разбор
+            card.appendChild(buildReview(data.review || []));
+
             const retry = document.createElement('button');
             retry.className = 'retry-btn';
             retry.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Пройти снова';
@@ -1193,23 +1326,180 @@
             card.appendChild(retry);
         }
 
+        function buildBreakdown(title, rows) {
+            const wrap = document.createElement('div');
+            wrap.className = 'breakdown';
+
+            const head = document.createElement('div');
+            head.className = 'breakdown-title';
+            head.textContent = title;
+            wrap.appendChild(head);
+
+            rows.forEach(({ name, band }) => {
+                const pct = band.total ? Math.round(band.correct / band.total * 100) : 0;
+
+                const row = document.createElement('div');
+                row.className = 'bd-row';
+
+                const label = document.createElement('div');
+                label.className = 'bd-label';
+                label.textContent = name;
+                label.title = name;
+
+                const barWrap = document.createElement('div');
+                barWrap.className = 'bd-bar';
+                const fill = document.createElement('div');
+                fill.className = 'bd-fill ' + (pct >= 60 ? 'ok' : 'weak');
+                fill.style.width = pct + '%';
+                barWrap.appendChild(fill);
+
+                const value = document.createElement('div');
+                value.className = 'bd-value';
+                value.textContent = `${band.correct}/${band.total}`;
+
+                row.appendChild(label);
+                row.appendChild(barWrap);
+                row.appendChild(value);
+                wrap.appendChild(row);
+            });
+
+            return wrap;
+        }
+
+        function buildReview(items) {
+            const wrap = document.createElement('div');
+            wrap.className = 'review-wrap';
+
+            const head = document.createElement('div');
+            head.className = 'review-head';
+            head.textContent = 'Разбор всех вопросов';
+            wrap.appendChild(head);
+
+            const mistakes = items.filter(it => !it.is_correct).length;
+
+            const sub = document.createElement('div');
+            sub.className = 'review-sub';
+            sub.textContent = mistakes
+                ? `Ошибок и пропусков: ${mistakes}. У каждого вопроса — правило, по которому он решается.`
+                : 'Ни одной ошибки — можно просто перечитать правила.';
+            wrap.appendChild(sub);
+
+            const list = document.createElement('div');
+            let onlyErrors = mistakes > 0;
+
+            const toggle = document.createElement('button');
+            toggle.className = 'review-toggle';
+
+            function renderList() {
+                list.innerHTML = '';
+                const shown = items.filter(it => !onlyErrors || !it.is_correct);
+                if (!shown.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'review-empty';
+                    empty.textContent = 'Ошибок нет.';
+                    list.appendChild(empty);
+                }
+                shown.forEach(it => list.appendChild(reviewItem(it, items.indexOf(it) + 1)));
+                toggle.textContent = onlyErrors
+                    ? `Показать все ${items.length} вопросов`
+                    : 'Показать только ошибки';
+            }
+
+            toggle.onclick = () => { onlyErrors = !onlyErrors; renderList(); };
+            if (mistakes > 0) wrap.appendChild(toggle);
+            renderList();
+            wrap.appendChild(list);
+            return wrap;
+        }
+
+        function reviewItem(item, number) {
+            const box = document.createElement('div');
+            box.className = 'review-item ' + (item.is_correct ? 'rv-ok' : 'rv-bad');
+
+            const top = document.createElement('div');
+            top.className = 'rv-top';
+
+            const num = document.createElement('span');
+            num.className = 'rv-num';
+            num.textContent = '№' + number;
+
+            const topic = document.createElement('span');
+            topic.className = 'rv-topic';
+            topic.textContent = `${item.topic} · ${item.level}`;
+
+            const mark = document.createElement('span');
+            mark.className = 'rv-mark';
+            mark.textContent = item.is_correct
+                ? '✓ верно'
+                : (item.user_answer === -1 ? '— без ответа' : '✕ ошибка');
+
+            top.appendChild(num);
+            top.appendChild(topic);
+            top.appendChild(mark);
+            box.appendChild(top);
+
+            const question = document.createElement('div');
+            question.className = 'rv-q';
+            question.textContent = item.question;
+            box.appendChild(question);
+
+            (item.options || []).forEach((opt, i) => {
+                const row = document.createElement('div');
+                row.className = 'rv-opt';
+
+                const isCorrect = i === item.correct;
+                const isUser = i === item.user_answer;
+                if (isCorrect) row.classList.add('rv-correct');
+                else if (isUser) row.classList.add('rv-wrong');
+
+                const letter = document.createElement('span');
+                letter.className = 'rv-letter';
+                letter.textContent = String.fromCharCode(65 + i);
+                row.appendChild(letter);
+                row.appendChild(document.createTextNode(opt));
+
+                if (isCorrect || isUser) {
+                    const tag = document.createElement('span');
+                    tag.className = 'rv-tag';
+                    tag.textContent = isCorrect
+                        ? (isUser ? 'ваш ответ · верно' : 'правильный ответ')
+                        : 'ваш ответ';
+                    row.appendChild(tag);
+                }
+                box.appendChild(row);
+            });
+
+            if (item.explain) {
+                const explain = document.createElement('div');
+                explain.className = 'rv-explain';
+                explain.textContent = item.explain;
+                box.appendChild(explain);
+            }
+
+            return box;
+        }
+
         function cancelTest() {
             clearInterval(timerInterval);
             testActive = false;
+            sessionId = null;
             document.getElementById('anticheatOverlay').classList.remove('show');
             showScreen('startScreen');
+            loadStatus();
         }
 
         function retryTest() {
             showScreen('startScreen');
+            loadStatus();
         }
 
-        // ── Anticheat ──
+        // ── Античит: уход со вкладки отменяет попытку на сервере ──
         document.addEventListener('visibilitychange', () => {
-            if (!testActive) return;
+            if (!testActive || submitting) return;
             if (document.hidden) {
                 clearInterval(timerInterval);
                 testActive = false;
+                API.post('/api/kspoya/abort', { session_id: sessionId });
                 document.getElementById('anticheatOverlay').classList.add('show');
             }
         });

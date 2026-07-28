@@ -194,7 +194,7 @@ func (s *Store) CreateUser(username, nickname, password string) (*models.User, e
 		// unique violation → conflict
 		return nil, fmt.Errorf("conflict")
 	}
-	
+
 	// ИСПРАВЛЕННЫЙ БЛОК: правильно обрабатываем true/false и превращаем в ошибку
 	user, ok := s.GetUserByUsername(username)
 	if !ok {
@@ -570,5 +570,5 @@ func hasAvatar(avatars []string, a string) bool {
 	return false
 }
 
-func HasBadge(badges []string, b string) bool  { return hasBadge(badges, b) }
+func HasBadge(badges []string, b string) bool   { return hasBadge(badges, b) }
 func HasAvatar(avatars []string, a string) bool { return hasAvatar(avatars, a) }

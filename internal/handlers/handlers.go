@@ -304,84 +304,6 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/test/submit
-func (h *Handler) TestSubmit(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-	username := getUsernameFromCtx(r)
-	user, ok := h.store.GetUserByUsername(username)
-	if !ok {
-		writeError(w, http.StatusNotFound, "User not found")
-		return
-	}
-
-	var req models.TestSubmitRequest
-	if err := h.parseBody(r, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-
-	// Server validates: expects answers array of correct answer indices per question
-	// Frontend sends: array of chosen indices for each question position
-	// We trust the score count sent from client (validated by server-side question bank would be ideal)
-	// For now: count correct answers from submitted answers vs server's key
-	correctAnswers := []int{0, 1, 1, 1, 3, 2, 2, 2, 0, 2}
-	correct := 0
-	total := len(correctAnswers)
-	for i, ans := range req.Answers {
-		if i < total && ans == correctAnswers[i] {
-			correct++
-		}
-	}
-
-	// Per PDF spec: levels based on score out of 10
-	var level, badge string
-	var xp, coins int
-	switch {
-	case correct == 10:
-		level, badge, xp, coins = "C2", "🌈", 2000, 500
-	case correct == 9:
-		level, badge, xp, coins = "C1", "🌟", 1500, 400
-	case correct == 8:
-		level, badge, xp, coins = "B2", "👑", 1000, 300
-	case correct == 7:
-		level, badge, xp, coins = "B1", "🏆", 750, 200
-	case correct >= 5:
-		level, badge, xp, coins = "A2", "⭐", 500, 100
-	default:
-		level, badge, xp, coins = "A1", "📝", 100, 0
-	}
-
-	passed := correct >= 5
-	badgeEarned := ""
-
-	if passed {
-		user.XP += xp
-		user.Balance += coins
-		// Level badges can't be obtained via promo — server-enforced
-		if !store.HasBadge(user.Badges, badge) {
-			user.Badges = append(user.Badges, badge)
-			badgeEarned = badge
-		}
-		h.store.UpdateUser(user)
-	}
-
-	h.store.SaveTestResult(models.TestResult{
-		UserID: user.ID, Score: correct * 10, Passed: passed,
-		Level: level, BadgeEarned: badgeEarned,
-		PlayedAt: time.Now().Format(time.RFC3339),
-	})
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"correct": correct, "total": total, "level": level,
-		"passed": passed, "badge_earned": badgeEarned,
-		"xp_earned": xp, "coins_earned": coins,
-		"new_xp": user.XP, "new_balance": user.Balance,
-	})
-}
-
 // POST /api/topic/complete
 func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -395,7 +317,9 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct{ Topic string `json:"topic"` }
+	var req struct {
+		Topic string `json:"topic"`
+	}
 	if err := h.parseBody(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
@@ -543,7 +467,9 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var req struct{ Nickname string `json:"nickname"` }
+	var req struct {
+		Nickname string `json:"nickname"`
+	}
 	if err := h.parseBody(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
