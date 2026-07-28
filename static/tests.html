@@ -862,6 +862,103 @@
             margin-top: 8px;
         }
 
+        /* ── Плитки со статистикой ── */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-tile {
+            padding: 16px 12px;
+            background: #f5f9fb;
+            border-radius: 16px;
+            border-bottom: 3px solid var(--lv, #0099cc);
+            animation: riseIn 0.45s ease both;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--lv, #023e50);
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            font-weight: 700;
+            opacity: 0.55;
+        }
+
+        .stat-label {
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #7c8f99;
+            line-height: 1.35;
+        }
+
+        /* ── Совет ── */
+        .advice-box {
+            margin-top: 24px;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #fffdf5, #f5f9fb);
+            border: 1.5px solid #ecf1f4;
+            border-left: 4px solid var(--lv, #0099cc);
+            border-radius: 16px;
+            text-align: left;
+        }
+
+        .advice-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #023e50;
+            margin-bottom: 12px;
+        }
+
+        .advice-title i {
+            color: var(--lv, #0099cc);
+            animation: bulbGlow 2.4s ease-in-out infinite;
+        }
+
+        @keyframes bulbGlow {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50%      { transform: scale(1.18); opacity: 1; }
+        }
+
+        .advice-item {
+            display: flex;
+            gap: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #4a6572;
+            margin-bottom: 10px;
+        }
+
+        .advice-item:last-child { margin-bottom: 0; }
+
+        .advice-dot {
+            flex: 0 0 auto;
+            width: 7px;
+            height: 7px;
+            margin-top: 7px;
+            border-radius: 50%;
+            background: var(--lv, #0099cc);
+        }
+
+        .advice-item b { color: #12303d; }
+
+        .advice-item a {
+            color: var(--lv, #0099cc);
+            font-weight: 700;
+            text-decoration: none;
+            border-bottom: 1px solid currentColor;
+        }
+
         .topic-chip {
             display: inline-block;
             margin: 0 0 10px;
@@ -1567,12 +1664,7 @@
                 toggle.textContent = title + (open ? ' ▴' : ' ▾');
             };
 
-            const index = document.createElement('div');
-            index.className = 'result-level-sub';
-            index.style.marginTop = '18px';
-            index.textContent =
-                `Индекс уровня ${data.percent}% · отвечено ${data.answered} из ${data.total}`;
-            body.appendChild(index);
+            body.appendChild(buildStats(data));
 
             if (data.capped) {
                 const note = document.createElement('div');
@@ -1604,11 +1696,144 @@
                 body.appendChild(buildBreakdown('Темы — начните с верхних', topics));
             }
 
+            body.appendChild(buildAdvice(data));
             body.appendChild(buildReview(data.review || []));
 
             wrap.appendChild(toggle);
             wrap.appendChild(body);
             return wrap;
+        }
+
+        // Три плитки: индекс уровня, самая длинная серия, сколько отвечено.
+        function buildStats(data) {
+            const row = document.createElement('div');
+            row.className = 'stat-row';
+
+            const tiles = [
+                { value: data.percent, unit: '%', label: 'Индекс уровня' },
+                { value: data.best_streak || 0, unit: '', label: 'Верных подряд, максимум' },
+                { value: data.answered, unit: '/' + data.total, label: 'Дано ответов' },
+            ];
+
+            tiles.forEach((t, i) => {
+                const tile = document.createElement('div');
+                tile.className = 'stat-tile';
+                tile.style.animationDelay = (i * 0.08) + 's';
+
+                const value = document.createElement('div');
+                value.className = 'stat-value';
+                value.textContent = t.value;
+                if (t.unit) {
+                    const unit = document.createElement('span');
+                    unit.className = 'stat-unit';
+                    unit.textContent = t.unit;
+                    value.appendChild(unit);
+                }
+
+                const label = document.createElement('div');
+                label.className = 'stat-label';
+                label.textContent = t.label;
+
+                tile.appendChild(value);
+                tile.appendChild(label);
+                row.appendChild(tile);
+            });
+
+            return row;
+        }
+
+        // Совет собирается из того, что реально видно в результате:
+        // какая ступень мешает расти, какие темы просели, сколько пропущено.
+        function buildAdvice(data) {
+            const box = document.createElement('div');
+            box.className = 'advice-box';
+
+            const title = document.createElement('div');
+            title.className = 'advice-title';
+            title.innerHTML = '<i class="fa-solid fa-lightbulb"></i>';
+            title.appendChild(document.createTextNode('Что делать дальше'));
+            box.appendChild(title);
+
+            const tips = [];
+
+            // 1. Ближайшая цель по уровню.
+            const idx = LEVEL_ORDER.indexOf(data.level);
+            const next = idx >= 0 && idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : null;
+            if (next) {
+                const band = (data.by_level || {})[next];
+                const need = band ? Math.ceil(band.total * 0.6) : 0;
+                tips.push(band
+                    ? `Следующая ступень — <b>${next}</b>. Её вопросов нужно решать не меньше ` +
+                      `60%: это <b>${need} из ${band.total}</b>, сейчас верно ${band.correct}.`
+                    : `Следующая ступень — <b>${next}</b>.`);
+            } else {
+                tips.push('Это максимальный уровень. Дальше — поддерживать форму: ' +
+                    'проходите тест время от времени, наборы вопросов каждый раз разные.');
+            }
+
+            // 2. Просевшие темы.
+            const weak = Object.keys(data.by_topic || {})
+                .map(name => ({ name, band: data.by_topic[name] }))
+                .filter(t => t.band.total > 0 && t.band.correct / t.band.total < 0.6)
+                .sort((a, b) => (a.band.correct / a.band.total) - (b.band.correct / b.band.total))
+                .slice(0, 3);
+
+            if (weak.length) {
+                const list = weak.map(t => `<b>${escapeHtml(t.name)}</b> (${t.band.correct}/${t.band.total})`);
+                tips.push(`Слабее всего идут: ${list.join(', ')}. ` +
+                    `Начните с них — темы разобраны в <a href="tree.html">дереве грамматики</a>.`);
+            } else {
+                tips.push('Провальных тем нет — ошибки разбросаны понемногу везде. ' +
+                    'Смотрите разбор ниже: там к каждому вопросу приложено правило.');
+            }
+
+            // 3. Пропуски. Пропуск не штрафуется, но и баллов не даёт.
+            const skipped = data.total - data.answered;
+            if (skipped > 0) {
+                tips.push(`Без ответа осталось <b>${skipped}</b>. Пропуск не штрафуется, но и ` +
+                    'баллов не приносит: если получается отбросить хотя бы один вариант, ' +
+                    'отвечать уже выгоднее, чем пропускать.');
+            }
+
+            // 4. Ровность результата.
+            const streak = data.best_streak || 0;
+            if (data.correct >= 8 && streak > 0 && streak < 4) {
+                tips.push(`Максимальная серия — всего <b>${streak}</b> подряд при ${data.correct} ` +
+                    'верных. Ошибки идут вперемешку, так что дело скорее во внимательности, ' +
+                    'чем в незнании: перечитывайте вопрос до конца.');
+            } else if (streak >= 12) {
+                tips.push(`Серия из <b>${streak}</b> верных подряд — уверенный кусок теста.`);
+            }
+
+            if (data.capped) {
+                tips.push('Часть сложных вопросов, похоже, угадана: уровень ограничен по общему ' +
+                    'результату. Наугад его не поднять — неверный ответ отнимает больше, чем даёт.');
+            }
+
+            tips.slice(0, 4).forEach(html => {
+                const item = document.createElement('div');
+                item.className = 'advice-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'advice-dot';
+
+                const text = document.createElement('div');
+                text.innerHTML = html;
+
+                item.appendChild(dot);
+                item.appendChild(text);
+                box.appendChild(item);
+            });
+
+            return box;
+        }
+
+        // Названия тем приходят с сервера, но раз уж они попадают в innerHTML —
+        // экранируем, чтобы разметка не могла сломаться.
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s == null ? '' : s;
+            return d.innerHTML;
         }
 
         function buildBreakdown(title, rows) {

@@ -155,14 +155,15 @@ func ShuffleOptions(sessionID string, question Question) (options []string, corr
 
 // Outcome — результат проверки одной попытки.
 type Outcome struct {
-	Correct  int             // сколько верных ответов из 40
-	Total    int             // сколько вопросов было задано
-	Answered int             // на сколько вопросов ученик вообще ответил
-	Percent  int             // индекс уровня, 0..100
-	Level    string          // итоговый уровень A1..C2
-	Capped   bool            // уровень был ограничен «потолком»
-	ByLevel  map[string]Band // разбивка по уровням сложности
-	ByTopic  map[string]Band // разбивка по разделам грамматики
+	Correct    int             // сколько верных ответов из 40
+	Total      int             // сколько вопросов было задано
+	Answered   int             // на сколько вопросов ученик вообще ответил
+	BestStreak int             // самая длинная серия верных ответов подряд
+	Percent    int             // индекс уровня, 0..100
+	Level      string          // итоговый уровень A1..C2
+	Capped     bool            // уровень был ограничен «потолком»
+	ByLevel    map[string]Band // разбивка по уровням сложности
+	ByTopic    map[string]Band // разбивка по разделам грамматики
 }
 
 // Band — сколько верных ответов из скольких в одной группе.
@@ -192,6 +193,7 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 
 	earned := 0.0
 	maxScore := 0.0
+	streak := 0
 
 	for i, id := range questionIDs {
 		question, ok := ByID[id]
@@ -221,9 +223,19 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 			earned += w
 			levelBand.Correct++
 			topicBand.Correct++
+
+			// Серия считается по порядку выдачи вопросов; пропуск и
+			// неверный ответ одинаково её обрывают.
+			streak++
+			if streak > out.BestStreak {
+				out.BestStreak = streak
+			}
 		case answer >= 0 && answer < len(question.Options):
 			out.Answered++
 			earned -= w / 3 // поправка на угадывание
+			streak = 0
+		default:
+			streak = 0
 		}
 
 		out.ByLevel[question.Level] = levelBand

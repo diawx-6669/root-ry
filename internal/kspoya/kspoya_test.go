@@ -274,6 +274,60 @@ func TestPerfectRunGivesC2(t *testing.T) {
 	}
 }
 
+// Максимальная серия верных ответов подряд.
+func TestBestStreak(t *testing.T) {
+	ids := SelectQuestions()
+	const sid = "streak"
+
+	correctAt := func(i int) int {
+		_, c := ShuffleOptions(sid, ByID[ids[i]])
+		return c
+	}
+	wrongAt := func(i int) int { return (correctAt(i) + 1) % 4 }
+
+	// Всё верно — серия во весь тест.
+	all := make([]int, len(ids))
+	for i := range ids {
+		all[i] = correctAt(i)
+	}
+	if got := Grade(sid, ids, all).BestStreak; got != len(ids) {
+		t.Errorf("идеальный прогон: серия %d, ожидалось %d", got, len(ids))
+	}
+
+	// Ни одного верного — серии нет.
+	none := make([]int, len(ids))
+	for i := range ids {
+		none[i] = wrongAt(i)
+	}
+	if got := Grade(sid, ids, none).BestStreak; got != 0 {
+		t.Errorf("ни одного верного: серия %d, ожидалось 0", got)
+	}
+
+	// Две серии: 5 верных, ошибка, 3 верных, остальное неверно.
+	mixed := make([]int, len(ids))
+	for i := range ids {
+		switch {
+		case i < 5, i >= 6 && i < 9:
+			mixed[i] = correctAt(i)
+		default:
+			mixed[i] = wrongAt(i)
+		}
+	}
+	if got := Grade(sid, ids, mixed).BestStreak; got != 5 {
+		t.Errorf("серии 5 и 3: получено %d, ожидалось 5", got)
+	}
+
+	// Пропуск обрывает серию так же, как ошибка.
+	skip := make([]int, len(ids))
+	for i := range ids {
+		skip[i] = correctAt(i)
+	}
+	skip[4] = -1
+	if got := Grade(sid, ids, skip).BestStreak; got != len(ids)-5 {
+		t.Errorf("пропуск на 5-м вопросе: серия %d, ожидалось %d", got, len(ids)-5)
+	}
+}
+
 // Пропуск не должен штрафоваться сильнее, чем неверный ответ.
 func TestSkippingIsNotPunishedMoreThanGuessing(t *testing.T) {
 	ids := SelectQuestions()
