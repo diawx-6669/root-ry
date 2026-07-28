@@ -100,8 +100,12 @@ func newRand() *rand.Rand {
 // затем перемешивает итоговый список, чтобы вопросы не шли от простых к сложным.
 // Возвращает идентификаторы вопросов в том порядке, в каком их увидит ученик.
 func SelectQuestions() []int {
-	rng := newRand()
+	return selectQuestions(newRand())
+}
 
+// selectQuestions вынесен отдельно, чтобы тесты могли подать управляемый
+// генератор и получать воспроизводимые наборы.
+func selectQuestions(rng *rand.Rand) []int {
 	byLevel := make(map[string][]int, len(Levels))
 	for _, question := range Bank {
 		byLevel[question.Level] = append(byLevel[question.Level], question.ID)
@@ -238,15 +242,18 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 	// ── Определение уровня ───────────────────────────────────────────────
 	//
 	// Основной критерий — «лестница освоенных групп»: уровень засчитывается,
-	// если ученик решил не меньше 60% вопросов этой группы и не провалил
-	// больше одной группы ниже. Одна провальная группа прощается: сильный
+	// если ученик решил не меньше 60% вопросов этой группы.
+	//
+	// Одна провальная группа ниже прощается, но только начиная с B2: сильный
 	// ученик может споткнуться на узкой теме, и это не должно отбрасывать его
-	// на две ступени вниз.
+	// на две ступени. А вот заявить B1, провалив при этом основы, нельзя —
+	// иначе редкая удача на средней группе давала бы завышенный уровень.
 	//
 	// Такой критерий гораздо устойчивее к угадыванию, чем общий процент:
 	// чтобы случайно «набрать» группу из 7 вопросов, нужно угадать 5 из них,
 	// а это происходит примерно в одном случае из восьмидесяти.
 	const bandPass = 0.6
+	const forgiveFrom = 3 // B2 и выше
 
 	ladder := 0
 	failures := 0
@@ -256,7 +263,11 @@ func Grade(sessionID string, questionIDs []int, answers []int) Outcome {
 			continue
 		}
 		if float64(band.Correct)/float64(band.Total) >= bandPass {
-			if failures <= 1 {
+			allowed := 0
+			if i >= forgiveFrom {
+				allowed = 1
+			}
+			if failures <= allowed {
 				ladder = i
 			}
 		} else {
