@@ -450,6 +450,74 @@ func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// /api/case/free
+//
+//	GET  — доступен ли бесплатный кейс сегодня;
+//	POST — открыть его.
+//
+// Ограничение «раз в сутки» проверяется в базе, а не в браузере.
+func (h *Handler) FreeCase(w http.ResponseWriter, r *http.Request) {
+	username := getUsernameFromCtx(r)
+	user, ok := h.store.GetUserByUsername(username)
+	if !ok {
+		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"available": h.store.FreeCaseAvailable(username),
+		})
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	// Отметка ставится до розыгрыша: если кейс сегодня уже брали,
+	// запрос не пройдёт и предмет не выдастся.
+	if !h.store.ClaimFreeCase(username) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"available": false,
+			"message":   "Бесплатный кейс сегодня уже открыт. Возвращайтесь завтра!",
+		})
+		return
+	}
+
+	itemEmoji, itemRarity, isDuplicate := store.RollCase("free", user.Avatars, user.Badges, false)
+
+	compensation := 0
+	if isDuplicate {
+		compensation = store.CompensationForRarity(itemRarity)
+		user.Balance += compensation
+	} else {
+		user.Avatars = append(user.Avatars, itemEmoji)
+	}
+
+	xpGained := 10 + store.XPForRarity(itemRarity)
+	user.XP += xpGained
+
+	h.store.UpdateUser(user)
+	h.store.SaveCaseResult(models.CaseResult{
+		UserID: user.ID, CaseType: "free",
+		ItemEmoji: itemEmoji, ItemRarity: itemRarity,
+		IsDuplicate: isDuplicate, Compensation: compensation,
+		PlayedAt: time.Now().Format(time.RFC3339),
+	})
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"available":    true,
+		"item_emoji":   itemEmoji,
+		"item_rarity":  itemRarity,
+		"is_duplicate": isDuplicate,
+		"compensation": compensation,
+		"xp_gained":    xpGained,
+		"new_balance":  user.Balance,
+		"new_xp":       user.XP,
+	})
+}
+
 // GET /api/daily/claim
 func (h *Handler) DailyClaim(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCtx(r)

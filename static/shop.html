@@ -535,9 +535,49 @@
         .main-content { padding: 0 32px; }
         .app-window { width: 100%; }
         .section-label { margin-top: 8px; }
-        /* Промокод — по центру страницы */
-        .shop-section:last-child { display: flex; flex-direction: column; align-items: center; }
-        .shop-section:last-child .section-label { width: 100%; max-width: 680px; }
+        /* Правило центрирования последней секции убрано вместе с переездом
+           промокода наверх: теперь последней идёт витрина кейсов, и её
+           центрировать не нужно. */
+
+        /* ── Бесплатный кейс и промокод: две колонки ── */
+        .free-promo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+        @media (max-width: 820px) { .free-promo-row { grid-template-columns: 1fr; } }
+
+        .free-case-card { border: 2px solid #bbf7d0; background: linear-gradient(135deg, #f0fdf4, #fff); }
+        .free-case-card.used { border-color: #e5e7eb; background: #fafafa; }
+        .free-case-sub { font-size: 12px; color: #8e9fae; margin-top: 2px; }
+        .free-case-body { display: flex; align-items: center; gap: 16px; margin: 14px 0; }
+
+        .free-case-box {
+            flex: 0 0 auto; width: 78px; height: 78px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center; font-size: 40px;
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            box-shadow: 0 6px 18px rgba(34, 197, 94, 0.25);
+            animation: giftFloat 2.6s ease-in-out infinite;
+        }
+        .free-case-card.used .free-case-box {
+            background: #eef2f5; box-shadow: none; animation: none; filter: grayscale(1); opacity: 0.55;
+        }
+        @keyframes giftFloat {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50%      { transform: translateY(-7px) rotate(2deg); }
+        }
+        @keyframes giftPop {
+            0%   { transform: scale(1) rotate(0); }
+            35%  { transform: scale(1.25) rotate(-10deg); }
+            70%  { transform: scale(0.95) rotate(6deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .free-case-box.pop { animation: giftPop 0.7s cubic-bezier(0.34,1.56,0.64,1); }
+
+        .free-odds { flex: 1 1 auto; min-width: 0; }
+        .free-case-btn { width: 100%; margin-top: 4px; }
+        .free-case-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .free-case-msg { margin-top: 10px; font-size: 12.5px; font-weight: 600; line-height: 1.5; min-height: 18px; }
+        .free-case-msg.ok { color: #15803d; }
+        .free-case-msg.wait { color: #8e9fae; }
+        .free-case-msg.err { color: #dc2626; }
+
     </style>
 </head>
 <body>
@@ -607,6 +647,44 @@
                             <span style="color:#92400e">Выиграй <a href="games.html" style="color:#d97706;font-weight:800">5 разных игр</a> сегодня — +50 монет придут автоматически!</span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- БЕСПЛАТНЫЙ КЕЙС + ПРОМОКОД -->
+            <div class="shop-section">
+                <div class="free-promo-row">
+
+                    <!-- Слева: бесплатный кейс раз в сутки -->
+                    <div class="daily-card free-case-card" id="freeCaseCard">
+                        <div class="daily-card-title"><i class="fa-solid fa-gift" style="color:#22c55e"></i> Бесплатный кейс</div>
+                        <div class="free-case-sub">Один кейс каждый день, без монет.</div>
+
+                        <div class="free-case-body">
+                            <div class="free-case-box" id="freeCaseBox">🎁</div>
+                            <div class="free-odds">
+                                <div class="odd-row"><span class="odd-name oc">Обычная</span><div class="odd-track"><div class="odd-fill bc" style="width:70%"></div></div><span class="odd-pct oc">70%</span></div>
+                                <div class="odd-row"><span class="odd-name or">Редкая</span><div class="odd-track"><div class="odd-fill br" style="width:18%"></div></div><span class="odd-pct or">18%</span></div>
+                                <div class="odd-row"><span class="odd-name oe">Эпик</span><div class="odd-track"><div class="odd-fill be" style="width:10%"></div></div><span class="odd-pct oe">10%</span></div>
+                                <div class="odd-row"><span class="odd-name ol">Лега</span><div class="odd-track"><div class="odd-fill bl" style="width:1.9%"></div></div><span class="odd-pct ol">1.9%</span></div>
+                                <div class="odd-row"><span class="odd-name om">Мифик</span><div class="odd-track"><div class="odd-fill bm" style="width:0.1%"></div></div><span class="odd-pct om">0.1%</span></div>
+                            </div>
+                        </div>
+
+                        <button class="claim-btn free-case-btn" id="freeCaseBtn" onclick="openFreeCase()">Открыть бесплатно</button>
+                        <div class="free-case-msg" id="freeCaseMsg"></div>
+                    </div>
+
+                    <!-- Справа: промокод -->
+                    <div class="daily-card">
+                        <div class="daily-card-title"><i class="fa-solid fa-ticket" style="color:#0099cc"></i> Промокод</div>
+                        <div class="free-case-sub">Монеты, значки и особые аватарки за коды от команды RootRy.</div>
+                        <div class="promo-row" style="margin-top:14px">
+                            <input class="promo-input" id="promoInput" type="text" placeholder="ВВЕДИ КОД..." maxlength="32">
+                            <button class="promo-submit" id="promoBtn" onclick="redeemPromo()">Активировать</button>
+                        </div>
+                        <div class="promo-msg" id="promoMsg"></div>
+                    </div>
+
                 </div>
             </div>
 
@@ -770,20 +848,6 @@
                         <button class="buy-btn" onclick="openCase('badge', 300, this)">300 <i class="fa-solid fa-coins coin-icon"></i></button>
                     </div>
 
-                </div>
-            </div>
-
-            <!-- ПРОМОКОД -->
-            <div class="shop-section">
-                <div class="section-label"><i class="fa-solid fa-ticket" style="color:#0099cc"></i> Промокод</div>
-                <div class="promo-wrap">
-                    <div class="daily-card-title" style="margin-bottom:2px"><i class="fa-solid fa-tag" style="color:#0099cc"></i> Введи секретный код</div>
-                    <div class="promo-sub">Монеты, значки и особые аватарки за промокоды от команды RootRy.</div>
-                    <div class="promo-row">
-                        <input class="promo-input" id="promoInput" type="text" placeholder="ВВЕДИ КОД..." maxlength="32">
-                        <button class="promo-submit" id="promoBtn" onclick="redeemPromo()">Активировать</button>
-                    </div>
-                    <div class="promo-msg" id="promoMsg"></div>
                 </div>
             </div>
 
@@ -1171,6 +1235,83 @@
         btn.textContent = 'Активировать';
         setTimeout(() => { msg.style.display = 'none'; }, 4500);
     }
+
+
+    // ── Бесплатный кейс раз в сутки ──
+    // Доступность и сам розыгрыш проверяет сервер: в браузере кнопку
+    // можно только нарисовать, но не выдать себе предмет.
+    async function loadFreeCase() {
+        const r = await API.get('/api/case/free');
+        if (!r.ok) return;
+        setFreeCaseState(r.data.available);
+    }
+
+    function setFreeCaseState(available) {
+        const btn = document.getElementById('freeCaseBtn');
+        const card = document.getElementById('freeCaseCard');
+        const msg = document.getElementById('freeCaseMsg');
+        if (!btn) return;
+
+        btn.disabled = !available;
+        card.classList.toggle('used', !available);
+        if (available) {
+            btn.textContent = 'Открыть бесплатно';
+            if (msg.className === 'free-case-msg wait') msg.textContent = '';
+        } else {
+            btn.textContent = 'Уже открыт сегодня';
+            if (!msg.textContent) {
+                msg.className = 'free-case-msg wait';
+                msg.textContent = 'Следующий бесплатный кейс — завтра.';
+            }
+        }
+    }
+
+    async function openFreeCase() {
+        const btn = document.getElementById('freeCaseBtn');
+        const box = document.getElementById('freeCaseBox');
+        const msg = document.getElementById('freeCaseMsg');
+
+        btn.disabled = true;
+        btn.textContent = 'Открываем…';
+
+        const r = await API.post('/api/case/free', {});
+        if (!r.ok) {
+            msg.className = 'free-case-msg err';
+            msg.textContent = (r.data && r.data.error) || 'Не удалось открыть кейс';
+            setFreeCaseState(true);
+            return;
+        }
+
+        if (!r.data.available) {
+            msg.className = 'free-case-msg wait';
+            msg.textContent = r.data.message || 'Бесплатный кейс сегодня уже открыт.';
+            setFreeCaseState(false);
+            return;
+        }
+
+        box.textContent = r.data.item_emoji;
+        box.classList.remove('pop');
+        void box.offsetWidth; // перезапуск анимации
+        box.classList.add('pop');
+
+        const rarity = RARITY_RU[r.data.item_rarity] || r.data.item_rarity;
+        msg.className = 'free-case-msg ok';
+        msg.textContent = r.data.is_duplicate
+            ? `${r.data.item_emoji} ${rarity} — уже была, +${r.data.compensation} монет и +${r.data.xp_gained} XP`
+            : `${r.data.item_emoji} ${rarity} — новая аватарка! +${r.data.xp_gained} XP`;
+
+        setFreeCaseState(false);
+        API.refreshUser();
+        const bal = document.getElementById('userBalance');
+        if (bal && r.data.new_balance != null) bal.textContent = r.data.new_balance;
+    }
+
+    const RARITY_RU = {
+        common: 'обычная', rare: 'редкая', epic: 'эпическая',
+        legendary: 'легендарная', mythic: 'мифическая',
+    };
+
+    loadFreeCase();
 
     document.getElementById('promoInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') redeemPromo();
