@@ -2,6 +2,7 @@ package store
 
 import (
 	crand "crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -161,6 +162,113 @@ func (s *Store) AbortKspoyaSession(id, username string) {
 	if err != nil {
 		log.Printf("AbortKspoyaSession(%s): %v", username, err)
 	}
+}
+
+// bestAttemptSQL — лучшая попытка пользователя: наибольший балл, а при равном
+// балле та, что завершена раньше.
+const bestAttemptSQL = `
+	SELECT id, raw_score, level_key, finished_at,
+	       COALESCE(array_length(question_ids, 1), 0) AS total
+	FROM kspoya_sessions
+	WHERE username = u.username AND status = 'completed' AND level_key <> ''
+	ORDER BY raw_score DESC, finished_at ASC
+	LIMIT 1`
+
+// KspoyaLeaderboard возвращает рейтинг по лучшей попытке каждого ученика.
+// Администраторы в рейтинг не попадают. При равном балле выше тот,
+// кто прошёл тест раньше.
+func (s *Store) KspoyaLeaderboard(limit int) []models.KspoyaLeaderEntry {
+	rows, err := s.db.Query(`
+		SELECT u.username, u.nickname, best.raw_score, best.total,
+		       best.level_key, best.finished_at
+		FROM users u
+		JOIN LATERAL (`+bestAttemptSQL+`) best ON TRUE
+		WHERE u.is_admin = FALSE
+		ORDER BY best.raw_score DESC, best.finished_at ASC
+		LIMIT $1`, limit)
+	if err != nil {
+		log.Printf("KspoyaLeaderboard: %v", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var out []models.KspoyaLeaderEntry
+	rank := 1
+	for rows.Next() {
+		var e models.KspoyaLeaderEntry
+		if err := rows.Scan(&e.Username, &e.Nickname, &e.Score,
+			&e.Total, &e.Level, &e.FinishedAt); err != nil {
+			continue
+		}
+		e.Rank = rank
+		rank++
+		out = append(out, e)
+	}
+	return out
+}
+
+// BestKspoyaAttemptID возвращает идентификатор лучшей попытки пользователя.
+func (s *Store) BestKspoyaAttemptID(username string) (id string, score int, level string, ok bool) {
+	row := s.db.QueryRow(`
+		SELECT id, raw_score, level_key
+		FROM kspoya_sessions
+		WHERE username = $1 AND status = 'completed' AND level_key <> ''
+		ORDER BY raw_score DESC, finished_at ASC
+		LIMIT 1`, username)
+	if err := row.Scan(&id, &score, &level); err != nil {
+		return "", 0, "", false
+	}
+	return id, score, level, true
+}
+
+// ── Античит ──────────────────────────────────────────────────────────────
+
+// KspoyaBanState читает счётчик нарушений и срок блокировки.
+func (s *Store) KspoyaBanState(username string) models.KspoyaBanState {
+	var state models.KspoyaBanState
+	var until sql.NullTime
+	err := s.db.QueryRow(`
+		SELECT COALESCE(kspoya_warnings, 0), kspoya_ban_until
+		FROM users WHERE username = $1`, username).Scan(&state.Warnings, &until)
+	if err != nil {
+		log.Printf("KspoyaBanState(%s): %v", username, err)
+		return state
+	}
+	if until.Valid && until.Time.After(time.Now()) {
+		t := until.Time
+		state.BannedUntil = &t
+	}
+	return state
+}
+
+// RegisterKspoyaViolation засчитывает нарушение античита. Когда нарушений
+// набирается maxStrikes, пользователь блокируется на banFor, а счётчик
+// обнуляется — чтобы после снятия блокировки отсчёт начинался заново.
+func (s *Store) RegisterKspoyaViolation(username string, maxStrikes int, banFor time.Duration) models.KspoyaBanState {
+	state := models.KspoyaBanState{MaxStrikes: maxStrikes}
+	var until sql.NullTime
+
+	err := s.db.QueryRow(`
+		UPDATE users SET
+		  kspoya_warnings = CASE
+		      WHEN COALESCE(kspoya_warnings, 0) + 1 >= $2 THEN 0
+		      ELSE COALESCE(kspoya_warnings, 0) + 1 END,
+		  kspoya_ban_until = CASE
+		      WHEN COALESCE(kspoya_warnings, 0) + 1 >= $2 THEN now() + $3::interval
+		      ELSE kspoya_ban_until END
+		WHERE username = $1
+		RETURNING kspoya_warnings, kspoya_ban_until`,
+		username, maxStrikes, fmt.Sprintf("%d seconds", int(banFor.Seconds())),
+	).Scan(&state.Warnings, &until)
+	if err != nil {
+		log.Printf("RegisterKspoyaViolation(%s): %v", username, err)
+		return state
+	}
+	if until.Valid && until.Time.After(time.Now()) {
+		t := until.Time
+		state.BannedUntil = &t
+	}
+	return state
 }
 
 // ListKspoyaAttempts возвращает завершённые попытки, новые сверху.

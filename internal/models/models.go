@@ -35,6 +35,10 @@ type LeaderboardEntry struct {
 	Balance  int    `json:"balance"`
 	Badges   int    `json:"badges_count"`
 	Streak   int    `json:"streak"`
+	// Лучший результат КСПОЯ. KspoyaLevel пуст, если тест ещё не сдавали.
+	KspoyaScore int    `json:"kspoya_score"`
+	KspoyaLevel string `json:"kspoya_level"`
+	KspoyaBadge string `json:"kspoya_badge"`
 }
 
 type PromoCode struct {
@@ -90,6 +94,26 @@ type KspoyaSession struct {
 	RawScore    int       `json:"raw_score"`
 	Percent     int       `json:"percent"`
 	LevelKey    string    `json:"level_key"`
+}
+
+// KspoyaLeaderEntry — строка рейтинга КСПОЯ: лучшая попытка пользователя.
+type KspoyaLeaderEntry struct {
+	Rank       int       `json:"rank"`
+	Username   string    `json:"username"`
+	Nickname   string    `json:"nickname"`
+	Score      int       `json:"score"`
+	Total      int       `json:"total"`
+	Level      string    `json:"level"`
+	LevelLabel string    `json:"level_label"`
+	LevelBadge string    `json:"level_badge"`
+	FinishedAt time.Time `json:"finished_at"`
+}
+
+// KspoyaBanState — состояние античита у пользователя.
+type KspoyaBanState struct {
+	Warnings    int        `json:"warnings"`
+	MaxStrikes  int        `json:"max_strikes"`
+	BannedUntil *time.Time `json:"banned_until,omitempty"`
 }
 
 // KspoyaAttempt — строка в списке прошлых попыток.

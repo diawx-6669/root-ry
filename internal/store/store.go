@@ -271,13 +271,23 @@ func (s *Store) UpdateUser(u *models.User) {
 	}
 }
 
+// GetLeaderboard отдаёт общий рейтинг. Лучший результат КСПОЯ подтягивается
+// отдельным подзапросом: наибольший балл, при равенстве — более ранняя попытка.
 func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rows, err := s.db.Query(`
-		SELECT username, nickname, xp, balance,
-		       jsonb_array_length(badges), streak
-		FROM users
-		WHERE is_admin = FALSE
-		ORDER BY xp DESC`)
+		SELECT u.username, u.nickname, u.xp, u.balance,
+		       jsonb_array_length(u.badges), u.streak,
+		       COALESCE(best.raw_score, 0), COALESCE(best.level_key, '')
+		FROM users u
+		LEFT JOIN LATERAL (
+		    SELECT raw_score, level_key
+		    FROM kspoya_sessions
+		    WHERE username = u.username AND status = 'completed' AND level_key <> ''
+		    ORDER BY raw_score DESC, finished_at ASC
+		    LIMIT 1
+		) best ON TRUE
+		WHERE u.is_admin = FALSE
+		ORDER BY u.xp DESC`)
 	if err != nil {
 		log.Printf("GetLeaderboard: %v", err)
 		return nil
@@ -287,7 +297,8 @@ func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rank := 1
 	for rows.Next() {
 		var e models.LeaderboardEntry
-		rows.Scan(&e.Username, &e.Nickname, &e.XP, &e.Balance, &e.Badges, &e.Streak)
+		rows.Scan(&e.Username, &e.Nickname, &e.XP, &e.Balance, &e.Badges, &e.Streak,
+			&e.KspoyaScore, &e.KspoyaLevel)
 		e.Rank = rank
 		rank++
 		entries = append(entries, e)

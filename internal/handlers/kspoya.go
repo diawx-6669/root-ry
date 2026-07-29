@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"rootry/internal/kspoya"
@@ -38,6 +39,13 @@ func buildReview(sessionID string, questionIDs, answers []int) []models.KspoyaRe
 	return review
 }
 
+// Античит: сколько нарушений допускается и насколько блокируется тест.
+// Первое нарушение — предупреждение, второе — блокировка.
+const (
+	kspoyaMaxStrikes = 2
+	kspoyaBanFor     = 24 * time.Hour
+)
+
 // POST /api/kspoya/start
 //
 // Создаёт попытку и отдаёт 40 вопросов БЕЗ правильных ответов и без пометок
@@ -51,6 +59,16 @@ func (h *Handler) KspoyaStart(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCtx(r)
 	if _, ok := h.store.GetUserByUsername(username); !ok {
 		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	// Блокировка проверяется на сервере: обойти её из браузера нельзя.
+	if ban := h.store.KspoyaBanState(username); ban.BannedUntil != nil {
+		writeJSON(w, http.StatusForbidden, map[string]any{
+			"error":        "Тест заблокирован за нарушение правил",
+			"banned_until": ban.BannedUntil,
+			"seconds_left": int(time.Until(*ban.BannedUntil).Seconds()),
+		})
 		return
 	}
 
@@ -247,7 +265,11 @@ func (h *Handler) KspoyaAttempt(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/kspoya/abort — отмена попытки (античит или отказ ученика).
+// POST /api/kspoya/abort — отмена попытки.
+//
+// Если передан violation=true (ушёл со вкладки, вышел из полноэкранного
+// режима), нарушение засчитывается: первое даёт предупреждение, второе
+// блокирует тест на сутки.
 func (h *Handler) KspoyaAbort(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -256,10 +278,54 @@ func (h *Handler) KspoyaAbort(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCtx(r)
 	var req struct {
 		SessionID string `json:"session_id"`
+		Violation bool   `json:"violation"`
+		Reason    string `json:"reason"`
 	}
 	h.parseBody(r, &req) // тело необязательно: без id отменяем все активные
 	h.store.AbortKspoyaSession(req.SessionID, username)
-	writeJSON(w, http.StatusOK, models.SuccessResponse{Message: "Попытка отменена"})
+
+	state := models.KspoyaBanState{MaxStrikes: kspoyaMaxStrikes}
+	if req.Violation {
+		state = h.store.RegisterKspoyaViolation(username, kspoyaMaxStrikes, kspoyaBanFor)
+		state.MaxStrikes = kspoyaMaxStrikes
+	}
+
+	resp := map[string]any{
+		"warnings":    state.Warnings,
+		"max_strikes": kspoyaMaxStrikes,
+		"banned":      state.BannedUntil != nil,
+	}
+	if state.BannedUntil != nil {
+		resp["banned_until"] = state.BannedUntil
+		resp["seconds_left"] = int(time.Until(*state.BannedUntil).Seconds())
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// GET /api/kspoya/leaderboard — рейтинг по лучшей попытке каждого ученика.
+func (h *Handler) KspoyaLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	limit := 6
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
+
+	entries := h.store.KspoyaLeaderboard(limit)
+	for i := range entries {
+		reward := kspoya.Rewards[entries[i].Level]
+		entries[i].LevelLabel = reward.Label
+		entries[i].LevelBadge = reward.Badge
+	}
+	if entries == nil {
+		entries = []models.KspoyaLeaderEntry{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entries": entries})
 }
 
 // GET /api/kspoya/status — есть ли незавершённая попытка и сколько времени осталось.
@@ -270,6 +336,8 @@ func (h *Handler) KspoyaStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	username := getUsernameFromCtx(r)
 
+	ban := h.store.KspoyaBanState(username)
+
 	resp := map[string]any{
 		"has_active":   false,
 		"bank_size":    len(kspoya.Bank),
@@ -277,6 +345,26 @@ func (h *Handler) KspoyaStatus(w http.ResponseWriter, r *http.Request) {
 		"options":      kspoya.OptionsPerQuestion,
 		"level_scale":  kspoya.LevelThresholds,
 		"time_minutes": kspoya.TestMinutes,
+		"warnings":     ban.Warnings,
+		"max_strikes":  kspoyaMaxStrikes,
+		"banned":       ban.BannedUntil != nil,
+	}
+	if ban.BannedUntil != nil {
+		resp["banned_until"] = ban.BannedUntil
+		resp["seconds_left_ban"] = int(time.Until(*ban.BannedUntil).Seconds())
+	}
+
+	// Лучший результат — для кнопки «Лучший результат» под стартом.
+	if id, score, level, ok := h.store.BestKspoyaAttemptID(username); ok {
+		reward := kspoya.Rewards[level]
+		resp["best"] = map[string]any{
+			"attempt_id":  id,
+			"score":       score,
+			"total":       kspoya.QuestionsPerTest,
+			"level":       level,
+			"level_label": reward.Label,
+			"level_badge": reward.Badge,
+		}
 	}
 	if session, ok := h.store.ActiveKspoyaSession(username); ok {
 		secondsLeft := int(time.Until(session.ExpiresAt).Seconds())
