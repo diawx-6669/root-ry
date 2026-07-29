@@ -34,33 +34,49 @@
         .loading-row { text-align: center; padding: 40px; color: #8e9fae; font-size: 15px; }
 
         /* ── Пьедестал: первая тройка ── */
-        .podium { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 10px; align-items: end; margin-bottom: 24px; }
-        .pod { background: #fff; border-radius: 18px 18px 0 0; padding: 16px 8px 0; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 6px 22px rgba(0,0,0,0.07); animation: podRise 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+        /* Ширина ограничена: на всю страницу пьедестал растягивать незачем. */
+        .podium-wrap { max-width: 460px; margin: 6px auto 28px; }
+        .podium { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 8px; align-items: end; }
+        .pod { display: flex; flex-direction: column; align-items: center; min-width: 0; animation: podRise 0.55s cubic-bezier(0.22,1,0.36,1) both; }
         .pod-1 { animation-delay: 0.05s; }
-        .pod-2 { animation-delay: 0.15s; }
-        .pod-3 { animation-delay: 0.25s; }
-        @keyframes podRise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-        .pod.me { outline: 2px solid #0099cc; outline-offset: -2px; }
-        .pod-medal { font-size: 26px; line-height: 1; margin-bottom: 6px; }
-        .pod-avatar { width: 58px; height: 58px; border-radius: 50%; background: #eef4f7; border: 3px solid #e4ecf0; }
-        .pod-1 .pod-avatar { width: 70px; height: 70px; border-color: #fca311; }
-        .pod-2 .pod-avatar { border-color: #bdbdbd; }
-        .pod-3 .pod-avatar { border-color: #cd7f32; }
-        .pod-name { margin-top: 8px; font-size: 13px; font-weight: 700; color: #023e50; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .pod-uname { font-size: 10.5px; color: #8e9fae; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-        .pod-val { margin: 8px 0 10px; font-size: 14px; font-weight: 800; }
-        .pod-base { width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        .pod-1 .pod-base { height: 104px; background: linear-gradient(180deg, #fcbf49, #f59e0b); }
-        .pod-2 .pod-base { height: 76px; background: linear-gradient(180deg, #d5dbe0, #9aa3ab); }
-        .pod-3 .pod-base { height: 58px; background: linear-gradient(180deg, #e0a074, #cd7f32); }
-        @media (max-width: 560px) {
+        .pod-2 { animation-delay: 0.16s; }
+        .pod-3 { animation-delay: 0.27s; }
+        @keyframes podRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+
+        .pod-avatar-wrap { position: relative; }
+        .pod-avatar { display: block; width: 52px; height: 52px; border-radius: 50%; background: #fff; border: 3px solid #e4ecf0; box-shadow: 0 5px 16px rgba(0,0,0,0.13); }
+        .pod-1 .pod-avatar { width: 64px; height: 64px; border-color: #fcbf49; box-shadow: 0 6px 20px rgba(245,158,11,0.4); }
+        .pod-2 .pod-avatar { border-color: #c3ced6; }
+        .pod-3 .pod-avatar { border-color: #dda07a; }
+        .pod-crown { position: absolute; top: -15px; left: 50%; transform: translateX(-50%) rotate(-14deg); font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
+        .pod-name { margin-top: 7px; font-size: 12.5px; font-weight: 700; color: #023e50; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pod-1 .pod-name { font-size: 13.5px; }
+        .pod-val { margin: 5px 0 9px; padding: 3px 11px; border-radius: 20px; background: #f0f4f8; font-size: 11.5px; font-weight: 800; color: #023e50; white-space: nowrap; }
+        .pod.me .pod-val { background: #0099cc; color: #fff; }
+
+        .pod-step { position: relative; width: 100%; border-radius: 14px 14px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 9px; font-size: 28px; font-weight: 800; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.22); overflow: hidden; }
+        /* Блик по верхней части ступени, чтобы она не выглядела плоской */
+        .pod-step::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 45%; background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0)); pointer-events: none; }
+        .pod-1 .pod-step { height: 92px; background: linear-gradient(180deg, #fcd34d, #f59e0b); }
+        .pod-2 .pod-step { height: 66px; background: linear-gradient(180deg, #dfe5ea, #9aa3ab); }
+        .pod-3 .pod-step { height: 50px; background: linear-gradient(180deg, #e8b48f, #cd7f32); }
+        .pod.me .pod-step { box-shadow: inset 0 0 0 2px #0099cc; }
+
+        /* Общая подставка под всеми ступенями */
+        .podium-plate { height: 12px; border-radius: 7px; background: linear-gradient(90deg, #8ea3b0, #cfd8de 50%, #8ea3b0); box-shadow: 0 7px 18px rgba(2,62,80,0.16); }
+
+        @media (max-width: 520px) {
+            .podium-wrap { max-width: 100%; }
             .podium { gap: 6px; }
-            .pod { padding: 12px 4px 0; }
-            .pod-avatar { width: 44px; height: 44px; }
-            .pod-1 .pod-avatar { width: 54px; height: 54px; }
-            .pod-name { font-size: 11.5px; }
-            .pod-uname { display: none; }
-            .pod-base { font-size: 22px; }
+            .pod-avatar { width: 42px; height: 42px; }
+            .pod-1 .pod-avatar { width: 52px; height: 52px; }
+            .pod-name, .pod-1 .pod-name { font-size: 11px; }
+            .pod-val { font-size: 10.5px; padding: 3px 8px; }
+            .pod-step { font-size: 22px; }
+            .pod-1 .pod-step { height: 72px; }
+            .pod-2 .pod-step { height: 54px; }
+            .pod-3 .pod-step { height: 42px; }
         }
         .header-row { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; padding: 0 16px; margin-bottom: 8px; }
     </style>
@@ -89,7 +105,10 @@
                 <button class="lb-tab" data-tab="badges" onclick="setTab('badges',this)">По значкам</button>
                 <button class="lb-tab" data-tab="kspoya" onclick="setTab('kspoya',this)">По КСПОЯ</button>
             </div>
-            <div class="podium" id="podium"></div>
+            <div class="podium-wrap">
+                <div class="podium" id="podium"></div>
+                <div class="podium-plate"></div>
+            </div>
             <div class="header-row" id="headerRow">
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;">#</div>
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;">Игрок</div>
@@ -159,6 +178,15 @@
             return;
         }
 
+        // Значение активной вкладки без разметки — для чипа на пьедестале.
+        const plainVal = (e) => {
+            if (currentTab === 'balance') return e.balance + ' 💰';
+            if (currentTab === 'streak') return e.streak + ' 🔥';
+            if (currentTab === 'badges') return e.badges_count + ' 🏅';
+            if (currentTab === 'kspoya') return e.kspoya_level ? `${e.kspoya_score} · ${e.kspoya_level}` : '—';
+            return e.xp + ' ⚡';
+        };
+
         const getVal = (e) => {
             if (currentTab === 'balance') return `<span class="lb-stat">${e.balance} 💰</span>`;
             if (currentTab === 'streak') return `<span class="lb-stat streak">${e.streak} 🔥</span>`;
@@ -182,37 +210,39 @@
             const pod = document.createElement('div');
             pod.className = 'pod pod-' + (idx + 1) + (me && e.username === me.username ? ' me' : '');
 
-            const medal = document.createElement('div');
-            medal.className = 'pod-medal';
-            medal.textContent = ['🥇', '🥈', '🥉'][idx];
+            const avatarWrap = document.createElement('div');
+            avatarWrap.className = 'pod-avatar-wrap';
 
             const img = document.createElement('img');
             img.className = 'pod-avatar';
             img.src = avatarURL(e.username);
             img.alt = '';
+            avatarWrap.appendChild(img);
+
+            if (idx === 0) {
+                const crown = document.createElement('div');
+                crown.className = 'pod-crown';
+                crown.textContent = '👑';
+                avatarWrap.appendChild(crown);
+            }
 
             const name = document.createElement('div');
             name.className = 'pod-name';
             name.textContent = e.nickname || e.username;
-
-            const uname = document.createElement('div');
-            uname.className = 'pod-uname';
-            uname.textContent = '@' + e.username;
+            name.title = '@' + e.username;
 
             const val = document.createElement('div');
             val.className = 'pod-val';
-            val.innerHTML = getVal(e);
+            val.textContent = plainVal(e);
 
-            const base = document.createElement('div');
-            base.className = 'pod-base';
-            base.textContent = String(idx + 1);
+            const step = document.createElement('div');
+            step.className = 'pod-step';
+            step.textContent = String(idx + 1);
 
-            pod.appendChild(medal);
-            pod.appendChild(img);
+            pod.appendChild(avatarWrap);
             pod.appendChild(name);
-            pod.appendChild(uname);
             pod.appendChild(val);
-            pod.appendChild(base);
+            pod.appendChild(step);
             podium.appendChild(pod);
         });
 
