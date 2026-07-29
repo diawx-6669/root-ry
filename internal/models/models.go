@@ -35,6 +35,8 @@ type LeaderboardEntry struct {
 	Balance  int    `json:"balance"`
 	Badges   int    `json:"badges_count"`
 	Streak   int    `json:"streak"`
+	// Выбранная аватарка: рейтинг рисовал робота по логину и игнорировал её.
+	ActiveAvatar string `json:"active_avatar"`
 	// Лучший результат КСПОЯ. KspoyaLevel пуст, если тест ещё не сдавали.
 	KspoyaScore int    `json:"kspoya_score"`
 	KspoyaLevel string `json:"kspoya_level"`
@@ -98,15 +100,16 @@ type KspoyaSession struct {
 
 // KspoyaLeaderEntry — строка рейтинга КСПОЯ: лучшая попытка пользователя.
 type KspoyaLeaderEntry struct {
-	Rank       int       `json:"rank"`
-	Username   string    `json:"username"`
-	Nickname   string    `json:"nickname"`
-	Score      int       `json:"score"`
-	Total      int       `json:"total"`
-	Level      string    `json:"level"`
-	LevelLabel string    `json:"level_label"`
-	LevelBadge string    `json:"level_badge"`
-	FinishedAt time.Time `json:"finished_at"`
+	Rank         int       `json:"rank"`
+	Username     string    `json:"username"`
+	Nickname     string    `json:"nickname"`
+	Score        int       `json:"score"`
+	Total        int       `json:"total"`
+	Level        string    `json:"level"`
+	ActiveAvatar string    `json:"active_avatar"`
+	LevelLabel   string    `json:"level_label"`
+	LevelBadge   string    `json:"level_badge"`
+	FinishedAt   time.Time `json:"finished_at"`
 }
 
 // KspoyaBanState — состояние античита у пользователя.

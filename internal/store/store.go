@@ -315,7 +315,7 @@ func (s *Store) TouchDailyLogin(username string) (streak, balance int, awarded b
 func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rows, err := s.db.Query(`
 		SELECT u.username, u.nickname, u.xp, u.balance,
-		       jsonb_array_length(u.badges), u.streak,
+		       jsonb_array_length(u.badges), u.streak, u.active_avatar,
 		       COALESCE(best.raw_score, 0), COALESCE(best.level_key, '')
 		FROM users u
 		LEFT JOIN LATERAL (
@@ -337,7 +337,7 @@ func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	for rows.Next() {
 		var e models.LeaderboardEntry
 		rows.Scan(&e.Username, &e.Nickname, &e.XP, &e.Balance, &e.Badges, &e.Streak,
-			&e.KspoyaScore, &e.KspoyaLevel)
+			&e.ActiveAvatar, &e.KspoyaScore, &e.KspoyaLevel)
 		e.Rank = rank
 		rank++
 		entries = append(entries, e)

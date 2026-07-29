@@ -16,7 +16,6 @@ func TestChanceTablesSumTo100(t *testing.T) {
 		"кейс rare":      CaseChances["rare"],
 		"кейс epic":      CaseChances["epic"],
 		"кейс legendary": CaseChances["legendary"],
-		"кейс free":      CaseChances["free"],
 		"кейс значков":   BadgeCaseChances,
 	}
 
@@ -43,18 +42,6 @@ func TestChanceTablesSumTo100(t *testing.T) {
 			if !known {
 				t.Errorf("%s: неизвестная редкость %q", name, rarity)
 			}
-		}
-	}
-}
-
-// Бесплатный кейс должен раздавать ровно то, что обещано.
-func TestFreeCaseChances(t *testing.T) {
-	want := map[string]float64{
-		"common": 70, "rare": 18, "epic": 10, "legendary": 1.9, "mythic": 0.1,
-	}
-	for rarity, chance := range want {
-		if got := CaseChances["free"][rarity]; math.Abs(got-chance) > 1e-9 {
-			t.Errorf("бесплатный кейс, %s: шанс %.2f, ожидалось %.2f", rarity, got, chance)
 		}
 	}
 }

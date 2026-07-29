@@ -48,14 +48,35 @@ const API = {
         window.location.href = '/index.html';
     },
 
-    // Fix: refreshUser replaces full user object, not a partial spread
-    async refreshUser() {
-        const r = await this.get('/api/me');
-        if (r.ok) {
-            localStorage.setItem('currentUser', JSON.stringify(r.data));
-            return r.data;
+    // Свежие данные пользователя.
+    //
+    // Раньше каждая страница дёргала /api/me дважды: один раз из initHeader,
+    // второй — из своего загрузчика. Теперь параллельные вызовы разделяют
+    // один запрос, а результат недолго живёт в памяти, поэтому переход между
+    // вкладками не начинается с двух одинаковых обращений к серверу.
+    _pending: null,
+    _freshAt: 0,
+
+    async refreshUser({ force = false } = {}) {
+        const age = Date.now() - this._freshAt;
+        if (!force && this._pending) return this._pending;
+        if (!force && age < 1500) return this.user();
+
+        this._pending = (async () => {
+            const r = await this.get('/api/me');
+            if (r.ok) {
+                localStorage.setItem('currentUser', JSON.stringify(r.data));
+                this._freshAt = Date.now();
+                return r.data;
+            }
+            return this.user();
+        })();
+
+        try {
+            return await this._pending;
+        } finally {
+            this._pending = null;
         }
-        return this.user();
     }
 };
 
@@ -144,8 +165,24 @@ async function initHeader() {
     };
 
     applyUser(user);
-    // Refresh in background with full server data
+    addSoundToggle();
+
+    // Обновляем в фоне полными данными с сервера.
     API.refreshUser().then(u => { if (u) applyUser(u); });
+}
+
+
+// Кнопка «звук вкл/выкл» появляется в шапке на всех страницах.
+function addSoundToggle() {
+    const right = document.querySelector('.header-right');
+    if (!right || right.querySelector('.sound-toggle')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'sound-toggle';
+    btn.textContent = Sound.muted ? '🔇' : '🔊';
+    btn.title = Sound.muted ? 'Включить звук' : 'Выключить звук';
+    btn.onclick = () => Sound.toggle();
+    right.appendChild(btn);
 }
 
 function showToast(msg, type = 'info') {
@@ -156,6 +193,9 @@ function showToast(msg, type = 'info') {
         toast.style.cssText = 'position:fixed;top:85px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 26px;border-radius:20px;font-family:Montserrat,sans-serif;font-weight:600;font-size:13px;z-index:9999;opacity:0;transition:0.3s;box-shadow:0 6px 20px rgba(0,0,0,0.15);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;';
         document.body.appendChild(toast);
     }
+    if (type === 'success') Sound.correct();
+    else if (type === 'error') Sound.error();
+
     const colors = { success: '#2ecc71', error: '#e74c3c', info: '#023e50', warn: '#f39c12' };
     toast.style.background = colors[type] || colors.info;
     toast.style.color = '#fff';
@@ -216,10 +256,11 @@ async function submitGameResult(gameType, score) {
     try {
         const r = await API.post('/api/game/submit', { game_type: gameType, score: score });
         if (r.ok) {
-            // Update balance in header
+            // Монеты летят в кошелёк, счётчик докручивается.
             if (r.data.new_balance !== undefined) {
-                const balEl = document.getElementById('userBalance');
-                if (balEl) balEl.textContent = r.data.new_balance;
+                const earned = r.data.coins_earned || 0;
+                if (earned > 0) rewardCoins(earned, r.data.new_balance);
+                else animateBalance(r.data.new_balance);
             }
             // Update cached user including quest-related fields
             const u = API.user();
@@ -262,8 +303,187 @@ async function submitGameResult(gameType, score) {
                 }
                 if (r.data.badge_earned) lines.push(`🏅 Новый значок: ${r.data.badge_earned}`);
                 if (lines.length) showRewardNotification(lines);
+                if (firstWin) Sound.win();
             }
         }
         return r;
     } catch(e) { return { ok: false }; }
 }
+
+// ── Звук ────────────────────────────────────────────────────────────
+// Короткие сигналы синтезируются через WebAudio: никаких файлов,
+// лишних запросов и задержек на загрузку.
+// Контекст создаётся при первом клике — браузеры не дают включить
+// звук до действия пользователя.
+const Sound = {
+    ctx: null,
+    muted: localStorage.getItem('soundMuted') === '1',
+
+    ensure() {
+        if (this.muted) return null;
+        if (!this.ctx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return null;
+            this.ctx = new Ctx();
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        return this.ctx;
+    },
+
+    toggle() {
+        this.muted = !this.muted;
+        localStorage.setItem('soundMuted', this.muted ? '1' : '0');
+        if (!this.muted) this.click();
+        document.querySelectorAll('.sound-toggle').forEach(b => {
+            b.textContent = this.muted ? '🔇' : '🔊';
+            b.title = this.muted ? 'Включить звук' : 'Выключить звук';
+        });
+        return this.muted;
+    },
+
+    // Один тон. type — форма волны, freq — частота, dur — длительность.
+    tone(freq, dur, { type = 'sine', gain = 0.06, slideTo = null, delay = 0 } = {}) {
+        const ctx = this.ensure();
+        if (!ctx) return;
+        const t0 = ctx.currentTime + delay;
+
+        const osc = ctx.createOscillator();
+        const vol = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t0);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+
+        // Мягкая атака и затухание, иначе на концах слышны щелчки.
+        vol.gain.setValueAtTime(0.0001, t0);
+        vol.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+        vol.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+        osc.connect(vol);
+        vol.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+    },
+
+    click()  { this.tone(520, 0.05, { type: 'triangle', gain: 0.035 }); },
+    hover()  { this.tone(700, 0.03, { type: 'sine', gain: 0.015 }); },
+    coin()   { this.tone(880, 0.09, { type: 'square', gain: 0.03 });
+               this.tone(1320, 0.12, { type: 'square', gain: 0.025, delay: 0.06 }); },
+    correct(){ this.tone(660, 0.1, { type: 'sine' });
+               this.tone(990, 0.16, { type: 'sine', delay: 0.08 }); },
+    wrong()  { this.tone(220, 0.22, { type: 'sawtooth', gain: 0.04, slideTo: 120 }); },
+    error()  { this.tone(180, 0.25, { type: 'square', gain: 0.035, slideTo: 110 }); },
+    win()    { [523, 659, 784, 1047].forEach((f, i) =>
+                 this.tone(f, 0.22, { type: 'triangle', gain: 0.05, delay: i * 0.09 })); },
+    open()   { this.tone(300, 0.5, { type: 'sine', gain: 0.05, slideTo: 1200 }); },
+    levelUp(){ [392, 523, 659, 784, 1047].forEach((f, i) =>
+                 this.tone(f, 0.3, { type: 'sine', gain: 0.055, delay: i * 0.1 })); },
+};
+
+// Клик по любой кнопке или ссылке-вкладке звучит одинаково.
+document.addEventListener('click', e => {
+    const el = e.target.closest('button, .tab-item, .lb-tab, .case-card');
+    if (el && !el.disabled && !el.classList.contains('sound-toggle')) Sound.click();
+}, true);
+
+// ── Монеты ──────────────────────────────────────────────────────────
+// Счётчик в шапке докручивается до нового значения, а от места события
+// к кошельку летят монетки.
+function animateBalance(to, from) {
+    const el = document.getElementById('userBalance');
+    if (!el) return;
+
+    const start = from != null ? from : parseInt(el.textContent.replace(/\s/g, ''), 10) || 0;
+    const target = Number(to) || 0;
+    if (start === target) { el.textContent = target; return; }
+
+    const duration = 700;
+    const t0 = performance.now();
+
+    function step(now) {
+        const p = Math.min(1, (now - t0) / duration);
+        // Замедление к концу, чтобы последние цифры читались.
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (target - start) * eased);
+        if (p < 1) requestAnimationFrame(step);
+        else {
+            el.textContent = target;
+            el.classList.remove('balance-bump');
+            void el.offsetWidth;
+            el.classList.add('balance-bump');
+        }
+    }
+    requestAnimationFrame(step);
+}
+
+// Монетки, летящие к кошельку. origin — элемент, от которого лететь.
+function flyCoins(origin, count) {
+    const target = document.getElementById('userBalance');
+    if (!target) return;
+
+    const to = target.getBoundingClientRect();
+    const from = origin && origin.getBoundingClientRect
+        ? origin.getBoundingClientRect()
+        : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+
+    const n = Math.min(Math.max(count || 1, 1), 12);
+    for (let i = 0; i < n; i++) {
+        const coin = document.createElement('div');
+        coin.className = 'flying-coin';
+        coin.textContent = '🪙';
+        coin.style.left = (from.left + from.width / 2) + 'px';
+        coin.style.top = (from.top + from.height / 2) + 'px';
+        document.body.appendChild(coin);
+
+        // Небольшой разлёт, чтобы монеты не летели одной линией.
+        const spreadX = (Math.random() - 0.5) * 90;
+        const spreadY = (Math.random() - 0.5) * 60;
+
+        requestAnimationFrame(() => {
+            coin.style.transition = 'transform 0.75s cubic-bezier(0.4,0,0.25,1), opacity 0.75s';
+            coin.style.transitionDelay = (i * 0.05) + 's';
+            coin.style.transform =
+                `translate(${to.left + to.width / 2 - from.left - from.width / 2 + spreadX}px,
+                           ${to.top + to.height / 2 - from.top - from.height / 2 + spreadY}px) scale(0.5)`;
+            coin.style.opacity = '0';
+        });
+
+        setTimeout(() => coin.remove(), 1100 + i * 50);
+    }
+    Sound.coin();
+}
+
+// Награда монетами: и полёт, и докрутка счётчика, и звук.
+function rewardCoins(amount, newBalance, origin) {
+    if (!amount) return;
+    flyCoins(origin, Math.ceil(amount / 25));
+    if (newBalance != null) animateBalance(newBalance);
+}
+
+// Стили для монет и подскока счётчика — чтобы каждая страница
+// не описывала их у себя.
+(function injectCoinStyles() {
+    const css = document.createElement('style');
+    css.textContent = `
+        .flying-coin {
+            position: fixed; z-index: 99998; font-size: 22px;
+            pointer-events: none; will-change: transform, opacity;
+        }
+        .balance-bump { animation: balanceBump 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes balanceBump {
+            0%   { transform: scale(1); }
+            45%  { transform: scale(1.35); color: #fcd34d; }
+            100% { transform: scale(1); }
+        }
+        .sound-toggle {
+            border: none; background: rgba(255,255,255,0.18); color: #fff;
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+            font-size: 15px; line-height: 1; transition: 0.2s;
+        }
+        .sound-toggle:hover { background: rgba(255,255,255,0.32); }
+        @media (prefers-reduced-motion: reduce) {
+            .flying-coin { display: none; }
+            .balance-bump { animation: none; }
+        }
+    `;
+    document.head.appendChild(css);
+})();
