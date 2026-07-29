@@ -97,19 +97,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update streak
-	today := time.Now().Format("2006-01-02")
-	if user.LastLogin != today {
-		yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-		if user.LastLogin == yesterday {
-			user.Streak++
-		} else {
-			user.Streak = 1
-		}
-		user.LastLogin = today
-		// Daily login bonus: +10 coins per PDF spec
-		user.Balance += 10
-		h.store.UpdateUser(user)
+	// Серия и ежедневный бонус считаются в одном запросе к базе.
+	if streak, balance, awarded := h.store.TouchDailyLogin(user.Username); awarded {
+		user.Streak = streak
+		user.Balance = balance
 	}
 
 	token, _ := middleware.GenerateToken(user.ID, user.Username, user.IsAdmin)
@@ -123,11 +114,52 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+
+	// Заход на любую страницу продлевает серию. Раньше она обновлялась
+	// только при вводе логина и пароля, а с 30-дневным токеном этого
+	// почти никогда не происходит.
+	h.store.TouchDailyLogin(username)
+
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
 		return
 	}
+	writeJSON(w, http.StatusOK, user)
+}
+
+// PUT /api/profile/avatar — выбор активной аватарки.
+//
+// Раньше выбор жил только в localStorage браузера и слетал при первом же
+// обновлении данных с сервера.
+func (h *Handler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	username := getUsernameFromCtx(r)
+	user, ok := h.store.GetUserByUsername(username)
+	if !ok {
+		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	var req struct {
+		Avatar string `json:"avatar"`
+	}
+	if err := h.parseBody(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	// Ставить можно только ту аватарку, которая уже есть в инвентаре.
+	if !store.HasAvatar(user.Avatars, req.Avatar) {
+		writeError(w, http.StatusBadRequest, "Эта аватарка вам не принадлежит")
+		return
+	}
+
+	user.ActiveAvatar = req.Avatar
+	h.store.UpdateUser(user)
 	writeJSON(w, http.StatusOK, user)
 }
 

@@ -273,6 +273,45 @@ func (s *Store) UpdateUser(u *models.User) {
 
 // GetLeaderboard отдаёт общий рейтинг. Лучший результат КСПОЯ подтягивается
 // отдельным подзапросом: наибольший балл, при равенстве — более ранняя попытка.
+// localZone — часовой пояс, по которому считается «сегодня».
+// Сервер живёт в UTC, а ученики в Казахстане: без этого день сменялся бы
+// в пять утра по местному времени.
+const localZone = "Asia/Almaty"
+
+// TouchDailyLogin отмечает заход за сегодня: продлевает серию, если вчера
+// заход был, иначе начинает её заново, и выдаёт ежедневный бонус.
+//
+// Вызывается не только при вводе логина и пароля, но и при любом обращении
+// к /api/me. Токен живёт 30 дней, поэтому вернувшийся ученик страницу входа
+// обычно не открывает — раньше из-за этого серия навсегда застревала на 1.
+//
+// Всё делается одним UPDATE: условие в WHERE гарантирует, что за день
+// бонус начислится ровно один раз, даже если запросы придут параллельно.
+func (s *Store) TouchDailyLogin(username string) (streak, balance int, awarded bool) {
+	const dailyBonus = 10
+
+	row := s.db.QueryRow(`
+		UPDATE users SET
+		  streak = CASE
+		      WHEN last_login = ((now() AT TIME ZONE $2)::date - 1) THEN streak + 1
+		      ELSE 1
+		  END,
+		  balance = balance + $3,
+		  last_login = (now() AT TIME ZONE $2)::date
+		WHERE username = $1
+		  AND last_login IS DISTINCT FROM (now() AT TIME ZONE $2)::date
+		RETURNING streak, balance`,
+		username, localZone, dailyBonus,
+	)
+	if err := row.Scan(&streak, &balance); err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("TouchDailyLogin(%s): %v", username, err)
+		}
+		return 0, 0, false // сегодня уже отмечались
+	}
+	return streak, balance, true
+}
+
 func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rows, err := s.db.Query(`
 		SELECT u.username, u.nickname, u.xp, u.balance,
