@@ -32,6 +32,36 @@
         .lb-stat.streak { color: #f39c12; }
         .admin-notice { font-size: 13px; color: #7f8c8d; background: #f8f9fa; padding: 10px 16px; border-radius: 10px; border-left: 4px solid #023e50; margin-top: 15px; max-width: 700px; }
         .loading-row { text-align: center; padding: 40px; color: #8e9fae; font-size: 15px; }
+
+        /* ── Пьедестал: первая тройка ── */
+        .podium { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 10px; align-items: end; margin-bottom: 24px; }
+        .pod { background: #fff; border-radius: 18px 18px 0 0; padding: 16px 8px 0; text-align: center; display: flex; flex-direction: column; align-items: center; box-shadow: 0 6px 22px rgba(0,0,0,0.07); animation: podRise 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+        .pod-1 { animation-delay: 0.05s; }
+        .pod-2 { animation-delay: 0.15s; }
+        .pod-3 { animation-delay: 0.25s; }
+        @keyframes podRise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+        .pod.me { outline: 2px solid #0099cc; outline-offset: -2px; }
+        .pod-medal { font-size: 26px; line-height: 1; margin-bottom: 6px; }
+        .pod-avatar { width: 58px; height: 58px; border-radius: 50%; background: #eef4f7; border: 3px solid #e4ecf0; }
+        .pod-1 .pod-avatar { width: 70px; height: 70px; border-color: #fca311; }
+        .pod-2 .pod-avatar { border-color: #bdbdbd; }
+        .pod-3 .pod-avatar { border-color: #cd7f32; }
+        .pod-name { margin-top: 8px; font-size: 13px; font-weight: 700; color: #023e50; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pod-uname { font-size: 10.5px; color: #8e9fae; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+        .pod-val { margin: 8px 0 10px; font-size: 14px; font-weight: 800; }
+        .pod-base { width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .pod-1 .pod-base { height: 104px; background: linear-gradient(180deg, #fcbf49, #f59e0b); }
+        .pod-2 .pod-base { height: 76px; background: linear-gradient(180deg, #d5dbe0, #9aa3ab); }
+        .pod-3 .pod-base { height: 58px; background: linear-gradient(180deg, #e0a074, #cd7f32); }
+        @media (max-width: 560px) {
+            .podium { gap: 6px; }
+            .pod { padding: 12px 4px 0; }
+            .pod-avatar { width: 44px; height: 44px; }
+            .pod-1 .pod-avatar { width: 54px; height: 54px; }
+            .pod-name { font-size: 11.5px; }
+            .pod-uname { display: none; }
+            .pod-base { font-size: 22px; }
+        }
         .header-row { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; padding: 0 16px; margin-bottom: 8px; }
     </style>
 </head>
@@ -59,7 +89,8 @@
                 <button class="lb-tab" data-tab="badges" onclick="setTab('badges',this)">По значкам</button>
                 <button class="lb-tab" data-tab="kspoya" onclick="setTab('kspoya',this)">По КСПОЯ</button>
             </div>
-            <div class="header-row">
+            <div class="podium" id="podium"></div>
+            <div class="header-row" id="headerRow">
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;">#</div>
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;">Игрок</div>
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;text-align:right;"
@@ -117,20 +148,17 @@
         else sorted.sort((a,b) => b.xp - a.xp);
 
         const container = document.getElementById('lbContainer');
+        const podium = document.getElementById('podium');
+        const headerRow = document.getElementById('headerRow');
+        podium.innerHTML = '';
         if (!sorted.length) {
+            headerRow.style.display = 'none';
             container.innerHTML = currentTab === 'kspoya'
                 ? '<div class="loading-row">КСПОЯ ещё никто не сдавал — станьте первым! 🎓</div>'
                 : '<div class="loading-row">Список пуст — станьте первым! 🏆</div>';
             return;
         }
 
-        const rankClass = i => i===0?'top1':i===1?'top2':i===2?'top3':'';
-        const rankDisplay = (i,r) => {
-            if (i===0) return '<span class="rank-num gold">🥇</span>';
-            if (i===1) return '<span class="rank-num silver">🥈</span>';
-            if (i===2) return '<span class="rank-num bronze">🥉</span>';
-            return `<span class="rank-num">${r}</span>`;
-        };
         const getVal = (e) => {
             if (currentTab === 'balance') return `<span class="lb-stat">${e.balance} 💰</span>`;
             if (currentTab === 'streak') return `<span class="lb-stat streak">${e.streak} 🔥</span>`;
@@ -143,13 +171,60 @@
             return `<span class="lb-stat xp">${e.xp} ⚡</span>`;
         };
 
-        // Fix: build rows with DOM to prevent XSS, fix duplicate balance column
-        const rows = sorted.map((e, i) => {
+        // Первая тройка выносится на пьедестал, таблица начинается с 4-го места.
+        const avatarURL = u => 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u);
+        const podOrder = [1, 0, 2]; // слева 2-е место, по центру 1-е, справа 3-е
+
+        podOrder.forEach(idx => {
+            const e = sorted[idx];
+            if (!e) return;
+
+            const pod = document.createElement('div');
+            pod.className = 'pod pod-' + (idx + 1) + (me && e.username === me.username ? ' me' : '');
+
+            const medal = document.createElement('div');
+            medal.className = 'pod-medal';
+            medal.textContent = ['🥇', '🥈', '🥉'][idx];
+
+            const img = document.createElement('img');
+            img.className = 'pod-avatar';
+            img.src = avatarURL(e.username);
+            img.alt = '';
+
+            const name = document.createElement('div');
+            name.className = 'pod-name';
+            name.textContent = e.nickname || e.username;
+
+            const uname = document.createElement('div');
+            uname.className = 'pod-uname';
+            uname.textContent = '@' + e.username;
+
+            const val = document.createElement('div');
+            val.className = 'pod-val';
+            val.innerHTML = getVal(e);
+
+            const base = document.createElement('div');
+            base.className = 'pod-base';
+            base.textContent = String(idx + 1);
+
+            pod.appendChild(medal);
+            pod.appendChild(img);
+            pod.appendChild(name);
+            pod.appendChild(uname);
+            pod.appendChild(val);
+            pod.appendChild(base);
+            podium.appendChild(pod);
+        });
+
+        const rest = sorted.slice(3);
+        headerRow.style.display = rest.length ? 'grid' : 'none';
+
+        const rows = rest.map((e, i) => {
             const row = document.createElement('div');
-            row.className = 'lb-row ' + rankClass(i) + (me && e.username === me.username ? ' me' : '');
+            row.className = 'lb-row' + (me && e.username === me.username ? ' me' : '');
 
             const rankEl = document.createElement('div');
-            rankEl.innerHTML = rankDisplay(i, i+1);
+            rankEl.innerHTML = `<span class="rank-num">${i + 4}</span>`;
 
             const userDiv = document.createElement('div');
             userDiv.className = 'lb-user';
