@@ -36,11 +36,40 @@
         /* ── Пьедестал: первая тройка ── */
         .podium-wrap { max-width: 680px; margin: 10px auto 34px; }
         .podium { display: grid; grid-template-columns: 1fr 1.14fr 1fr; gap: 12px; align-items: end; }
-        .pod { display: flex; flex-direction: column; align-items: center; min-width: 0; animation: podRise 0.55s cubic-bezier(0.22,1,0.36,1) both; }
-        .pod-1 { animation-delay: 0.05s; }
-        .pod-2 { animation-delay: 0.16s; }
-        .pod-3 { animation-delay: 0.27s; }
-        @keyframes podRise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .pod { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+
+        /* Ступень вырастает из подставки снизу вверх, а карточка над ней
+           всплывает следом — как будто место поднимается из земли. */
+        .pod-step { transform-origin: bottom center; animation: stepGrow 0.75s cubic-bezier(0.22,1,0.36,1) both; }
+        .pod-head { display: flex; flex-direction: column; align-items: center; min-width: 0; animation: headRise 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+
+        .pod-2 .pod-step { animation-delay: 0.05s; }
+        .pod-2 .pod-head { animation-delay: 0.40s; }
+        .pod-1 .pod-step { animation-delay: 0.25s; }
+        .pod-1 .pod-head { animation-delay: 0.70s; }
+        .pod-3 .pod-step { animation-delay: 0.45s; }
+        .pod-3 .pod-head { animation-delay: 0.80s; }
+
+        @keyframes stepGrow {
+            from { transform: scaleY(0); opacity: 0.35; }
+            to   { transform: scaleY(1); opacity: 1; }
+        }
+        @keyframes headRise {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Строки таблицы тоже выезжают снизу, одна за другой. */
+        .lb-row { animation: rowRise 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes rowRise {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Тем, кто выключил анимации в системе, ничего не двигаем. */
+        @media (prefers-reduced-motion: reduce) {
+            .pod-step, .pod-head, .lb-row { animation: none; }
+        }
 
         .pod-avatar-wrap { position: relative; }
         .pod-avatar { display: block; width: 72px; height: 72px; border-radius: 50%; background: #fff; border: 4px solid #e4ecf0; box-shadow: 0 7px 20px rgba(0,0,0,0.14); }
@@ -319,9 +348,13 @@
             step.className = 'pod-step';
             step.textContent = String(idx + 1);
 
-            pod.appendChild(avatarWrap);
-            pod.appendChild(name);
-            pod.appendChild(val);
+            const head = document.createElement('div');
+            head.className = 'pod-head';
+            head.appendChild(avatarWrap);
+            head.appendChild(name);
+            head.appendChild(val);
+
+            pod.appendChild(head);
             pod.appendChild(step);
             podium.appendChild(pod);
         });
@@ -332,6 +365,7 @@
         const rows = rest.map((e, i) => {
             const row = document.createElement('div');
             row.className = 'lb-row' + (me && e.username === me.username ? ' me' : '');
+            row.style.animationDelay = Math.min(i * 0.04, 0.6) + 's';
 
             const rankEl = document.createElement('div');
             rankEl.innerHTML = `<span class="rank-num">${i + 4}</span>`;

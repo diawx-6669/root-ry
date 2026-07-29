@@ -46,6 +46,7 @@ func main() {
 	mux.HandleFunc("/api/kspoya/attempt", middleware.AuthMiddleware(h.KspoyaAttempt))
 	mux.HandleFunc("/api/kspoya/leaderboard", middleware.AuthMiddleware(h.KspoyaLeaderboard))
 	mux.HandleFunc("/api/profile/avatar", middleware.AuthMiddleware(h.UpdateAvatar))
+	mux.HandleFunc("/api/case/free", middleware.AuthMiddleware(h.FreeCase))
 	mux.HandleFunc("/api/case/open", middleware.AuthMiddleware(h.CaseOpen))
 	mux.HandleFunc("/api/profile/nickname", middleware.AuthMiddleware(h.UpdateNickname))
 	mux.HandleFunc("/api/daily/claim", middleware.AuthMiddleware(h.DailyClaim))
