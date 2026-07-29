@@ -260,10 +260,24 @@
     const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
     const RARITY_ORDER = ['common','rare','epic','legendary','mythic'];
 
+    // Лучший результат КСПОЯ: балл и уровень в скобках, например «23 (B1)».
+    let kspoyaBest = null;
+
+    function kspoyaStatText() {
+        if (!kspoyaBest) return '—';
+        return `${kspoyaBest.score} (${kspoyaBest.level})`;
+    }
+
     async function loadProfile() {
         const r = await API.refreshUser();
         if (!r) return;
         userData = r;
+
+        // Статус КСПОЯ лежит в отдельном эндпоинте, поэтому запрашиваем его
+        // до отрисовки — иначе плитка успеет показать прочерк.
+        const k = await API.get('/api/kspoya/status');
+        kspoyaBest = (k.ok && k.data && k.data.best) ? k.data.best : null;
+
         renderProfile(r);
     }
 
@@ -298,7 +312,7 @@
                 <div class="stat-box"><div class="val">${level}</div><div class="lbl">Уровень</div></div>
                 <div class="stat-box"><div class="val">${u.xp}</div><div class="lbl">XP</div></div>
                 <div class="stat-box"><div class="val">${u.balance}</div><div class="lbl">Монеты</div></div>
-                <div class="stat-box"><div class="val">${(u.completed_topics||[]).length}</div><div class="lbl">Тем</div></div>
+                <div class="stat-box"><div class="val">${kspoyaStatText()}</div><div class="lbl">КСПОЯ</div></div>
             </div>
 
             <div class="xp-bar-wrap">

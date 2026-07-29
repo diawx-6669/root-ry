@@ -13,7 +13,7 @@
         .lb-tab.active { background: #023e50; color: #fff; border-color: #023e50; }
         .lb-table { width: 100%; max-width: 700px; border-collapse: collapse; }
         .lb-table th { text-align: left; padding: 10px 16px; font-size: 12px; color: #8e9fae; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .lb-row { background: #fff; border-radius: 16px; margin-bottom: 8px; display: grid; grid-template-columns: 44px 1fr 90px 90px 70px; align-items: center; padding: 14px 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: 0.2s; }
+        .lb-row { background: #fff; border-radius: 16px; margin-bottom: 8px; display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; padding: 14px 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: 0.2s; }
         .lb-row:hover { box-shadow: 0 6px 20px rgba(0,153,204,0.1); transform: translateY(-1px); }
         .lb-row.me { border: 2px solid #0099cc; }
         .lb-row.top1 { background: linear-gradient(135deg, #fff9e6, #fff); border: 2px solid #fca311; }
@@ -32,7 +32,7 @@
         .lb-stat.streak { color: #f39c12; }
         .admin-notice { font-size: 13px; color: #7f8c8d; background: #f8f9fa; padding: 10px 16px; border-radius: 10px; border-left: 4px solid #023e50; margin-top: 15px; max-width: 700px; }
         .loading-row { text-align: center; padding: 40px; color: #8e9fae; font-size: 15px; }
-        .header-row { display: grid; grid-template-columns: 44px 1fr 90px 90px 70px; padding: 0 16px; margin-bottom: 8px; }
+        .header-row { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; padding: 0 16px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -53,18 +53,17 @@
         <section class="app-window">
             <h1>Таблица рекордов</h1>
             <div class="lb-tabs">
-                <button class="lb-tab active" onclick="setTab('xp',this)">По XP</button>
-                <button class="lb-tab" onclick="setTab('balance',this)">По монетам</button>
-                <button class="lb-tab" onclick="setTab('streak',this)">По серии дней</button>
-                <button class="lb-tab" onclick="setTab('badges',this)">По значкам</button>
-                <button class="lb-tab" onclick="setTab('kspoya',this)">По КСПОЯ</button>
+                <button class="lb-tab active" data-tab="xp" onclick="setTab('xp',this)">По XP</button>
+                <button class="lb-tab" data-tab="balance" onclick="setTab('balance',this)">По монетам</button>
+                <button class="lb-tab" data-tab="streak" onclick="setTab('streak',this)">По серии дней</button>
+                <button class="lb-tab" data-tab="badges" onclick="setTab('badges',this)">По значкам</button>
+                <button class="lb-tab" data-tab="kspoya" onclick="setTab('kspoya',this)">По КСПОЯ</button>
             </div>
             <div class="header-row">
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;">#</div>
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;">Игрок</div>
-                <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;" id="colLabel">XP</div>
-                <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;">Монеты</div>
-                <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;">🔥</div>
+                <div style="font-size:11px;color:#8e9fae;font-weight:600;text-transform:uppercase;text-align:right;"
+                    id="colLabel">XP</div>
             </div>
             <div id="lbContainer"><div class="loading-row"><i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...</div></div>
             <p class="admin-notice"><i class="fa-solid fa-user-shield"></i> Аккаунты администраторов не отображаются в рейтинге.</p>
@@ -170,30 +169,31 @@
             userDiv.appendChild(img);
             userDiv.appendChild(nameDiv);
 
+            // Показываем только показатель активной вкладки, без лишних колонок
             const valEl = document.createElement('div');
+            valEl.style.textAlign = 'right';
             valEl.innerHTML = getVal(e);
-
-            // Fix: don't duplicate balance column when tab IS balance
-            const coinEl = document.createElement('span');
-            coinEl.className = 'lb-stat';
-            coinEl.textContent = (currentTab !== 'balance' ? e.balance + ' 💰' : '—');
-
-            const streakEl = document.createElement('span');
-            streakEl.className = 'lb-stat streak';
-            streakEl.textContent = e.streak + ' 🔥';
 
             row.appendChild(rankEl);
             row.appendChild(userDiv);
             row.appendChild(valEl);
-            row.appendChild(coinEl);
-            row.appendChild(streakEl);
             return row;
         });
         container.innerHTML = '';
         rows.forEach(r => container.appendChild(r));
     }
 
-    loadLeaderboard();
+    // Ссылка вида leaderboard.html#kspoya открывает сразу нужную вкладку.
+    function openTabFromHash() {
+        const tab = (location.hash || '').replace('#', '');
+        if (!tab) return;
+        const btn = document.querySelector(`.lb-tab[data-tab="${tab}"]`);
+        if (btn) setTab(tab, btn);
+    }
+
+    window.addEventListener('hashchange', openTabFromHash);
+
+    loadLeaderboard().then(openTabFromHash);
     setInterval(loadLeaderboard, 30000); // refresh every 30s
     </script>
 </body>

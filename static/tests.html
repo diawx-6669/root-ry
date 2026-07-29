@@ -29,7 +29,7 @@
 
         .kspoя-wrap h1 {
             width: 100%;
-            max-width: 1060px;
+            max-width: 1180px;
             color: #023e50;
             font-size: 28px;
             font-weight: 700;
@@ -642,13 +642,14 @@
            РАСКЛАДКА СТАРТОВОГО ЭКРАНА
            Слева карточка теста, справа топ КСПОЯ.
            ══════════════════════════════════════════════════════════ */
+        /* Половина экрана — тест, половина — таблица. */
         .start-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 300px;
+            grid-template-columns: 1fr 1fr;
             gap: 18px;
             align-items: start;
             width: 100%;
-            max-width: 1060px;
+            max-width: 1180px;
             margin: 0 auto;
         }
 
@@ -735,15 +736,17 @@
 
         .side-more:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 153, 204, 0.3); }
 
-        /* Кнопка «Лучший результат» под стартом */
+        /* Кнопка «Лучший результат» под стартом.
+           Содержимое разнесено по краям: слева значок и подпись,
+           по центру уровень, справа балл. */
         .best-btn {
             width: 100%;
             margin-top: 10px;
-            padding: 13px;
-            display: flex;
+            padding: 13px 18px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            gap: 12px;
             border: 1.5px solid var(--lv, #0099cc);
             background: #fff;
             color: var(--lv, #0099cc);
@@ -753,9 +756,39 @@
             font-size: 14px;
             cursor: pointer;
             transition: 0.2s;
+            text-align: left;
         }
 
         .best-btn:hover { background: var(--lv, #0099cc); color: #fff; }
+
+        .best-left { display: flex; align-items: center; gap: 9px; }
+        .best-emoji { font-size: 22px; line-height: 1; }
+        .best-caption { font-size: 11px; font-weight: 600; opacity: 0.75; }
+        .best-level { font-size: 13.5px; font-weight: 700; }
+
+        .best-middle {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .best-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 520px) {
+            .best-btn { grid-template-columns: auto 1fr; }
+            .best-middle { display: none; }
+        }
 
         /* Предупреждения античита и блокировка */
         .strike-strip {
@@ -1393,8 +1426,18 @@
 
                     <!-- Лучший результат: открывает аналитику лучшей попытки -->
                     <button class="best-btn" id="bestBtn" onclick="openBest()" style="display:none;">
-                        <span id="bestBtnText">Лучший результат</span>
-                        <i class="fa-solid fa-chart-simple"></i>
+                        <span class="best-left">
+                            <span class="best-emoji" id="bestEmoji">📘</span>
+                            <span>
+                                <span class="best-caption">Лучший результат</span><br>
+                                <span class="best-level" id="bestLevel"></span>
+                            </span>
+                        </span>
+                        <span class="best-middle" id="bestMiddle"></span>
+                        <span class="best-right">
+                            <span id="bestScore"></span>
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </span>
                     </button>
                 </div>
 
@@ -1402,7 +1445,7 @@
                 <aside class="side-card">
                     <div class="side-title"><i class="fa-solid fa-trophy"></i> Топ КСПОЯ</div>
                     <div id="kspoyaTop" class="side-list"></div>
-                    <a class="side-more" href="leaderboard.html">
+                    <a class="side-more" href="leaderboard.html#kspoya">
                         Расширенная таблица <i class="fa-solid fa-arrow-right"></i>
                     </a>
                 </aside>
@@ -1528,12 +1571,14 @@
                 return;
             }
             const meta = LEVELS[bestAttempt.level] || LEVELS.A1;
-            btn.style.display = 'flex';
+            btn.style.display = 'grid';
             btn.className = 'best-btn ' + levelClass(bestAttempt.level);
-            document.getElementById('bestBtnText').textContent =
-                `Лучший результат: ${bestAttempt.level_badge || meta.emoji} ` +
-                `${bestAttempt.level_label || meta.label} · ` +
-                `${bestAttempt.score} из ${bestAttempt.total}`;
+
+            document.getElementById('bestEmoji').textContent = bestAttempt.level_badge || meta.emoji;
+            document.getElementById('bestLevel').textContent = bestAttempt.level_label || meta.label;
+            document.getElementById('bestMiddle').textContent = 'открыть разбор';
+            document.getElementById('bestScore').textContent =
+                `${bestAttempt.score}/${bestAttempt.total}`;
         }
 
         function openBest() {
