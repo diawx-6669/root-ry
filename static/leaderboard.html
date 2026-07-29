@@ -57,6 +57,7 @@
                 <button class="lb-tab" onclick="setTab('balance',this)">По монетам</button>
                 <button class="lb-tab" onclick="setTab('streak',this)">По серии дней</button>
                 <button class="lb-tab" onclick="setTab('badges',this)">По значкам</button>
+                <button class="lb-tab" onclick="setTab('kspoya',this)">По КСПОЯ</button>
             </div>
             <div class="header-row">
                 <div style="font-size:11px;color:#8e9fae;font-weight:600;">#</div>
@@ -98,7 +99,7 @@
         currentTab = tab;
         document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const labels = { xp: 'XP', balance: 'Монеты', streak: 'Серия', badges: 'Значки' };
+        const labels = { xp: 'XP', balance: 'Монеты', streak: 'Серия', badges: 'Значки', kspoya: 'КСПОЯ' };
         document.getElementById('colLabel').textContent = labels[tab];
         renderTab();
     }
@@ -109,11 +110,18 @@
         if (currentTab === 'balance') sorted.sort((a,b) => b.balance - a.balance);
         else if (currentTab === 'streak') sorted.sort((a,b) => b.streak - a.streak);
         else if (currentTab === 'badges') sorted.sort((a,b) => b.badges_count - a.badges_count);
+        else if (currentTab === 'kspoya') {
+            // Сдавшие тест идут первыми, дальше по убыванию балла.
+            sorted = sorted.filter(e => e.kspoya_level);
+            sorted.sort((a,b) => b.kspoya_score - a.kspoya_score);
+        }
         else sorted.sort((a,b) => b.xp - a.xp);
 
         const container = document.getElementById('lbContainer');
         if (!sorted.length) {
-            container.innerHTML = '<div class="loading-row">Список пуст — станьте первым! 🏆</div>';
+            container.innerHTML = currentTab === 'kspoya'
+                ? '<div class="loading-row">КСПОЯ ещё никто не сдавал — станьте первым! 🎓</div>'
+                : '<div class="loading-row">Список пуст — станьте первым! 🏆</div>';
             return;
         }
 
@@ -128,6 +136,11 @@
             if (currentTab === 'balance') return `<span class="lb-stat">${e.balance} 💰</span>`;
             if (currentTab === 'streak') return `<span class="lb-stat streak">${e.streak} 🔥</span>`;
             if (currentTab === 'badges') return `<span class="lb-stat">${e.badges_count} 🏅</span>`;
+            if (currentTab === 'kspoya') {
+                return e.kspoya_level
+                    ? `<span class="lb-stat">${e.kspoya_score} · ${e.kspoya_level}</span>`
+                    : '<span class="lb-stat">—</span>';
+            }
             return `<span class="lb-stat xp">${e.xp} ⚡</span>`;
         };
 

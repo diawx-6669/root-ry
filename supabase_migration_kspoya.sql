@@ -41,6 +41,21 @@ CREATE INDEX IF NOT EXISTS idx_kspoya_sessions_user
 ALTER TABLE kspoya_sessions
     ADD COLUMN IF NOT EXISTS answers INTEGER[];
 
+-- ── Античит: предупреждения и блокировка ─────────────────────────────
+-- Первое нарушение (уход со вкладки или выход из полноэкранного режима)
+-- аннулирует попытку и даёт предупреждение, второе — блокирует КСПОЯ
+-- на 24 часа. После блокировки счётчик обнуляется.
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS kspoya_warnings INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS kspoya_ban_until TIMESTAMPTZ;
+
+-- Рейтинг КСПОЯ: лучшая попытка каждого пользователя.
+-- При равном балле выше тот, кто прошёл раньше.
+CREATE INDEX IF NOT EXISTS idx_kspoya_sessions_rating
+    ON kspoya_sessions (raw_score DESC, finished_at ASC)
+    WHERE status = 'completed';
+
 -- Если ранее была запущена старая миграция с кириллическими именами,
 -- эти таблицы можно удалить — код их не использует:
 --   DROP TABLE IF EXISTS "kspoя_sessions", "kspoя_questions", "kspoя_results";

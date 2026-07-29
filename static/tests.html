@@ -29,7 +29,7 @@
 
         .kspoя-wrap h1 {
             width: 100%;
-            max-width: 720px;
+            max-width: 1060px;
             color: #023e50;
             font-size: 28px;
             font-weight: 700;
@@ -639,6 +639,145 @@
         }
     
         /* ══════════════════════════════════════════════════════════
+           РАСКЛАДКА СТАРТОВОГО ЭКРАНА
+           Слева карточка теста, справа топ КСПОЯ.
+           ══════════════════════════════════════════════════════════ */
+        .start-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 18px;
+            align-items: start;
+            width: 100%;
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        .start-layout .start-card { max-width: none; }
+
+        @media (max-width: 940px) {
+            .start-layout { grid-template-columns: 1fr; }
+        }
+
+        .side-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 20px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.07);
+            animation: fadeUp 0.5s ease 0.1s both;
+        }
+
+        .side-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #023e50;
+            margin-bottom: 14px;
+        }
+
+        .side-title i { color: #f59e0b; }
+
+        .side-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .side-row {
+            display: grid;
+            grid-template-columns: 26px 1fr auto;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 10px;
+            border-radius: 12px;
+            background: #f5f9fb;
+            border-left: 3px solid var(--lv, #cfdde4);
+            animation: riseIn 0.4s ease both;
+        }
+
+        .side-row.is-me { background: #e8f4fa; box-shadow: inset 0 0 0 1.5px #0099cc; }
+
+        .side-rank { font-size: 13px; font-weight: 800; color: #8ba0ab; text-align: center; }
+        .side-rank.top { font-size: 16px; }
+
+        .side-name {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #12303d;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .side-sub { font-size: 10.5px; color: #8ba0ab; margin-top: 1px; }
+
+        .side-score {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--lv, #023e50);
+            white-space: nowrap;
+        }
+
+        .side-empty { font-size: 12.5px; color: #8ba0ab; padding: 6px 2px; }
+
+        .side-more {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 11px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #023e50, #0099cc);
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .side-more:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 153, 204, 0.3); }
+
+        /* Кнопка «Лучший результат» под стартом */
+        .best-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1.5px solid var(--lv, #0099cc);
+            background: #fff;
+            color: var(--lv, #0099cc);
+            border-radius: 16px;
+            font-family: Montserrat, sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .best-btn:hover { background: var(--lv, #0099cc); color: #fff; }
+
+        /* Предупреждения античита и блокировка */
+        .strike-strip {
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .strike-strip.warn { background: #fff3e0; color: #c2410c; }
+        .strike-strip.ban { background: #fdecea; color: #b02a1c; }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ══════════════════════════════════════════════════════════
            ЦВЕТА УРОВНЕЙ
            Каждый уровень задаёт две переменные, которыми красится всё
            остальное: значок, кольцо, полосы, подложка.
@@ -1155,8 +1294,8 @@
 
     <div class="anticheat-overlay" id="anticheatOverlay">
         <i class="fa-solid fa-triangle-exclamation" style="font-size:60px;"></i>
-        <h2>Тест аннулирован!</h2>
-        <p>Вы переключили вкладку во время теста.<br>Попытка засчитана как проваленная.</p>
+        <h2 id="acTitle">Попытка аннулирована</h2>
+        <p id="acText"></p>
         <button class="anticheat-btn" onclick="cancelTest()">Вернуться к тестам</button>
     </div>
 
@@ -1183,6 +1322,7 @@
 
             <!-- START SCREEN -->
             <div class="screen active" id="startScreen">
+                <div class="start-layout">
                 <div class="start-card">
                     <div class="start-hero">
                         <div class="start-icon"><i class="fa-solid fa-file-invoice"></i></div>
@@ -1250,10 +1390,23 @@
                     <button class="start-btn" id="startBtn" onclick="startTest()">
                         <i class="fa-solid fa-play"></i> Начать тест (40 вопросов)
                     </button>
+
+                    <!-- Лучший результат: открывает аналитику лучшей попытки -->
+                    <button class="best-btn" id="bestBtn" onclick="openBest()" style="display:none;">
+                        <span id="bestBtnText">Лучший результат</span>
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </button>
                 </div>
 
-                <!-- Прошлые попытки -->
-                <div class="history-wrap" id="historyWrap"></div>
+                <!-- Топ КСПОЯ -->
+                <aside class="side-card">
+                    <div class="side-title"><i class="fa-solid fa-trophy"></i> Топ КСПОЯ</div>
+                    <div id="kspoyaTop" class="side-list"></div>
+                    <a class="side-more" href="leaderboard.html">
+                        Расширенная таблица <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </aside>
+                </div>
             </div>
 
             <!-- TEST SCREEN -->
@@ -1349,14 +1502,138 @@
         // Диапазоны берутся с сервера, чтобы подписи на странице и реальная
         // проверка не могли разойтись.
         let levelScale = [];
+        let bestAttempt = null;
 
-        async function loadScale() {
+        async function loadStatus() {
             const r = await API.get('/api/kspoya/status');
-            if (!r.ok || !r.data.level_scale) return;
-            levelScale = r.data.level_scale;
-            applyScale();
+            if (!r.ok) return;
+
+            if (r.data.level_scale) {
+                levelScale = r.data.level_scale;
+                applyScale();
+            }
+
+            bestAttempt = r.data.best || null;
+            applyBest();
+            applyBanState(r.data);
         }
-        loadScale();
+        loadStatus();
+
+        // Кнопка «Лучший результат» появляется только когда попытки есть.
+        function applyBest() {
+            const btn = document.getElementById('bestBtn');
+            if (!btn) return;
+            if (!bestAttempt) {
+                btn.style.display = 'none';
+                return;
+            }
+            const meta = LEVELS[bestAttempt.level] || LEVELS.A1;
+            btn.style.display = 'flex';
+            btn.className = 'best-btn ' + levelClass(bestAttempt.level);
+            document.getElementById('bestBtnText').textContent =
+                `Лучший результат: ${bestAttempt.level_badge || meta.emoji} ` +
+                `${bestAttempt.level_label || meta.label} · ` +
+                `${bestAttempt.score} из ${bestAttempt.total}`;
+        }
+
+        function openBest() {
+            if (bestAttempt) openAnalysis(bestAttempt.attempt_id, document.getElementById('bestBtn'));
+        }
+
+        // Предупреждения и блокировка — состояние приходит с сервера.
+        function applyBanState(data) {
+            const card = document.querySelector('.start-card');
+            const startBtn = document.getElementById('startBtn');
+            if (!card || !startBtn) return;
+
+            const old = document.getElementById('strikeStrip');
+            if (old) old.remove();
+
+            if (!data.banned && !data.warnings) {
+                startBtn.disabled = false;
+                return;
+            }
+
+            const strip = document.createElement('div');
+            strip.id = 'strikeStrip';
+
+            if (data.banned) {
+                strip.className = 'strike-strip ban';
+                strip.textContent = 'Тест заблокирован за нарушение правил. ' +
+                    'Останется недоступен ещё ' + formatLeft(data.seconds_left_ban) + '.';
+                startBtn.disabled = true;
+            } else {
+                strip.className = 'strike-strip warn';
+                strip.textContent =
+                    `Предупреждение ${data.warnings} из ${data.max_strikes}. ` +
+                    'Ещё одно нарушение — блокировка теста на 24 часа.';
+                startBtn.disabled = false;
+            }
+            startBtn.parentNode.insertBefore(strip, startBtn);
+        }
+
+        function formatLeft(seconds) {
+            const s = Math.max(0, seconds || 0);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            if (h > 0) return `${h} ч ${m} мин`;
+            return `${m} мин`;
+        }
+
+        // ── Топ КСПОЯ в боковой панели ──
+        async function loadTop() {
+            const box = document.getElementById('kspoyaTop');
+            if (!box) return;
+
+            const r = await API.get('/api/kspoya/leaderboard?limit=6');
+            box.innerHTML = '';
+            if (!r.ok) return;
+
+            const entries = r.data.entries || [];
+            if (!entries.length) {
+                const empty = document.createElement('div');
+                empty.className = 'side-empty';
+                empty.textContent = 'Тест ещё никто не сдавал. Станьте первым!';
+                box.appendChild(empty);
+                return;
+            }
+
+            const me = API.user();
+            const medals = ['🥇', '🥈', '🥉'];
+
+            entries.forEach((e, i) => {
+                const meta = LEVELS[e.level] || LEVELS.A1;
+
+                const row = document.createElement('div');
+                row.className = 'side-row ' + levelClass(e.level) +
+                    (me && e.username === me.username ? ' is-me' : '');
+                row.style.animationDelay = (i * 0.05) + 's';
+
+                const rank = document.createElement('div');
+                rank.className = 'side-rank' + (i < 3 ? ' top' : '');
+                rank.textContent = i < 3 ? medals[i] : String(e.rank);
+
+                const main = document.createElement('div');
+                const name = document.createElement('div');
+                name.className = 'side-name';
+                name.textContent = e.nickname || e.username;
+                const sub = document.createElement('div');
+                sub.className = 'side-sub';
+                sub.textContent = `${e.level_badge || meta.emoji} ${e.level}`;
+                main.appendChild(name);
+                main.appendChild(sub);
+
+                const score = document.createElement('div');
+                score.className = 'side-score';
+                score.textContent = `${e.score}/${e.total}`;
+
+                row.appendChild(rank);
+                row.appendChild(main);
+                row.appendChild(score);
+                box.appendChild(row);
+            });
+        }
+        loadTop();
 
         function applyScale() {
             const total = levelScale.length ? levelScale[0].max_score : 40;
@@ -1383,82 +1660,40 @@
             return null;
         }
 
-        // ── Прошлые попытки ──
-        async function loadHistory() {
-            const wrap = document.getElementById('historyWrap');
-            if (!wrap) return;
-
-            const r = await API.get('/api/kspoya/history');
-            wrap.innerHTML = '';
-            if (!r.ok) return;
-
-            const attempts = r.data.attempts || [];
-            if (!attempts.length) return;
-
-            const title = document.createElement('div');
-            title.className = 'history-title';
-            title.textContent = 'Прошлые попытки';
-            wrap.appendChild(title);
-
-            attempts.forEach((a, i) => {
-                const meta = LEVELS[a.level] || LEVELS.A1;
-
-                const row = document.createElement('div');
-                row.className = 'history-item ' + levelClass(a.level);
-                row.style.animationDelay = (i * 0.05) + 's';
-
-                const emoji = document.createElement('div');
-                emoji.className = 'history-emoji';
-                emoji.textContent = a.level_badge || meta.emoji;
-
-                const main = document.createElement('div');
-                main.className = 'history-main';
-
-                const lvl = document.createElement('div');
-                lvl.className = 'history-level';
-                lvl.textContent = a.level_label || meta.label;
-
-                const sub = document.createElement('div');
-                sub.className = 'history-meta';
-                sub.textContent = `${formatDate(a.finished_at)} · ${a.correct} из ${a.total} верных`;
-
-                main.appendChild(lvl);
-                main.appendChild(sub);
-
-                row.appendChild(emoji);
-                row.appendChild(main);
-
-                // У попыток, сделанных до появления колонки answers,
-                // разбор восстановить нечем — кнопку не показываем.
-                if (a.has_review) {
-                    const btn = document.createElement('button');
-                    btn.className = 'history-btn';
-                    btn.textContent = 'Анализ';
-                    btn.onclick = () => openAnalysis(a.id, btn);
-                    row.appendChild(btn);
-                } else {
-                    const note = document.createElement('div');
-                    note.className = 'history-meta';
-                    note.textContent = 'разбор недоступен';
-                    row.appendChild(note);
-                }
-                wrap.appendChild(row);
-            });
-        }
-        loadHistory();
-
-        function formatDate(iso) {
-            if (!iso) return '';
-            const d = new Date(iso);
-            if (isNaN(d)) return '';
-            return d.toLocaleDateString('ru-RU', {
-                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
-            });
-        }
-
         // ── Старт ──
+        // Тест идёт только в полноэкранном режиме. Запрос на полный экран
+        // должен идти прямо из клика — иначе браузер его отклонит.
+        async function enterFullscreen() {
+            const el = document.documentElement;
+            const request = el.requestFullscreen || el.webkitRequestFullscreen ||
+                el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (!request) return false;
+            try {
+                await request.call(el);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function exitFullscreen() {
+            if (!document.fullscreenElement) return;
+            const exit = document.exitFullscreen || document.webkitExitFullscreen ||
+                document.mozCancelFullScreen || document.msExitFullscreen;
+            if (exit) {
+                try { exit.call(document); } catch (e) { /* уже вышли */ }
+            }
+        }
+
         async function startTest() {
             const btn = document.getElementById('startBtn');
+
+            if (!await enterFullscreen()) {
+                showToast('Тест проходит только в полноэкранном режиме. ' +
+                    'Разрешите его в браузере и попробуйте снова', 'error');
+                return;
+            }
+
             btn.disabled = true;
             btn.textContent = 'Готовим вопросы…';
 
@@ -1468,7 +1703,9 @@
             btn.innerHTML = '<i class="fa-solid fa-play"></i> Начать тест (40 вопросов)';
 
             if (!r.ok) {
+                exitFullscreen();
                 showToast((r.data && r.data.error) || 'Не удалось начать тест', 'error');
+                if (r.data && r.data.banned_until) loadStatus();
                 return;
             }
 
@@ -1600,14 +1837,16 @@
                 submitting = false;
                 showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
                 showScreen('startScreen');
-                loadHistory();
+                loadStatus();
                 return;
             }
 
             sessionId = null;
+            exitFullscreen();
             showScreen('resultScreen');
             renderResult(r.data, timeout);
-            loadHistory();
+            loadStatus();
+            loadTop();
 
             API.refreshUser().then(u => {
                 const bal = document.getElementById('userBalance');
@@ -1704,12 +1943,6 @@
             };
 
             body.appendChild(buildStats(data));
-
-            const scaleNote = document.createElement('div');
-            scaleNote.className = 'result-note';
-            scaleNote.textContent = `Уровень зависит только от числа верных ответов: ` +
-                `${data.correct} из ${data.total} — это ${data.level}.`;
-            body.appendChild(scaleNote);
 
             if (data.reward_repeat) {
                 const note = document.createElement('div');
@@ -2066,23 +2299,71 @@
             sessionId = null;
             document.getElementById('anticheatOverlay').classList.remove('show');
             showScreen('startScreen');
-            loadHistory();
+            loadStatus();
+            loadTop();
         }
 
         function retryTest() {
             showScreen('startScreen');
         }
 
-        // ── Античит: уход со вкладки отменяет попытку на сервере ──
-        document.addEventListener('visibilitychange', () => {
-            if (!testActive || submitting) return;
-            if (document.hidden) {
-                clearInterval(timerInterval);
-                testActive = false;
-                API.post('/api/kspoya/abort', { session_id: sessionId });
-                document.getElementById('anticheatOverlay').classList.add('show');
+        // ── Античит ──
+        // Уход со вкладки или выход из полноэкранного режима аннулируют
+        // попытку. Первое нарушение — предупреждение, второе — блокировка
+        // на сутки. Считает всё сервер, здесь только показ результата.
+        let violationPending = false;
+
+        async function registerViolation(reason) {
+            if (!testActive || submitting || violationPending) return;
+            violationPending = true;
+
+            clearInterval(timerInterval);
+            testActive = false;
+
+            const r = await API.post('/api/kspoya/abort', {
+                session_id: sessionId,
+                violation: true,
+                reason: reason,
+            });
+            sessionId = null;
+            exitFullscreen();
+            showAnticheat(r.ok ? r.data : null, reason);
+            violationPending = false;
+        }
+
+        function showAnticheat(data, reason) {
+            const title = document.getElementById('acTitle');
+            const text = document.getElementById('acText');
+
+            const cause = reason === 'fullscreen'
+                ? 'Вы вышли из полноэкранного режима во время теста.'
+                : 'Вы переключили вкладку во время теста.';
+
+            if (data && data.banned) {
+                title.textContent = 'Тест заблокирован';
+                text.innerHTML = cause + '<br>Это второе нарушение, поэтому КСПОЯ ' +
+                    'недоступен 24 часа.';
+            } else if (data) {
+                title.textContent = 'Попытка аннулирована';
+                text.innerHTML = cause + '<br>Предупреждение ' +
+                    `${data.warnings} из ${data.max_strikes}. ` +
+                    'Ещё одно нарушение — блокировка на 24 часа.';
+            } else {
+                title.textContent = 'Попытка аннулирована';
+                text.textContent = cause;
             }
+
+            document.getElementById('anticheatOverlay').classList.add('show');
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) registerViolation('tab');
         });
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange']
+            .forEach(evt => document.addEventListener(evt, () => {
+                if (!document.fullscreenElement) registerViolation('fullscreen');
+            }));
     </script>
 </body>
 
