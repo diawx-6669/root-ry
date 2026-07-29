@@ -8,7 +8,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
-        .lb-tabs { display: flex; gap: 10px; margin-bottom: 22px; }
+        .lb-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
         .lb-tab { padding: 8px 22px; border-radius: 15px; border: 2px solid #e9eff5; background: #fff; font-family: 'Montserrat',sans-serif; font-size: 13px; font-weight: 600; color: #8e9fae; cursor: pointer; transition: 0.2s; }
         .lb-tab.active { background: #023e50; color: #fff; border-color: #023e50; }
         .lb-table { width: 100%; max-width: 700px; border-collapse: collapse; }
@@ -47,7 +47,7 @@
         .pod-1 .pod-avatar { width: 92px; height: 92px; border-color: #fcbf49; box-shadow: 0 9px 28px rgba(245,158,11,0.45); }
         .pod-2 .pod-avatar { border-color: #c3ced6; }
         .pod-3 .pod-avatar { border-color: #dda07a; }
-        .pod-crown { position: absolute; top: -20px; left: 50%; transform: translateX(-50%) rotate(-14deg); font-size: 28px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.22)); }
+        .pod-crown { position: absolute; top: -28px; left: 50%; transform: translateX(-50%) rotate(-14deg); font-size: 40px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.22)); }
 
         .pod-name { margin-top: 10px; font-size: 15px; font-weight: 700; color: #023e50; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pod-1 .pod-name { font-size: 17px; }
@@ -70,7 +70,7 @@
             .podium { gap: 8px; }
             .pod-avatar { width: 54px; height: 54px; border-width: 3px; }
             .pod-1 .pod-avatar { width: 68px; height: 68px; }
-            .pod-crown { font-size: 22px; top: -16px; }
+            .pod-crown { font-size: 30px; top: -21px; }
             .pod-name { font-size: 12.5px; }
             .pod-1 .pod-name { font-size: 14px; }
             .pod-val { font-size: 11.5px; padding: 4px 10px; }
@@ -80,6 +80,12 @@
             .pod-3 .pod-step { height: 58px; }
             .podium-plate { height: 14px; }
         }
+        .lb-help { margin-left: auto; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; border: 2px solid #0099cc; background: #fff; color: #0099cc; font-family: 'Montserrat',sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .lb-help:hover, .lb-help.on { background: #0099cc; color: #fff; }
+        .lb-info { display: none; margin-bottom: 20px; padding: 14px 18px; background: #f1f7fa; border-left: 4px solid #0099cc; border-radius: 12px; font-size: 13px; line-height: 1.65; color: #4a6572; }
+        .lb-info.show { display: block; animation: infoIn 0.3s ease; }
+        .lb-info b { color: #023e50; }
+        @keyframes infoIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .header-row { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; padding: 0 16px; margin-bottom: 8px; }
     </style>
 </head>
@@ -106,7 +112,10 @@
                 <button class="lb-tab" data-tab="streak" onclick="setTab('streak',this)">По серии дней</button>
                 <button class="lb-tab" data-tab="badges" onclick="setTab('badges',this)">По значкам</button>
                 <button class="lb-tab" data-tab="kspoya" onclick="setTab('kspoya',this)">По КСПОЯ</button>
+                <button class="lb-tab" data-tab="overall" onclick="setTab('overall',this)">Общий рейтинг</button>
+                <button class="lb-help" id="lbHelp" onclick="toggleInfo()" title="Как работает этот рейтинг">?</button>
             </div>
+            <div class="lb-info" id="lbInfo"></div>
             <div class="podium-wrap">
                 <div class="podium" id="podium"></div>
                 <div class="podium-plate"></div>
@@ -138,20 +147,86 @@
     let allEntries = [];
     let currentTab = 'xp';
 
+    // Метрики, по которым считается общий рейтинг.
+    const METRICS = [
+        { key: 'r_xp', get: e => e.xp || 0 },
+        { key: 'r_balance', get: e => e.balance || 0 },
+        { key: 'r_streak', get: e => e.streak || 0 },
+        { key: 'r_badges', get: e => e.badges_count || 0 },
+        { key: 'r_kspoya', get: e => e.kspoya_score || 0 },
+    ];
+
+    // Место в одном топе. При равных значениях место общее: 1, 2, 2, 4 —
+    // иначе на сумму влиял бы случайный порядок в списке.
+    function assignRanks(list, key, get) {
+        const sorted = [...list].sort((a, b) => get(b) - get(a));
+        let rank = 0, prev = null, seen = 0;
+        sorted.forEach(e => {
+            seen++;
+            const v = get(e);
+            if (prev === null || v !== prev) { rank = seen; prev = v; }
+            e[key] = rank;
+        });
+    }
+
+    // Общий рейтинг: сумма мест во всех топах. Чем меньше — тем выше.
+    function computeOverall(list) {
+        METRICS.forEach(m => assignRanks(list, m.key, m.get));
+        list.forEach(e => {
+            e.overall_sum = METRICS.reduce((acc, m) => acc + (e[m.key] || 0), 0);
+        });
+    }
+
     async function loadLeaderboard() {
         const r = await API.get('/api/leaderboard');
         if (r.ok) {
             allEntries = r.data || [];
+            computeOverall(allEntries);
             renderTab();
         }
+    }
+
+    const INFO = {
+        xp: 'Сортировка по общему количеству <b>XP</b>. Опыт дают победы в играх, ' +
+            'пройденные темы дерева грамматики и сдача КСПОЯ.',
+        balance: 'Сортировка по <b>монетам на счету прямо сейчас</b>, а не по заработанным ' +
+            'за всё время: потратили в магазине — позиция опустится.',
+        streak: 'Сортировка по <b>серии дней</b> — сколько дней подряд вы заходили. ' +
+            'Пропустили день — серия обнуляется.',
+        badges: 'Сортировка по <b>числу значков</b>. Значки выпадают из кейсов, ' +
+            'даются за промокоды и за уровень КСПОЯ.',
+        kspoya: 'Сортировка по <b>лучшей попытке КСПОЯ</b>: берётся максимальный балл из 40. ' +
+            'При равном балле выше тот, кто прошёл тест <b>раньше</b>. ' +
+            'Кто ещё не сдавал — в рейтинг не попадает.',
+        overall: 'Складываются ваши места во всех пяти топах: XP, монеты, серия, значки и КСПОЯ. ' +
+            'Первое место везде даёт 1+1+1+1+1 = <b>5</b>. ' +
+            '<b>Чем меньше сумма, тем выше позиция.</b> ' +
+            'При одинаковом значении место в отдельном топе общее: 1, 2, 2, 4.',
+    };
+
+    function renderInfo() {
+        const box = document.getElementById('lbInfo');
+        box.innerHTML = (INFO[currentTab] || '') +
+            '<br><span style="font-size:12px;opacity:0.8">' +
+            'Аккаунты администраторов в рейтинге не участвуют.</span>';
+    }
+
+    function toggleInfo() {
+        const box = document.getElementById('lbInfo');
+        const btn = document.getElementById('lbHelp');
+        const show = !box.classList.contains('show');
+        box.classList.toggle('show', show);
+        btn.classList.toggle('on', show);
+        if (show) renderInfo();
     }
 
     function setTab(tab, btn) {
         currentTab = tab;
         document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const labels = { xp: 'XP', balance: 'Монеты', streak: 'Серия', badges: 'Значки', kspoya: 'КСПОЯ' };
+        const labels = { xp: 'XP', balance: 'Монеты', streak: 'Серия', badges: 'Значки', kspoya: 'КСПОЯ', overall: 'Сумма мест' };
         document.getElementById('colLabel').textContent = labels[tab];
+        if (document.getElementById('lbInfo').classList.contains('show')) renderInfo();
         renderTab();
     }
 
@@ -166,6 +241,7 @@
             sorted = sorted.filter(e => e.kspoya_level);
             sorted.sort((a,b) => b.kspoya_score - a.kspoya_score);
         }
+        else if (currentTab === 'overall') sorted.sort((a,b) => a.overall_sum - b.overall_sum);
         else sorted.sort((a,b) => b.xp - a.xp);
 
         const container = document.getElementById('lbContainer');
@@ -186,6 +262,7 @@
             if (currentTab === 'streak') return e.streak + ' 🔥';
             if (currentTab === 'badges') return e.badges_count + ' 🏅';
             if (currentTab === 'kspoya') return e.kspoya_level ? `${e.kspoya_score} · ${e.kspoya_level}` : '—';
+            if (currentTab === 'overall') return e.overall_sum + ' 🎯';
             return e.xp + ' ⚡';
         };
 
@@ -198,6 +275,7 @@
                     ? `<span class="lb-stat">${e.kspoya_score} · ${e.kspoya_level}</span>`
                     : '<span class="lb-stat">—</span>';
             }
+            if (currentTab === 'overall') return `<span class="lb-stat">${e.overall_sum} 🎯</span>`;
             return `<span class="lb-stat xp">${e.xp} ⚡</span>`;
         };
 
