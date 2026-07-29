@@ -3,7 +3,6 @@ package store
 import (
 	crand "crypto/rand"
 	"encoding/binary"
-	"log"
 	"math/rand"
 )
 
@@ -23,8 +22,6 @@ var CaseChances = map[string]map[string]float64{
 	"rare":      {"common": 40, "rare": 42.5, "epic": 12.5, "legendary": 4.5, "mythic": 0.5},
 	"epic":      {"common": 15, "rare": 52.5, "epic": 22.5, "legendary": 9, "mythic": 1},
 	"legendary": {"common": 0, "rare": 20, "epic": 40, "legendary": 35, "mythic": 5},
-	// Бесплатный кейс, доступный раз в сутки.
-	"free": {"common": 70, "rare": 18, "epic": 10, "legendary": 1.9, "mythic": 0.1},
 }
 
 // BadgeCaseChances — шансы значкового кейса. Мифических значков нет.
@@ -47,38 +44,6 @@ var BadgePool = map[string][]string{
 	"rare":      {"⭐", "🔥", "💡"},
 	"epic":      {"🏆", "💎"},
 	"legendary": {"👑"},
-}
-
-// FreeCaseAvailable сообщает, доступен ли бесплатный кейс сегодня.
-func (s *Store) FreeCaseAvailable(username string) bool {
-	var available bool
-	err := s.db.QueryRow(`
-		SELECT last_free_case IS DISTINCT FROM (now() AT TIME ZONE $2)::date
-		FROM users WHERE username = $1`, username, localZone).Scan(&available)
-	if err != nil {
-		log.Printf("FreeCaseAvailable(%s): %v", username, err)
-		return false
-	}
-	return available
-}
-
-// ClaimFreeCase отмечает бесплатный кейс за сегодня использованным.
-// Возвращает false, если сегодня его уже открывали.
-//
-// Отметка ставится одним UPDATE с условием: два одновременных запроса
-// не смогут открыть кейс дважды за день.
-func (s *Store) ClaimFreeCase(username string) bool {
-	res, err := s.db.Exec(`
-		UPDATE users SET last_free_case = (now() AT TIME ZONE $2)::date
-		WHERE username = $1
-		  AND last_free_case IS DISTINCT FROM (now() AT TIME ZONE $2)::date`,
-		username, localZone)
-	if err != nil {
-		log.Printf("ClaimFreeCase(%s): %v", username, err)
-		return false
-	}
-	n, err := res.RowsAffected()
-	return err == nil && n == 1
 }
 
 // caseRand — источник случайности для розыгрышей.

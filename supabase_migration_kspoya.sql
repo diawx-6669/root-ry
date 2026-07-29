@@ -50,12 +50,6 @@ ALTER TABLE users
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS kspoya_ban_until TIMESTAMPTZ;
 
--- ── Бесплатный кейс раз в сутки ──────────────────────────────────────
--- Дата последнего бесплатного кейса. Считается по местному времени,
--- поэтому день сменяется в полночь по Алматы, а не по UTC сервера.
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS last_free_case DATE;
-
 -- Рейтинг КСПОЯ: лучшая попытка каждого пользователя.
 -- При равном балле выше тот, кто прошёл раньше.
 CREATE INDEX IF NOT EXISTS idx_kspoya_sessions_rating

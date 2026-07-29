@@ -179,8 +179,8 @@ const bestAttemptSQL = `
 // кто прошёл тест раньше.
 func (s *Store) KspoyaLeaderboard(limit int) []models.KspoyaLeaderEntry {
 	rows, err := s.db.Query(`
-		SELECT u.username, u.nickname, best.raw_score, best.total,
-		       best.level_key, best.finished_at
+		SELECT u.username, u.nickname, u.active_avatar,
+		       best.raw_score, best.total, best.level_key, best.finished_at
 		FROM users u
 		JOIN LATERAL (`+bestAttemptSQL+`) best ON TRUE
 		WHERE u.is_admin = FALSE
@@ -196,8 +196,8 @@ func (s *Store) KspoyaLeaderboard(limit int) []models.KspoyaLeaderEntry {
 	rank := 1
 	for rows.Next() {
 		var e models.KspoyaLeaderEntry
-		if err := rows.Scan(&e.Username, &e.Nickname, &e.Score,
-			&e.Total, &e.Level, &e.FinishedAt); err != nil {
+		if err := rows.Scan(&e.Username, &e.Nickname, &e.ActiveAvatar,
+			&e.Score, &e.Total, &e.Level, &e.FinishedAt); err != nil {
 			continue
 		}
 		e.Rank = rank

@@ -309,7 +309,8 @@
         };
 
         // Первая тройка выносится на пьедестал, таблица начинается с 4-го места.
-        const avatarURL = u => 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u);
+        // Берём выбранную аватарку игрока, а не робота по логину.
+        const avatarURL = e => avatarSrc(e);
         const podOrder = [1, 0, 2]; // слева 2-е место, по центру 1-е, справа 3-е
 
         podOrder.forEach(idx => {
@@ -324,7 +325,7 @@
 
             const img = document.createElement('img');
             img.className = 'pod-avatar';
-            img.src = avatarURL(e.username);
+            img.src = avatarURL(e);
             img.alt = '';
             avatarWrap.appendChild(img);
 
@@ -374,7 +375,7 @@
             userDiv.className = 'lb-user';
             const img = document.createElement('img');
             img.className = 'lb-avatar';
-            img.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(e.username);
+            img.src = avatarSrc(e);
             img.alt = '';
             const nameDiv = document.createElement('div');
             const nameEl = document.createElement('div');

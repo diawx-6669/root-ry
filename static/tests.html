@@ -683,7 +683,7 @@
 
         .side-row {
             display: grid;
-            grid-template-columns: 26px 1fr auto;
+            grid-template-columns: 26px 30px 1fr auto;
             align-items: center;
             gap: 9px;
             padding: 9px 10px;
@@ -695,6 +695,7 @@
 
         .side-row.is-me { background: #e8f4fa; box-shadow: inset 0 0 0 1.5px #0099cc; }
 
+        .side-avatar { width: 30px; height: 30px; border-radius: 50%; background: #eef4f7; }
         .side-rank { font-size: 13px; font-weight: 800; color: #8ba0ab; text-align: center; }
         .side-rank.top { font-size: 16px; }
 
@@ -1658,6 +1659,11 @@
                 rank.className = 'side-rank' + (i < 3 ? ' top' : '');
                 rank.textContent = i < 3 ? medals[i] : String(e.rank);
 
+                const face = document.createElement('img');
+                face.className = 'side-avatar';
+                face.src = avatarSrc(e);
+                face.alt = '';
+
                 const main = document.createElement('div');
                 const name = document.createElement('div');
                 name.className = 'side-name';
@@ -1673,6 +1679,7 @@
                 score.textContent = `${e.score}/${e.total}`;
 
                 row.appendChild(rank);
+                row.appendChild(face);
                 row.appendChild(main);
                 row.appendChild(score);
                 box.appendChild(row);
@@ -1824,6 +1831,7 @@
         function selectAnswer(idx) {
             if (!testActive) return;
             userAnswers[currentQ] = idx;
+            Sound.hover();
             renderQuestion();
         }
 
@@ -1890,6 +1898,15 @@
             exitFullscreen();
             showScreen('resultScreen');
             renderResult(r.data, timeout);
+
+            // Новый уровень — фанфары и монеты в кошелёк.
+            if (r.data.badge_earned) {
+                Sound.levelUp();
+                rewardCoins(r.data.coins_earned, r.data.new_balance,
+                    document.getElementById('resultCard'));
+            } else {
+                Sound.win();
+            }
             loadStatus();
             loadTop();
 
@@ -2372,6 +2389,7 @@
             });
             sessionId = null;
             exitFullscreen();
+            Sound.wrong();
             showAnticheat(r.ok ? r.data : null, reason);
             violationPending = false;
         }
