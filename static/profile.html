@@ -220,45 +220,6 @@
         { emoji:'👑', label:'Корона',   rarity:'legendary' },
     ];
 
-    // Все аватарки из shop.html AVATAR_POOL
-    const ALL_AVATARS = {
-        common: [
-            { emoji:'🐱', label:'Кот',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4' },
-            { emoji:'🐶', label:'Пёс',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc' },
-            { emoji:'🦊', label:'Лис',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede' },
-            { emoji:'🐼', label:'Панда',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0' },
-            { emoji:'🐻', label:'Медведь', img:'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc' },
-            { emoji:'🐸', label:'Лягушка', img:'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0' },
-            { emoji:'🦁', label:'Лев',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=lion&backgroundColor=fde68a' },
-            { emoji:'🐯', label:'Тигр',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=tiger&backgroundColor=fed7aa' },
-        ],
-        rare: [
-            { emoji:'🦄', label:'Единорог', img:'https://api.dicebear.com/7.x/bottts/svg?seed=unicorn&backgroundColor=bfdbfe' },
-            { emoji:'🐉', label:'Дракон',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=dragon&backgroundColor=93c5fd' },
-            { emoji:'🦋', label:'Бабочка',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=butterfly&backgroundColor=c4b5fd' },
-            { emoji:'🦚', label:'Павлин',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=peacock&backgroundColor=a5f3fc' },
-            { emoji:'🦜', label:'Попугай',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=parrot&backgroundColor=bbf7d0' },
-            { emoji:'🦩', label:'Фламинго', img:'https://api.dicebear.com/7.x/bottts/svg?seed=flamingo&backgroundColor=fecdd3' },
-            { emoji:'🐬', label:'Дельфин',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=dolphin&backgroundColor=bae6fd' },
-        ],
-        epic: [
-            { emoji:'🧙', label:'Маг',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=wizard&backgroundColor=ddd6fe' },
-            { emoji:'🧛', label:'Вампир', img:'https://api.dicebear.com/7.x/bottts/svg?seed=vampire&backgroundColor=fecdd3' },
-            { emoji:'🦸', label:'Герой',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=hero&backgroundColor=d9f99d' },
-            { emoji:'🧝', label:'Эльф',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=elf&backgroundColor=a7f3d0' },
-            { emoji:'🧜', label:'Русалка',img:'https://api.dicebear.com/7.x/bottts/svg?seed=mermaid&backgroundColor=7dd3fc' },
-        ],
-        legendary: [
-            { emoji:'👑', label:'Корона', img:'https://api.dicebear.com/7.x/bottts/svg?seed=crown&backgroundColor=fef08a' },
-            { emoji:'🌟', label:'Звезда', img:'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=fde68a' },
-            { emoji:'💫', label:'Комета', img:'https://api.dicebear.com/7.x/bottts/svg?seed=comet&backgroundColor=fef9c3' },
-        ],
-        mythic: [
-            { emoji:'🌈', label:'Радуга', img:'https://api.dicebear.com/7.x/bottts/svg?seed=rainbow&backgroundColor=fbcfe8' },
-        ],
-    };
-    const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
-    const RARITY_ORDER = ['common','rare','epic','legendary','mythic'];
 
     // Лучший результат КСПОЯ: балл и уровень в скобках, например «23 (B1)».
     let kspoyaBest = null;
@@ -289,10 +250,8 @@
         const myBadges = u.badges || [];
         const topBadges = myBadges.slice(0, 5);
 
-        // Аватарка — emoji или dicebear картинка
-        const activeAv = u.active_avatar || '🐱';
-        const avData = findAvatarData(activeAv);
-        const avSrc = avData ? avData.img : `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`;
+        // Аватарка берётся из общего каталога в api.js
+        const avSrc = avatarSrc(u);
 
         document.getElementById('profileContent').innerHTML = `
         <div class="profile-card">
@@ -361,13 +320,6 @@
         return 'дней';
     }
 
-    function findAvatarData(emoji) {
-        for (const rarity of RARITY_ORDER) {
-            const found = (ALL_AVATARS[rarity] || []).find(a => a.emoji === emoji);
-            if (found) return found;
-        }
-        return null;
-    }
 
     /* ===== ЗНАЧКИ МОДАЛ ===== */
     function openBadgesModal() {
@@ -433,16 +385,25 @@
 
     async function selectAvatar(av) {
         if (!userData) return;
-        userData.active_avatar = av.emoji;
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        // Обновить картинку в профиле и хедере
+
+        // Выбор сохраняется на сервере: раньше он жил только в localStorage
+        // и слетал при первом же обновлении данных с сервера.
+        const r = await API.put('/api/profile/avatar', { avatar: av.emoji });
+        if (!r.ok) {
+            showToast((r.data && r.data.error) || 'Не удалось сменить аватарку', 'error');
+            return;
+        }
+
+        userData = r.data;
+        localStorage.setItem('currentUser', JSON.stringify(r.data));
+
         const img = document.getElementById('profileAvatarImg');
         if (img) img.src = av.img;
         const hav = document.getElementById('headerAvatar');
         if (hav) hav.src = av.img;
+
         closeAvatarModal();
         showToast(`Аватарка «${av.label}» выбрана!`, 'success');
-        // Переоткрыть модал чтобы видеть выбор (опционально)
     }
 
     async function saveNickname() {

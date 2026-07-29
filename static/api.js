@@ -59,6 +59,65 @@ const API = {
     }
 };
 
+// ── Аватарки ────────────────────────────────────────────────────────
+// Каталог общий для профиля и шапки: иначе выбранная аватарка
+// показывалась бы в одном месте и не показывалась в другом.
+const ALL_AVATARS = {
+    common: [
+        { emoji:'🐱', label:'Кот',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4' },
+        { emoji:'🐶', label:'Пёс',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc' },
+        { emoji:'🦊', label:'Лис',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede' },
+        { emoji:'🐼', label:'Панда',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0' },
+        { emoji:'🐻', label:'Медведь', img:'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc' },
+        { emoji:'🐸', label:'Лягушка', img:'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0' },
+        { emoji:'🦁', label:'Лев',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=lion&backgroundColor=fde68a' },
+        { emoji:'🐯', label:'Тигр',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=tiger&backgroundColor=fed7aa' },
+    ],
+    rare: [
+        { emoji:'🦄', label:'Единорог', img:'https://api.dicebear.com/7.x/bottts/svg?seed=unicorn&backgroundColor=bfdbfe' },
+        { emoji:'🐉', label:'Дракон',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=dragon&backgroundColor=93c5fd' },
+        { emoji:'🦋', label:'Бабочка',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=butterfly&backgroundColor=c4b5fd' },
+        { emoji:'🦚', label:'Павлин',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=peacock&backgroundColor=a5f3fc' },
+        { emoji:'🦜', label:'Попугай',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=parrot&backgroundColor=bbf7d0' },
+        { emoji:'🦩', label:'Фламинго', img:'https://api.dicebear.com/7.x/bottts/svg?seed=flamingo&backgroundColor=fecdd3' },
+        { emoji:'🐬', label:'Дельфин',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=dolphin&backgroundColor=bae6fd' },
+    ],
+    epic: [
+        { emoji:'🧙', label:'Маг',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=wizard&backgroundColor=ddd6fe' },
+        { emoji:'🧛', label:'Вампир', img:'https://api.dicebear.com/7.x/bottts/svg?seed=vampire&backgroundColor=fecdd3' },
+        { emoji:'🦸', label:'Герой',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=hero&backgroundColor=d9f99d' },
+        { emoji:'🧝', label:'Эльф',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=elf&backgroundColor=a7f3d0' },
+        { emoji:'🧜', label:'Русалка',img:'https://api.dicebear.com/7.x/bottts/svg?seed=mermaid&backgroundColor=7dd3fc' },
+    ],
+    legendary: [
+        { emoji:'👑', label:'Корона', img:'https://api.dicebear.com/7.x/bottts/svg?seed=crown&backgroundColor=fef08a' },
+        { emoji:'🌟', label:'Звезда', img:'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=fde68a' },
+        { emoji:'💫', label:'Комета', img:'https://api.dicebear.com/7.x/bottts/svg?seed=comet&backgroundColor=fef9c3' },
+    ],
+    mythic: [
+        { emoji:'🌈', label:'Радуга', img:'https://api.dicebear.com/7.x/bottts/svg?seed=rainbow&backgroundColor=fbcfe8' },
+    ],
+};
+const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
+const RARITY_ORDER = ['common','rare','epic','legendary','mythic'];
+
+// Картинка активной аватарки пользователя.
+// Если аватарка не выбрана или неизвестна — рисуем робота по логину.
+function avatarSrc(user) {
+    const found = user && findAvatarData(user.active_avatar);
+    if (found) return found.img;
+    const seed = (user && user.username) || "guest";
+    return 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(seed);
+}
+
+function findAvatarData(emoji) {
+    for (const rarity of RARITY_ORDER) {
+        const found = (ALL_AVATARS[rarity] || []).find(a => a.emoji === emoji);
+        if (found) return found;
+    }
+    return null;
+}
+
 function requireAuth() {
     if (!API.token()) {
         window.location.href = '/index.html';
@@ -81,7 +140,7 @@ async function initHeader() {
         safeText(document.getElementById('headerUsername'), u.nickname || u.username);
         safeText(document.getElementById('userBalance'), u.balance ?? 0);
         const av = document.getElementById('headerAvatar');
-        if (av) av.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.username);
+        if (av) av.src = avatarSrc(u);
     };
 
     applyUser(user);
