@@ -52,12 +52,44 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 /* ===== TREE AREA ===== */
 #tree-root {
     width:100%;
-    padding:20px 16px 90px;
-    overflow-x:auto;
+    padding:20px 0 90px;
     margin-top:64px;
     min-height:calc(100vh - 128px);
 }
-.tree-container { display:flex; flex-direction:column; align-items:center; min-width:max-content; }
+.zoom-scroll {
+  width:100%;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:0 16px;
+}
+.zoom-sizer { position:relative; margin:0 auto; }
+.tree-container {
+  display:flex; flex-direction:column; align-items:center; min-width:max-content;
+  position:absolute; top:0; left:0;
+  transform-origin:top left;
+  transition:transform .18s ease;
+}
+
+/* ===== ZOOM CONTROLS ===== */
+.zoom-controls {
+  position:fixed; right:14px; bottom:80px; z-index:900;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.92); border:1px solid #e2e8f0;
+  border-radius:18px; padding:8px 6px; box-shadow:0 6px 18px rgba(2,62,80,0.14);
+  backdrop-filter:blur(6px);
+}
+.zoom-controls button {
+  width:34px; height:34px; border-radius:50%; border:none; cursor:pointer;
+  background:linear-gradient(160deg,#e6f6ff,#dcf0fd); color:#075985;
+  font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  transition:transform .15s ease, filter .15s ease;
+  font-family:'Segoe UI',sans-serif;
+}
+.zoom-controls button:active { transform:scale(.92); }
+.zoom-controls button:hover { filter:brightness(1.06); }
+#zoomReset { background:linear-gradient(160deg,#0c5470,#023e50); color:#fff; font-size:13px; }
+#zoomLabel { font-size:11px; color:#64748b; font-weight:600; font-family:'Segoe UI',sans-serif; user-select:none; min-width:34px; text-align:center; }
 
 .level { display:flex; gap:14px; justify-content:center; align-items:flex-start; position:relative; }
 .level + .level { margin-top:0; }
@@ -194,7 +226,17 @@ svg.hlines { display:block; flex-shrink:0; opacity:.9; }
     <button id="exp-all" style="border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#475569;font-weight:500">Развернуть всё</button>
     <button id="col-all" style="border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#475569;font-weight:500">Свернуть</button>
   </div>
-  <div class="tree-container" id="tc"></div>
+  <div class="zoom-scroll" id="zoomScroll">
+    <div class="zoom-sizer" id="zoomSizer">
+      <div class="tree-container" id="tc"></div>
+    </div>
+  </div>
+</div>
+<div class="zoom-controls" id="zoomControls">
+  <button id="zoomIn" title="Увеличить">+</button>
+  <span id="zoomLabel">100%</span>
+  <button id="zoomOut" title="Уменьшить">−</button>
+  <button id="zoomReset" title="Сбросить масштаб"><i class="fa-solid fa-compress"></i></button>
 </div>
 <div class="tooltip" id="tooltip"></div>
 
@@ -678,6 +720,97 @@ const TREE = {
 
 const tc = document.getElementById('tc');
 const tooltip = document.getElementById('tooltip');
+const zoomScroll = document.getElementById('zoomScroll');
+const zoomSizer = document.getElementById('zoomSizer');
+const zoomLabel = document.getElementById('zoomLabel');
+
+/* ===== ZOOM / PAN ===== */
+let zoom = 1;
+const ZOOM_MIN = 0.45, ZOOM_MAX = 2;
+
+function clampZoom(z) { return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z)); }
+
+function syncSizer() {
+  // tc's own layout box is unscaled (transform doesn't affect layout),
+  // so its natural size comes straight from offsetWidth/offsetHeight.
+  const w = tc.offsetWidth, h = tc.offsetHeight;
+  zoomSizer.style.width = (w * zoom) + 'px';
+  zoomSizer.style.height = (h * zoom) + 'px';
+}
+
+function applyZoom(newZoom, focus) {
+  const old = zoom;
+  zoom = clampZoom(newZoom);
+  tc.style.transform = `scale(${zoom})`;
+  zoomLabel.textContent = Math.round(zoom * 100) + '%';
+
+  // Keep the point under the user's fingers/cursor stable while zooming
+  if (focus) {
+    const ratio = zoom / old;
+    zoomScroll.scrollLeft = (zoomScroll.scrollLeft + focus.x) * ratio - focus.x;
+    zoomScroll.scrollTop = (zoomScroll.scrollTop + focus.y) * ratio - focus.y;
+  }
+  requestAnimationFrame(syncSizer);
+}
+
+document.getElementById('zoomIn').addEventListener('click', () => applyZoom(zoom + 0.15));
+document.getElementById('zoomOut').addEventListener('click', () => applyZoom(zoom - 0.15));
+document.getElementById('zoomReset').addEventListener('click', () => {
+  applyZoom(1);
+  zoomScroll.scrollTo({left:0, top:0, behavior:'smooth'});
+});
+
+// Ctrl/Cmd + wheel to zoom (desktop trackpads & mice)
+zoomScroll.addEventListener('wheel', (e) => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  const rect = zoomScroll.getBoundingClientRect();
+  const focus = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  applyZoom(zoom - e.deltaY * 0.0015, focus);
+}, { passive:false });
+
+// Two-finger pinch to zoom (mobile)
+let pinchStartDist = null, pinchStartZoom = 1;
+function touchDist(t) {
+  const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+  return Math.hypot(dx, dy);
+}
+zoomScroll.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    pinchStartDist = touchDist(e.touches);
+    pinchStartZoom = zoom;
+  }
+}, { passive:true });
+zoomScroll.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2 && pinchStartDist) {
+    e.preventDefault();
+    const rect = zoomScroll.getBoundingClientRect();
+    const mid = {
+      x:(e.touches[0].clientX + e.touches[1].clientX)/2 - rect.left,
+      y:(e.touches[0].clientY + e.touches[1].clientY)/2 - rect.top
+    };
+    const dist = touchDist(e.touches);
+    applyZoom(pinchStartZoom * (dist / pinchStartDist), mid);
+  }
+}, { passive:false });
+zoomScroll.addEventListener('touchend', (e) => { if (e.touches.length < 2) pinchStartDist = null; });
+
+// Keep the scroll sizer in sync whenever the tree itself changes shape
+// (expanding/collapsing branches, search filtering, initial build).
+const sizerObserver = new MutationObserver(() => requestAnimationFrame(syncSizer));
+sizerObserver.observe(tc, { attributes:true, childList:true, subtree:true, attributeFilter:['class'] });
+window.addEventListener('resize', syncSizer);
+
+// After a branch opens, gently pan so the newly revealed children are
+// actually visible instead of leaving the user to scroll and hunt for them.
+function revealBranch(branch) {
+  const row = branch.querySelector(':scope > .connector-wrap .children-row');
+  setTimeout(() => {
+    syncSizer();
+    const target = row || branch.querySelector(':scope > .node');
+    if (target) target.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }, 420); // matches the .connector-wrap / .children-row CSS transition time
+}
 
 function nodeClass(level) {
   if(level===0) return 'node node-root';
@@ -706,6 +839,7 @@ function build(data, parentEl, isRoot=false) {
     nodeEl.addEventListener('click', (e) => {
       e.stopPropagation();
       branch.classList.toggle('collapsed');
+      if (!branch.classList.contains('collapsed')) revealBranch(branch);
     });
   }
 
@@ -766,12 +900,18 @@ function build(data, parentEl, isRoot=false) {
 
 const rootBranch = build(TREE, tc, true);
 tc.appendChild(rootBranch);
+requestAnimationFrame(syncSizer);
 
 document.getElementById('exp-all').addEventListener('click', () => {
   tc.querySelectorAll('.branch').forEach(b => b.classList.remove('collapsed'));
+  setTimeout(syncSizer, 420);
 });
 document.getElementById('col-all').addEventListener('click', () => {
   tc.querySelectorAll('.branch').forEach(b => b.classList.add('collapsed'));
+  setTimeout(() => {
+    syncSizer();
+    zoomScroll.scrollTo({left:0, top:0, behavior:'smooth'});
+  }, 420);
 });
 
 const qEl = document.getElementById('q');
