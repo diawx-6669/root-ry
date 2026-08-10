@@ -885,49 +885,25 @@
     // Аватарки — теперь URL-картинки (PNG через DiceBear или свои)
     // Формат: { img, rarity, label } — если img начинается с 'http', рендерим как фото
     // Если добавить свои PNG — просто замени URL на путь к файлу, напр. '/avatars/tiger.png'
-    const AVATAR_POOL = {
-        common:    {
-            items: [
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4',    label: 'Кот',      emoji: '🐱' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc',    label: 'Пёс',      emoji: '🐶' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede',    label: 'Лис',      emoji: '🦊' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0',  label: 'Панда',    emoji: '🐼' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc',   label: 'Медведь',  emoji: '🐻' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0',   label: 'Лягушка',  emoji: '🐸' },
-            ],
-            color: '#6b7280', label: 'Обычная'
-        },
-        rare: {
-            items: [
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=unicorn&backgroundColor=bfdbfe', label: 'Единорог', emoji: '🦄' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=dragon&backgroundColor=93c5fd',  label: 'Дракон',   emoji: '🐉' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=butterfly&backgroundColor=c4b5fd',label:'Бабочка',  emoji: '🦋' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=peacock&backgroundColor=a5f3fc', label: 'Павлин',   emoji: '🦚' },
-            ],
-            color: '#3b82f6', label: 'Редкая'
-        },
-        epic: {
-            items: [
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=wizard&backgroundColor=ddd6fe', label: 'Маг',      emoji: '🧙' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=vampire&backgroundColor=fecdd3',label: 'Вампир',   emoji: '🧛' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=hero&backgroundColor=d9f99d',   label: 'Герой',    emoji: '🦸' },
-            ],
-            color: '#a855f7', label: 'Эпическая'
-        },
-        legendary: {
-            items: [
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=crown&backgroundColor=fef08a',  label: 'Корона',   emoji: '👑' },
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=fde68a',   label: 'Звезда',   emoji: '🌟' },
-            ],
-            color: '#f59e0b', label: 'Легендарная'
-        },
-        mythic: {
-            items: [
-                { img: 'https://api.dicebear.com/7.x/bottts/svg?seed=rainbow&backgroundColor=fbcfe8', label: 'Радуга', emoji: '🌈' },
-            ],
-            color: '#ef4444', label: 'Мифическая'
-        }
+    // Пул рулетки собирается из общего каталога ALL_AVATARS (api.js), а он, в
+    // свою очередь, повторяет AvatarPool из internal/store/cases.go.
+    //
+    // Раньше здесь лежала своя укороченная копия: в рулетке не хватало 9 из 25
+    // аватарок (коала, лев, тигр, попугай, фламинго, дельфин, русалка, эльф,
+    // комета). Выпадала такая аватарка — и лента прокручивалась до пустого
+    // слота без картинки. Теперь список ровно один.
+    const RARITY_COLORS = {
+        common: '#6b7280', rare: '#3b82f6', epic: '#a855f7',
+        legendary: '#f59e0b', mythic: '#ef4444'
     };
+    const AVATAR_POOL = RARITY_ORDER.reduce((acc, rarity) => {
+        acc[rarity] = {
+            items: (ALL_AVATARS[rarity] || []).map(a => ({ img: a.img, label: a.label, emoji: a.emoji })),
+            color: RARITY_COLORS[rarity],
+            label: RARITY_LABELS[rarity]
+        };
+        return acc;
+    }, {});
 
     const BADGE_POOL = {
         common:    { items: [{ emoji:'📚'},{emoji:'✏️'},{emoji:'📝'},{emoji:'🎒'}], color:'#6b7280', label:'Обычный' },

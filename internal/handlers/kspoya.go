@@ -142,6 +142,13 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 
 	outcome := kspoya.Grade(session.ID, session.QuestionIDs, req.Answers)
 
+	// Лучший подтверждённый уровень ДО этой попытки. Читаем до закрытия
+	// сессии, иначе текущая попытка сама попадёт в выборку.
+	prevLevel := ""
+	if _, _, level, ok := h.store.BestKspoyaAttemptID(username); ok {
+		prevLevel = level
+	}
+
 	// Закрываем сессию. Если она уже была закрыта параллельным запросом или
 	// просрочена, награда не начисляется, но разбор ученик всё равно увидит.
 	awarded := h.store.FinishKspoyaSession(
@@ -149,15 +156,30 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 
 	reward := kspoya.Rewards[outcome.Level]
 	xpEarned, coinsEarned, badgeEarned := 0, 0, ""
+	improved := false
 
 	if awarded {
-		// Награда выдаётся только за уровень, который ещё не был подтверждён.
-		// Иначе тест можно было бы перепроходить ради монет.
-		if reward.Badge != "" && !store.HasBadge(user.Badges, reward.Badge) {
-			user.Badges = append(user.Badges, reward.Badge)
-			badgeEarned = reward.Badge
-			xpEarned = reward.XP
-			coinsEarned = reward.Coins
+		// Награда даётся только за НОВЫЙ личный рекорд по уровню, и только
+		// на разницу с уже полученным.
+		//
+		// Раньше условием было «значка этого уровня ещё нет». Сдав сразу C2,
+		// можно было потом специально сдать на B1, B2 и C1 и забрать их
+		// награды тоже — суммарно ~5550 XP вместо 2000 за один уровень.
+		improved = prevLevel == "" || kspoya.LevelIndex(outcome.Level) > kspoya.LevelIndex(prevLevel)
+		if improved {
+			prevReward := kspoya.Rewards[prevLevel] // для "" даёт нулевую награду
+			xpEarned = reward.XP - prevReward.XP
+			coinsEarned = reward.Coins - prevReward.Coins
+			if xpEarned < 0 {
+				xpEarned = 0
+			}
+			if coinsEarned < 0 {
+				coinsEarned = 0
+			}
+			if reward.Badge != "" && !store.HasBadge(user.Badges, reward.Badge) {
+				user.Badges = append(user.Badges, reward.Badge)
+				badgeEarned = reward.Badge
+			}
 			user.XP += xpEarned
 			user.Balance += coinsEarned
 			h.store.UpdateUser(user)
@@ -184,7 +206,11 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		"xp_earned":     xpEarned,
 		"coins_earned":  coinsEarned,
 		"badge_earned":  badgeEarned,
-		"reward_repeat": awarded && badgeEarned == "",
+		"prev_level":    prevLevel,
+		"improved":      improved,
+		// reward_repeat = попытка засчитана, но уровень не превзойдён,
+		// поэтому награды нет.
+		"reward_repeat": awarded && !improved,
 		"new_xp":        user.XP,
 		"new_balance":   user.Balance,
 		"review":        buildReview(session.ID, session.QuestionIDs, req.Answers),

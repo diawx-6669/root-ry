@@ -316,8 +316,8 @@
                             <div class="user-av-cell">
                                 <img src="${avSrc}" alt="">
                                 <div>
-                                    <div class="uname-col">${u.nickname || u.username}</div>
-                                    <div class="nick-col">@${u.username}</div>
+                                    <div class="uname-col">${esc(u.nickname || u.username)}</div>
+                                    <div class="nick-col">@${esc(u.username)}</div>
                                 </div>
                             </div>
                         </td>

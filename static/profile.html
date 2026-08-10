@@ -261,8 +261,8 @@
                     <div class="avatar-edit-hint">СМЕНИТЬ</div>
                 </div>
                 <div class="profile-info">
-                    <h2>${u.nickname || u.username}</h2>
-                    <div class="uname">@${u.username}</div>
+                    <h2>${esc(u.nickname || u.username)}</h2>
+                    <div class="uname">@${esc(u.username)}</div>
                     <div class="streak">🔥 Серия: ${u.streak || 0} ${declDays(u.streak)}</div>
                 </div>
             </div>
@@ -297,7 +297,7 @@
             <div style="margin-bottom:18px">
                 <div class="section-title" style="margin-bottom:8px"><span>✏️ Изменить никнейм</span></div>
                 <div class="edit-row">
-                    <input class="edit-input" id="newNick" placeholder="Новый никнейм..." value="${u.nickname||''}">
+                    <input class="edit-input" id="newNick" placeholder="Новый никнейм..." value="${esc(u.nickname||'')}">
                     <button class="save-btn" onclick="saveNickname()">Сохранить</button>
                 </div>
             </div>

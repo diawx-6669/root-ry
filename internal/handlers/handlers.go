@@ -2,14 +2,34 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
+	"rootry/internal/kspoya"
 	"rootry/internal/middleware"
 	"rootry/internal/models"
 	"rootry/internal/store"
+	"rootry/internal/timeutil"
+	"rootry/internal/topics"
 )
+
+// Ограничения на текстовые поля. Считаются в символах, а не в байтах:
+// len() для кириллицы даёт вдвое больше, и ник из 17 русских букв раньше
+// не проходил проверку «до 32 символов».
+const (
+	usernameMin = 3
+	usernameMax = 20
+	nicknameMin = 1
+	nicknameMax = 32
+	passwordMin = 6
+)
+
+// maxBodyBytes — предел размера тела запроса. Без него отправка гигабайтного
+// JSON заставляла сервер съесть всю память.
+const maxBodyBytes = 64 << 10
 
 type Handler struct {
 	store *store.Store
@@ -30,7 +50,17 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 }
 
 func (h *Handler) parseBody(r *http.Request, v any) error {
-	return json.NewDecoder(r.Body).Decode(v)
+	return json.NewDecoder(http.MaxBytesReader(nil, r.Body, maxBodyBytes)).Decode(v)
+}
+
+// requireMethod отвечает 405 и возвращает false, если метод не тот.
+// Раньше три обработчика проверку метода просто не делали.
+func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
+	if r.Method != method {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return false
+	}
+	return true
 }
 
 func getUsernameFromCtx(r *http.Request) string {
@@ -53,25 +83,32 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Username = strings.TrimSpace(req.Username)
 	req.Nickname = strings.TrimSpace(req.Nickname)
-	// Sanitize nickname to prevent XSS
-	req.Nickname = store.EscapeHTML(req.Nickname)
 
-	if len(req.Username) < 3 || !isLatinOnly(req.Username) {
-		writeError(w, http.StatusBadRequest, "Логин: только латиница, от 3 символов")
+	// Никнейм НЕ экранируется при записи: в базе он должен лежать таким,
+	// каким его ввёл ученик. Раньше «Вася & Петя» сохранялся как
+	// «Вася &amp; Петя» и в таком виде и показывался. Экранирование —
+	// задача вывода, и на фронте для этого есть esc().
+	if err := validateUsername(req.Username); err != "" {
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	if len(req.Nickname) < 1 || len(req.Nickname) > 32 {
-		writeError(w, http.StatusBadRequest, "Никнейм: от 1 до 32 символов")
+	if err := validateNickname(req.Nickname); err != "" {
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	if len(req.Password) < 6 {
+	if utf8.RuneCountInString(req.Password) < passwordMin {
 		writeError(w, http.StatusBadRequest, "Пароль: минимум 6 символов")
 		return
 	}
 
 	user, err := h.store.CreateUser(req.Username, req.Nickname, req.Password)
 	if err != nil {
-		writeError(w, http.StatusConflict, "Логин уже занят")
+		// Занятый логин — ошибка ученика, всё остальное — авария сервера.
+		if errors.Is(err, store.ErrUsernameTaken) {
+			writeError(w, http.StatusConflict, "Логин уже занят")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "Не удалось создать аккаунт, попробуйте позже")
 		return
 	}
 
@@ -97,10 +134,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Серия и ежедневный бонус считаются в одном запросе к базе.
-	if streak, balance, awarded := h.store.TouchDailyLogin(user.Username); awarded {
+	// Серия входов продлевается одним запросом к базе. Монеты за день
+	// выдаёт только /api/daily/claim.
+	if streak, updated := h.store.TouchDailyLogin(user.Username); updated {
 		user.Streak = streak
-		user.Balance = balance
 	}
 
 	token, _ := middleware.GenerateToken(user.ID, user.Username, user.IsAdmin)
@@ -170,6 +207,17 @@ func (h *Handler) Leaderboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	entries := h.store.GetLeaderboard()
+	// Значок уровня КСПОЯ считается по уровню, а не хранится в базе.
+	// Раньше поле оставалось пустым: рейтинг КСПОЯ его так и не показывал.
+	for i := range entries {
+		if entries[i].KspoyaLevel == "" {
+			continue
+		}
+		entries[i].KspoyaBadge = kspoya.Rewards[entries[i].KspoyaLevel].Badge
+	}
+	if entries == nil {
+		entries = []models.LeaderboardEntry{}
+	}
 	writeJSON(w, http.StatusOK, entries)
 }
 
@@ -267,7 +315,7 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	today := time.Now().Format("2006-01-02")
+	today := timeutil.Today()
 
 	// Reset daily counters if new day
 	if user.DailyTasksDate != today {
@@ -336,10 +384,13 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/topic/complete
+// POST /api/topic/complete — засчитать пройденный урок дерева грамматики.
+//
+// Тема проверяется по реестру internal/topics, а размер награды берётся
+// оттуда же. Раньше поле topic не проверялось вообще: любая новая случайная
+// строка приносила 50 XP и 10 монет, и опыт фармился бесконечно.
 func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 	username := getUsernameFromCtx(r)
@@ -350,30 +401,63 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Topic string `json:"topic"`
+		Topic   string `json:"topic"`
+		Correct int    `json:"correct"`
+		Total   int    `json:"total"`
 	}
 	if err := h.parseBody(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
 
+	topic, known := topics.Get(strings.TrimSpace(req.Topic))
+	if !known {
+		writeError(w, http.StatusBadRequest, "Неизвестная тема")
+		return
+	}
+
 	for _, t := range user.CompletedTopics {
-		if t == req.Topic {
-			writeJSON(w, http.StatusOK, map[string]any{"already_done": true, "xp_earned": 0})
+		if t == topic.ID {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"already_done":    true,
+				"xp_earned":       0,
+				"coins_earned":    0,
+				"new_xp":          user.XP,
+				"new_balance":     user.Balance,
+				"completed_count": len(user.CompletedTopics),
+				"total_topics":    topics.Count(),
+			})
 			return
 		}
 	}
 
-	user.CompletedTopics = append(user.CompletedTopics, req.Topic)
-	user.XP += 50
-	user.Balance += 10
+	user.CompletedTopics = append(user.CompletedTopics, topic.ID)
+	user.XP += topic.XP
+	user.Balance += topic.Coins
+
+	// Значок за прохождение всего дерева.
+	badgeEarned := ""
+	if len(user.CompletedTopics) >= topics.Count() && !store.HasBadge(user.Badges, treeMasterBadge) {
+		user.Badges = append(user.Badges, treeMasterBadge)
+		badgeEarned = treeMasterBadge
+	}
+
 	h.store.UpdateUser(user)
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"xp_earned": 50, "coins_earned": 10,
-		"new_xp": user.XP, "completed_count": len(user.CompletedTopics),
+		"xp_earned":       topic.XP,
+		"coins_earned":    topic.Coins,
+		"new_xp":          user.XP,
+		"new_balance":     user.Balance,
+		"badge_earned":    badgeEarned,
+		"completed_count": len(user.CompletedTopics),
+		"total_topics":    topics.Count(),
 	})
 }
+
+// treeMasterBadge — значок за пройденное дерево грамматики целиком.
+// Не пересекается ни с пулом магазина, ни со значками КСПОЯ.
+const treeMasterBadge = "🌳"
 
 // POST /api/case/open — server-side roll
 func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
@@ -450,15 +534,18 @@ func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/daily/claim
+// POST /api/daily/claim — единственный источник ежедневного бонуса.
 func (h *Handler) DailyClaim(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
 	username := getUsernameFromCtx(r)
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
 		return
 	}
-	today := time.Now().Format("2006-01-02")
+	today := timeutil.Today()
 	if user.LastDailyClaim == today {
 		writeJSON(w, http.StatusOK, map[string]any{"already_claimed": true})
 		return
@@ -492,8 +579,8 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 
 	// Per PDF: nickname can be changed no more than once per week
 	if user.LastNickChange != "" {
-		last, err := time.Parse("2006-01-02", user.LastNickChange)
-		if err == nil && time.Since(last) < 7*24*time.Hour {
+		last, err := time.ParseInLocation("2006-01-02", user.LastNickChange, timeutil.Location())
+		if err == nil && timeutil.Now().Sub(last) < 7*24*time.Hour {
 			writeError(w, http.StatusBadRequest, "Никнейм можно менять не чаще раза в неделю")
 			return
 		}
@@ -506,33 +593,42 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
-	nick := store.EscapeHTML(strings.TrimSpace(req.Nickname))
-	if len(nick) < 1 || len(nick) > 32 {
-		writeError(w, http.StatusBadRequest, "Никнейм: от 1 до 32 символов")
+	nick := strings.TrimSpace(req.Nickname)
+	if msg := validateNickname(nick); msg != "" {
+		writeError(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	user.Nickname = nick
-	user.LastNickChange = time.Now().Format("2006-01-02")
+	user.LastNickChange = timeutil.Today()
 	h.store.UpdateUser(user)
 	writeJSON(w, http.StatusOK, user)
 }
 
 // GET /api/admin/users
 func (h *Handler) AdminUsers(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
 	users := h.store.GetAllUsers()
+	if users == nil {
+		users = []*models.User{}
+	}
 	writeJSON(w, http.StatusOK, users)
 }
 
 // GET /api/admin/stats
 func (h *Handler) AdminStats(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
 	users := h.store.GetAllUsers()
 	results := h.store.GetGameResults()
 	caseResults := h.store.GetCaseResults()
 	totalXP, totalBalance, totalUsers := 0, 0, 0
 	totalBadges, totalAvatars := 0, 0
 	activeToday := 0
-	today := time.Now().Format("2006-01-02")
+	today := timeutil.Today()
 	for _, u := range users {
 		if !u.IsAdmin {
 			totalXP += u.XP
@@ -555,6 +651,102 @@ func (h *Handler) AdminStats(w http.ResponseWriter, r *http.Request) {
 		"total_avatars": totalAvatars,
 		"active_today":  activeToday,
 	})
+}
+
+// GET /api/topics — реестр тем дерева и прогресс ученика.
+//
+// Дерево на клиенте рисуется из статического файла, а вот сколько тем
+// существует и какие пройдены — источник правды на сервере.
+func (h *Handler) Topics(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+	username := getUsernameFromCtx(r)
+	user, ok := h.store.GetUserByUsername(username)
+	if !ok {
+		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+	completed := user.CompletedTopics
+	if completed == nil {
+		completed = []string{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"topics":    topics.All,
+		"completed": completed,
+		"total":     topics.Count(),
+	})
+}
+
+// PUT /api/profile/favorites — избранные игры.
+//
+// Колонка favorite_games была в базе и в модели, но фронт хранил избранное
+// в localStorage: список терялся при смене устройства и при очистке браузера.
+func (h *Handler) UpdateFavorites(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPut) {
+		return
+	}
+	username := getUsernameFromCtx(r)
+	user, ok := h.store.GetUserByUsername(username)
+	if !ok {
+		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	var req struct {
+		Games []string `json:"games"`
+	}
+	if err := h.parseBody(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	// Принимаем только известные игры и не больше, чем их всего есть:
+	// иначе в колонку можно было бы положить произвольный список любой длины.
+	favorites := make([]string, 0, len(knownGames))
+	seen := map[string]bool{}
+	for _, g := range req.Games {
+		if !knownGames[g] || seen[g] {
+			continue
+		}
+		seen[g] = true
+		favorites = append(favorites, g)
+	}
+
+	user.FavoriteGames = favorites
+	h.store.UpdateUser(user)
+	writeJSON(w, http.StatusOK, map[string]any{"favorite_games": favorites})
+}
+
+// knownGames — идентификаторы мини-игр, совпадают с game_type в /api/game/submit.
+var knownGames = map[string]bool{
+	"comma_ninja":    true,
+	"stress_space":   true,
+	"word_alchemist": true,
+	"minefield":      true,
+	"detective_case": true,
+}
+
+// validateUsername проверяет логин и возвращает текст ошибки («» — всё в порядке).
+func validateUsername(s string) string {
+	n := utf8.RuneCountInString(s)
+	if n < usernameMin || !isLatinOnly(s) {
+		return "Логин: только латиница, цифры и _, от 3 символов"
+	}
+	if n > usernameMax {
+		// Верхней границы не было вовсе — логин мог быть любой длины.
+		return "Логин: не длиннее 20 символов"
+	}
+	return ""
+}
+
+// validateNickname проверяет никнейм в символах, а не в байтах.
+func validateNickname(s string) string {
+	n := utf8.RuneCountInString(s)
+	if n < nicknameMin || n > nicknameMax {
+		return "Никнейм: от 1 до 32 символов"
+	}
+	return ""
 }
 
 func isLatinOnly(s string) bool {

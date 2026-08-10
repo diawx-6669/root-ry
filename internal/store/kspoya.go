@@ -198,11 +198,15 @@ func (s *Store) KspoyaLeaderboard(limit int) []models.KspoyaLeaderEntry {
 		var e models.KspoyaLeaderEntry
 		if err := rows.Scan(&e.Username, &e.Nickname, &e.ActiveAvatar,
 			&e.Score, &e.Total, &e.Level, &e.FinishedAt); err != nil {
+			log.Printf("KspoyaLeaderboard scan: %v", err)
 			continue
 		}
 		e.Rank = rank
 		rank++
 		out = append(out, e)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("KspoyaLeaderboard rows: %v", err)
 	}
 	return out
 }
@@ -293,9 +297,13 @@ func (s *Store) ListKspoyaAttempts(username string, limit int) []models.KspoyaAt
 		var a models.KspoyaAttempt
 		if err := rows.Scan(&a.ID, &a.FinishedAt, &a.Level,
 			&a.Correct, &a.Percent, &a.Total, &a.HasReview); err != nil {
+			log.Printf("ListKspoyaAttempts scan: %v", err)
 			continue
 		}
 		out = append(out, a)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("ListKspoyaAttempts rows: %v", err)
 	}
 	return out
 }

@@ -112,6 +112,42 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 .node-l2 .chev-dot, .node-l3 .chev-dot, .node-l4 .chev-dot { background:rgba(14,165,233,0.14); }
 .node-box.expanded .chev-dot { transform:rotate(90deg); }
 
+/* ===== УЗЛЫ С УРОКАМИ ===== */
+/* У темы, к которой привязан урок, слева появляется кнопка запуска.
+   Нажатие на неё открывает урок, нажатие на остальную часть узла —
+   по-прежнему раскрывает ветку. */
+.node-box.has-lesson { border-color:#0ea5e9; }
+.node-box.lesson-done { background:#ecfdf5 !important; border-color:#34d399 !important; color:#065f46 !important; }
+
+.lesson-btn {
+  flex-shrink:0; width:22px; height:22px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
+  font-size:11px; line-height:1; cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+  box-shadow:0 2px 6px rgba(0,153,204,.35);
+}
+.lesson-btn:hover { transform:scale(1.14); box-shadow:0 3px 10px rgba(0,153,204,.5); }
+.lesson-done .lesson-btn { background:linear-gradient(135deg,#059669,#34d399); box-shadow:0 2px 6px rgba(52,211,153,.4); }
+
+/* ===== ПОЛОСА ПРОГРЕССА ПО ДЕРЕВУ ===== */
+#lesson-progress {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 14px; background:#fff; border-bottom:1.5px solid #e2e8f0;
+  flex-shrink:0; font-family:'Segoe UI',sans-serif;
+}
+#lp-bar { flex:1; height:9px; background:#e9eff5; border-radius:8px; overflow:hidden; min-width:60px; }
+#lp-fill { height:100%; width:0%; background:linear-gradient(90deg,#0099cc,#22c55e); border-radius:8px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+#lp-text { font-size:12px; font-weight:700; color:#37576b; white-space:nowrap; }
+#lp-label { font-size:12px; color:#8095a3; white-space:nowrap; }
+#lp-continue {
+  border:none; background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
+  border-radius:11px; padding:6px 13px; font-size:12px; font-weight:700;
+  cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:inherit;
+}
+#lp-continue:hover { filter:brightness(1.08); }
+@media (max-width:560px) { #lp-label { display:none; } }
+
 /* ===== ZOOM HINT / CONTROLS (минимальные, не мешают) ===== */
 #treeHint {
   position:absolute; left:50%; top:12px; transform:translateX(-50%);
@@ -176,6 +212,12 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 </header>
 
 <div id="tree-root">
+  <div id="lesson-progress">
+    <span id="lp-label">🌳 Дерево грамматики</span>
+    <div id="lp-bar"><div id="lp-fill"></div></div>
+    <span id="lp-text">0 / 0</span>
+    <button id="lp-continue">Продолжить</button>
+  </div>
   <div id="search-bar">
     <span class="ico">🔍</span>
     <input id="q" type="text" placeholder="Поиск по дереву грамматики...">
@@ -210,6 +252,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 </nav>
 
 <script src="api.js"></script>
+<script src="lessons/index.js"></script>
 <script>
 // Init header if api.js available
 if(typeof initHeader === 'function') initHeader();
@@ -715,6 +758,61 @@ function nodeClass(depth) {
 
 let searchQuery = '';
 
+/* ═══════════════════════════════════════════════════════════════════
+   Уроки на узлах дерева.
+
+   Дерево рисуется из статического TREE, а уроки живут в lessons/index.js
+   и привязываются к узлу по его подписи (поле node). Пройденные темы
+   приходят с сервера в completed_topics: локальному списку доверять
+   нельзя — награда и прогресс считаются на сервере.
+   ═══════════════════════════════════════════════════════════════════ */
+
+let completedTopics = new Set();
+
+function lessonFor(d) { return lessonForNode(d.data); }
+function isDone(id)   { return completedTopics.has(id); }
+
+function openLesson(d) {
+  const lesson = lessonFor(d);
+  if (!lesson) return;
+  if (typeof Sound !== 'undefined') Sound.click();
+  location.href = 'lesson.html?id=' + encodeURIComponent(lesson.id);
+}
+
+function renderProgress() {
+  const total = LESSON_INDEX.length;
+  const done  = LESSON_INDEX.filter(l => completedTopics.has(l.id)).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('lp-fill').style.width = pct + '%';
+  document.getElementById('lp-text').textContent = `${done} / ${total}`;
+
+  // Кнопка ведёт к первой непройденной теме по порядку дерева.
+  const next = LESSON_INDEX.find(l => !completedTopics.has(l.id));
+  const btn  = document.getElementById('lp-continue');
+  if (next) {
+    btn.textContent = done ? 'Продолжить' : 'Начать';
+    btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(next.id); };
+  } else {
+    btn.textContent = '🌳 Всё пройдено';
+    btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(LESSON_INDEX[0].id); };
+  }
+}
+
+// Прогресс подтягивается с сервера; до ответа рисуем то, что есть в кеше.
+async function loadProgress() {
+  const cached = (API.user()?.completed_topics) || [];
+  completedTopics = new Set(cached);
+  renderProgress();
+
+  const fresh = await API.refreshUser({ force: true }).catch(() => null);
+  if (fresh && Array.isArray(fresh.completed_topics)) {
+    completedTopics = new Set(fresh.completed_topics);
+    renderProgress();
+    update(root);   // перерисовываем галочки на узлах
+  }
+}
+
 function toggle(d) {
   if (d.children) { d._children = d.children; d.children = null; }
   else if (d._children) { d.children = d._children; d._children = null; }
@@ -742,17 +840,30 @@ function update(source) {
       .attr('class', d => 'node-box ' + nodeClass(d.depth))
       .on('click', (event, d) => {
         event.stopPropagation();
+        // У листа с уроком раскрывать нечего — сразу открываем урок.
+        if (lessonFor(d) && !d.children && !d._children) { openLesson(d); return; }
         toggle(d);
         update(d);
         setTimeout(() => centerOn(d), 50);
       })
       .on('mouseenter', (event, d) => {
         const def = DEFS[d.data.label];
-        if (!def) return;
-        tooltip.innerHTML = `<strong>${d.data.label}</strong>${def}`;
+        const lesson = lessonFor(d);
+        if (!def && !lesson) return;
+        tooltip.innerHTML = `<strong>${d.data.label}</strong>${def || ''}` +
+          (lesson ? `<div style="margin-top:6px;color:#7dd3fc;font-size:12px">
+                       ${isDone(lesson.id) ? '✓ урок пройден' : '📘 есть урок · +' + lesson.xp + ' XP'}
+                     </div>` : '');
         tooltip.classList.add('show');
       })
       .on('mouseleave', () => tooltip.classList.remove('show'));
+
+  // Кнопка запуска урока — только у узлов, к которым урок привязан.
+  div.filter(d => !!lessonFor(d))
+     .append('span').attr('class', 'lesson-btn')
+     .attr('title', 'Открыть урок')
+     .html('<i class="fa-solid fa-play"></i>')
+     .on('click', (event, d) => { event.stopPropagation(); openLesson(d); });
 
   div.append('span').attr('class', 'node-label').text(d => d.data.label);
   div.filter(d => d.children || d._children)
@@ -764,7 +875,14 @@ function update(source) {
   nodeMerge.select('.node-box')
       .classed('has-children', d => !!(d.children || d._children))
       .classed('expanded', d => !!d.children)
+      .classed('has-lesson', d => !!lessonFor(d))
+      .classed('lesson-done', d => { const l = lessonFor(d); return !!l && isDone(l.id); })
       .classed('search-match', d => !!searchQuery && d.data.label.toLowerCase().includes(searchQuery));
+
+  nodeMerge.select('.lesson-btn')
+      .html(d => isDone(lessonFor(d).id)
+        ? '<i class="fa-solid fa-check"></i>'
+        : '<i class="fa-solid fa-play"></i>');
 
   nodeMerge.transition().duration(380)
       .attr('transform', d => `translate(${d.x},${d.y})`)
@@ -819,6 +937,7 @@ function centerOn(d, instant = false) {
 
 update(root);
 requestAnimationFrame(() => centerOn(root, true));
+loadProgress();
 
 // Небольшая подсказка про жесты — показываем один раз и прячем
 const hint = document.getElementById('treeHint');

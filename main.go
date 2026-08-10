@@ -16,10 +16,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "rootry_data.json"
-	}
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "rootry_dev_secret_change_in_prod"
@@ -27,14 +23,18 @@ func main() {
 	}
 	middleware.SetJWTSecret(jwtSecret)
 
-	s := store.New(dbPath)
+	s := store.New()
 	h := handlers.New(s)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/register", h.Register)
 	mux.HandleFunc("/api/login", h.Login)
-	mux.HandleFunc("/api/leaderboard", h.Leaderboard)
+	// Рейтинг закрыт авторизацией: раньше он был публичным и отдавал логины,
+	// ники, баланс и серии вообще всех зарегистрированных учеников.
+	mux.HandleFunc("/api/leaderboard", middleware.AuthMiddleware(h.Leaderboard))
 	mux.HandleFunc("/api/me", middleware.AuthMiddleware(h.Me))
+	mux.HandleFunc("/api/profile/favorites", middleware.AuthMiddleware(h.UpdateFavorites))
+	mux.HandleFunc("/api/topics", middleware.AuthMiddleware(h.Topics))
 	mux.HandleFunc("/api/promo", middleware.AuthMiddleware(h.RedeemPromo))
 	mux.HandleFunc("/api/game/submit", middleware.AuthMiddleware(h.GameSubmit))
 	mux.HandleFunc("/api/topic/complete", middleware.AuthMiddleware(h.TopicComplete))

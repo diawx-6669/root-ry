@@ -3,15 +3,24 @@ package store
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"rootry/internal/models"
+	"rootry/internal/timeutil"
 )
+
+// uniqueViolation — код ошибки PostgreSQL при нарушении UNIQUE-ограничения.
+const uniqueViolation = "23505"
+
+// ErrUsernameTaken возвращается, когда логин уже занят. Все прочие ошибки
+// вставки — это авария, и обработчик должен отвечать 500, а не 409.
+var ErrUsernameTaken = errors.New("username taken")
 
 // Store wraps a *sql.DB and exposes the same interface the handlers expect.
 type Store struct {
@@ -20,7 +29,7 @@ type Store struct {
 
 // ── Constructor ───────────────────────────────────────────────────────────────
 
-func New(_ string) *Store {
+func New() *Store {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		log.Fatal("DATABASE_URL env var is not set")
@@ -191,11 +200,17 @@ func (s *Store) CreateUser(username, nickname, password string) (*models.User, e
 	)
 	var id int64
 	if err := row.Scan(&id); err != nil {
-		// unique violation → conflict
-		return nil, fmt.Errorf("conflict")
+		// Занятый логин и упавшая база — разные вещи. Раньше любая ошибка
+		// вставки превращалась в «Логин уже занят», и настоящая авария базы
+		// выглядела для ученика как обычная опечатка в логине.
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == uniqueViolation {
+			return nil, ErrUsernameTaken
+		}
+		log.Printf("CreateUser(%s): %v", username, err)
+		return nil, fmt.Errorf("create user: %w", err)
 	}
 
-	// ИСПРАВЛЕННЫЙ БЛОК: правильно обрабатываем true/false и превращаем в ошибку
 	user, ok := s.GetUserByUsername(username)
 	if !ok {
 		return nil, fmt.Errorf("failed to retrieve created user")
@@ -275,42 +290,50 @@ func (s *Store) UpdateUser(u *models.User) {
 // отдельным подзапросом: наибольший балл, при равенстве — более ранняя попытка.
 // localZone — часовой пояс, по которому считается «сегодня».
 // Сервер живёт в UTC, а ученики в Казахстане: без этого день сменялся бы
-// в пять утра по местному времени.
-const localZone = "Asia/Almaty"
+// в пять утра по местному времени. Тот же пояс использует Go-код через
+// пакет timeutil — «сегодня» во всём проекте должно быть одним и тем же.
+const localZone = timeutil.Zone
 
 // TouchDailyLogin отмечает заход за сегодня: продлевает серию, если вчера
-// заход был, иначе начинает её заново, и выдаёт ежедневный бонус.
+// заход был, иначе начинает её заново.
 //
 // Вызывается не только при вводе логина и пароля, но и при любом обращении
 // к /api/me. Токен живёт 30 дней, поэтому вернувшийся ученик страницу входа
 // обычно не открывает — раньше из-за этого серия навсегда застревала на 1.
 //
-// Всё делается одним UPDATE: условие в WHERE гарантирует, что за день
-// бонус начислится ровно один раз, даже если запросы придут параллельно.
-func (s *Store) TouchDailyLogin(username string) (streak, balance int, awarded bool) {
-	const dailyBonus = 10
-
+// Монеты здесь БОЛЬШЕ НЕ начисляются: за ежедневный бонус отвечает только
+// /api/daily/claim. Раньше бонусов было два — молчаливый +10 за любой заход
+// и кнопка в магазине, — и ученик получал за день вдвое больше, чем показывал
+// интерфейс.
+//
+// Всё делается одним UPDATE: условие в WHERE гарантирует, что серия
+// продлится ровно один раз за день, даже если запросы придут параллельно.
+func (s *Store) TouchDailyLogin(username string) (streak int, updated bool) {
 	row := s.db.QueryRow(`
 		UPDATE users SET
 		  streak = CASE
 		      WHEN last_login = ((now() AT TIME ZONE $2)::date - 1) THEN streak + 1
 		      ELSE 1
 		  END,
-		  balance = balance + $3,
 		  last_login = (now() AT TIME ZONE $2)::date
 		WHERE username = $1
 		  AND last_login IS DISTINCT FROM (now() AT TIME ZONE $2)::date
-		RETURNING streak, balance`,
-		username, localZone, dailyBonus,
+		RETURNING streak`,
+		username, localZone,
 	)
-	if err := row.Scan(&streak, &balance); err != nil {
+	if err := row.Scan(&streak); err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("TouchDailyLogin(%s): %v", username, err)
 		}
-		return 0, 0, false // сегодня уже отмечались
+		return 0, false // сегодня уже отмечались
 	}
-	return streak, balance, true
+	return streak, true
 }
+
+// LeaderboardLimit — сколько строк отдаёт рейтинг. Без ограничения запрос
+// возвращал вообще всех зарегистрированных, и с ростом числа учеников
+// страница рейтинга тянула бы всю таблицу пользователей целиком.
+const LeaderboardLimit = 200
 
 func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rows, err := s.db.Query(`
@@ -326,7 +349,8 @@ func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 		    LIMIT 1
 		) best ON TRUE
 		WHERE u.is_admin = FALSE
-		ORDER BY u.xp DESC`)
+		ORDER BY u.xp DESC, u.username ASC
+		LIMIT $1`, LeaderboardLimit)
 	if err != nil {
 		log.Printf("GetLeaderboard: %v", err)
 		return nil
@@ -336,11 +360,19 @@ func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 	rank := 1
 	for rows.Next() {
 		var e models.LeaderboardEntry
-		rows.Scan(&e.Username, &e.Nickname, &e.XP, &e.Balance, &e.Badges, &e.Streak,
-			&e.ActiveAvatar, &e.KspoyaScore, &e.KspoyaLevel)
+		if err := rows.Scan(&e.Username, &e.Nickname, &e.XP, &e.Balance, &e.Badges, &e.Streak,
+			&e.ActiveAvatar, &e.KspoyaScore, &e.KspoyaLevel); err != nil {
+			log.Printf("GetLeaderboard scan: %v", err)
+			continue
+		}
 		e.Rank = rank
 		rank++
 		entries = append(entries, e)
+	}
+	// Без этой проверки оборванное соединение выглядело бы как «рейтинг
+	// закончился»: ученик увидел бы усечённый список и ничего об этом не узнал.
+	if err := rows.Err(); err != nil {
+		log.Printf("GetLeaderboard rows: %v", err)
 	}
 	return entries
 }
@@ -413,9 +445,14 @@ func (s *Store) GetAllUsers() []*models.User {
 	var out []*models.User
 	for rows.Next() {
 		u, err := scanUser(rows)
-		if err == nil {
-			out = append(out, u)
+		if err != nil {
+			log.Printf("GetAllUsers scan: %v", err)
+			continue
 		}
+		out = append(out, u)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("GetAllUsers rows: %v", err)
 	}
 	return out
 }
@@ -432,8 +469,14 @@ func (s *Store) GetGameResults() []models.GameResult {
 	var out []models.GameResult
 	for rows.Next() {
 		var r models.GameResult
-		rows.Scan(&r.UserID, &r.GameType, &r.Score, &r.XPEarned, &r.CoinsEarned, &r.PlayedAt)
+		if err := rows.Scan(&r.UserID, &r.GameType, &r.Score, &r.XPEarned, &r.CoinsEarned, &r.PlayedAt); err != nil {
+			log.Printf("GetGameResults scan: %v", err)
+			continue
+		}
 		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("GetGameResults rows: %v", err)
 	}
 	return out
 }
@@ -450,9 +493,15 @@ func (s *Store) GetCaseResults() []models.CaseResult {
 	var out []models.CaseResult
 	for rows.Next() {
 		var r models.CaseResult
-		rows.Scan(&r.UserID, &r.CaseType, &r.ItemEmoji, &r.ItemRarity,
-			&r.IsDuplicate, &r.Compensation, &r.PlayedAt)
+		if err := rows.Scan(&r.UserID, &r.CaseType, &r.ItemEmoji, &r.ItemRarity,
+			&r.IsDuplicate, &r.Compensation, &r.PlayedAt); err != nil {
+			log.Printf("GetCaseResults scan: %v", err)
+			continue
+		}
 		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("GetCaseResults rows: %v", err)
 	}
 	return out
 }

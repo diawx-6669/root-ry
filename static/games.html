@@ -443,14 +443,44 @@
         }
     ];
 
-    let favorites = JSON.parse(localStorage.getItem('rootry_favs_v2') || '[]');
+    // Избранное живёт на сервере (колонка favorite_games). Локальный список —
+    // только первое значение до ответа /api/me и разовый перенос старых
+    // избранных из localStorage, где они лежали раньше.
+    let favorites = Favorites.list();
     let activeTag = null;
 
     const allTags = [...new Set(GAMES_DATA.flatMap(g => g.hashtags))].sort();
 
+    async function migrateLocalFavorites() {
+        const raw = localStorage.getItem('rootry_favs_v2');
+        if (!raw) return;
+        localStorage.removeItem('rootry_favs_v2');
+        let old = [];
+        try { old = JSON.parse(raw) || []; } catch { return; }
+
+        const known = new Set(GAMES_DATA.map(g => g.id));
+        const merged = [...new Set([...favorites, ...old.filter(id => known.has(id))])];
+        if (merged.length === favorites.length) return;
+
+        const r = await API.put('/api/profile/favorites', { games: merged });
+        if (r.ok) {
+            favorites = r.data.favorite_games || merged;
+            const u = API.user();
+            if (u) { u.favorite_games = favorites; localStorage.setItem('currentUser', JSON.stringify(u)); }
+            renderAll();
+        }
+    }
+
     function init() {
         buildTagCloud();
         renderAll();
+
+        // Подтягиваем актуальное избранное с сервера и переносим старое.
+        API.refreshUser().then(async () => {
+            favorites = Favorites.list();
+            renderAll();
+            await migrateLocalFavorites();
+        });
         document.getElementById('gameSearch').addEventListener('input', renderAll);
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#filterBtn') && !e.target.closest('#tagDropdown')) {
@@ -499,14 +529,14 @@
 
     function isFav(id) { return favorites.includes(id); }
 
-    function toggleFav(e, id) {
+    async function toggleFav(e, id) {
         e.stopPropagation();
-        if (isFav(id)) {
-            favorites = favorites.filter(f => f !== id);
-        } else {
-            favorites.unshift(id);
-        }
-        localStorage.setItem('rootry_favs_v2', JSON.stringify(favorites));
+        // Звёздочка переключается сразу, запрос уходит следом.
+        favorites = isFav(id) ? favorites.filter(f => f !== id) : [id, ...favorites];
+        renderAll();
+
+        const saved = await Favorites.toggle(id);
+        favorites = saved;
         renderAll();
     }
 

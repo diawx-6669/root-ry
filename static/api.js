@@ -84,11 +84,15 @@ const API = {
 // Каталог общий для профиля и шапки: иначе выбранная аватарка
 // показывалась бы в одном месте и не показывалась в другом.
 const ALL_AVATARS = {
+    // Порядок и состав обязаны совпадать с AvatarPool в internal/store/cases.go:
+    // выпавшую с сервера аватарку, которой нет в этом каталоге, страница
+    // нарисовать не сможет и подставит робота-заглушку. Так пропала коала.
     common: [
         { emoji:'🐱', label:'Кот',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4' },
         { emoji:'🐶', label:'Пёс',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc' },
         { emoji:'🦊', label:'Лис',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede' },
         { emoji:'🐼', label:'Панда',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0' },
+        { emoji:'🐨', label:'Коала',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=koala&backgroundColor=d9f99d' },
         { emoji:'🐻', label:'Медведь', img:'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc' },
         { emoji:'🐸', label:'Лягушка', img:'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0' },
         { emoji:'🦁', label:'Лев',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=lion&backgroundColor=fde68a' },
@@ -151,6 +155,50 @@ function requireAuth() {
 function safeText(el, text) {
     if (el) el.textContent = text ?? '';
 }
+
+// esc — экранирование для вставки в HTML-шаблоны.
+//
+// Ник хранится в базе ровно так, как его ввёл ученик: экранирование —
+// задача вывода. Раньше сервер экранировал ник ПРИ ЗАПИСИ, и «Вася & Петя»
+// показывался как «Вася &amp; Петя». Везде, где значение с сервера попадает
+// в innerHTML, оно обязано пройти через esc().
+function esc(v) {
+    return String(v ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ── Избранные игры ──────────────────────────────────────────────────
+// Хранятся на сервере (колонка favorite_games), а не в localStorage:
+// иначе список терялся при смене устройства и очистке браузера.
+const Favorites = {
+    list() {
+        const u = API.user();
+        return (u && Array.isArray(u.favorite_games)) ? u.favorite_games.slice() : [];
+    },
+    has(id) { return this.list().includes(id); },
+
+    async toggle(id) {
+        const games = this.list();
+        const i = games.indexOf(id);
+        if (i >= 0) games.splice(i, 1); else games.push(id);
+
+        // Сначала показываем результат, потом подтверждаем на сервере:
+        // звёздочка не должна ждать сеть.
+        const u = API.user();
+        if (u) { u.favorite_games = games; localStorage.setItem('currentUser', JSON.stringify(u)); }
+
+        const r = await API.put('/api/profile/favorites', { games });
+        if (r.ok && u) {
+            u.favorite_games = r.data.favorite_games || games;
+            localStorage.setItem('currentUser', JSON.stringify(u));
+        }
+        return games;
+    }
+};
 
 async function initHeader() {
     if (!requireAuth()) return;

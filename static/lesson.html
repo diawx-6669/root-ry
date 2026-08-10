@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootRy | Урок</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="home-style.css">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Segoe UI',sans-serif;
+    background:radial-gradient(circle at 50% 0%,#eef5fb 0%,#e6eef6 55%,#dfe9f3 100%);
+    min-height:100vh;
+}
+
+/* ═════ ВЕРХНЯЯ ПАНЕЛЬ УРОКА ═════ */
+.lesson-top {
+    position:fixed; top:0; left:0; right:0; z-index:900;
+    height:60px; background:#fff;
+    display:flex; align-items:center; gap:14px; padding:0 16px;
+    box-shadow:0 2px 14px rgba(2,62,80,0.08);
+}
+.lt-close {
+    border:none; background:#f1f5f9; color:#64748b;
+    width:36px; height:36px; border-radius:12px; cursor:pointer;
+    font-size:15px; flex-shrink:0; transition:.15s;
+}
+.lt-close:hover { background:#e2e8f0; color:#0f172a; }
+.lt-bar { flex:1; height:14px; background:#e9eff5; border-radius:10px; overflow:hidden; }
+.lt-fill {
+    height:100%; width:0%;
+    background:linear-gradient(90deg,#0099cc,#22c55e);
+    border-radius:10px; transition:width .35s cubic-bezier(.4,0,.2,1);
+}
+.lt-hearts { display:flex; gap:4px; font-size:17px; flex-shrink:0; }
+.lt-hearts .heart.lost { opacity:.22; filter:grayscale(1); }
+.lt-combo {
+    flex-shrink:0; font-weight:800; font-size:13px; color:#f59e0b;
+    opacity:0; transform:scale(.8); transition:.25s; min-width:34px; text-align:right;
+}
+.lt-combo.on { opacity:1; transform:scale(1); }
+
+/* ═════ ОБЩИЙ КАРКАС ═════ */
+.wrap { max-width:720px; margin:0 auto; padding:84px 16px 140px; }
+.phase { display:none; animation:fadeUp .32s cubic-bezier(.4,0,.2,1); }
+.phase.on { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+
+.card {
+    background:#fff; border-radius:22px; padding:22px;
+    box-shadow:0 6px 26px rgba(2,62,80,.07); margin-bottom:16px;
+}
+
+/* ═════ ЗАСТАВКА ═════ */
+.hero { text-align:center; padding:34px 22px; }
+.hero .icon { font-size:56px; line-height:1; margin-bottom:12px; }
+.hero .sect {
+    display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em;
+    color:#0099cc; background:#e0f2fe; border-radius:20px; padding:5px 13px; margin-bottom:12px;
+}
+.hero h1 { font-size:27px; color:#023e50; margin-bottom:12px; line-height:1.22; }
+.hero .intro { font-size:15px; color:#546e7a; line-height:1.62; max-width:520px; margin:0 auto; }
+.hero-meta { display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap; }
+.chip {
+    background:#f1f7fb; border-radius:14px; padding:8px 14px;
+    font-size:13px; font-weight:700; color:#37576b;
+}
+.chip.done { background:#dcfce7; color:#15803d; }
+
+/* ═════ ТЕОРИЯ ═════ */
+.step-h { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.step-num {
+    width:30px; height:30px; border-radius:10px; flex-shrink:0;
+    background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
+}
+.step-h h2 { font-size:19px; color:#023e50; line-height:1.3; }
+.step-t { font-size:15px; color:#41596a; line-height:1.7; }
+.step-t b { color:#023e50; }
+
+.ex-list { list-style:none; margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+.ex-list li {
+    background:#f4f9fc; border-left:3px solid #7dd3fc; border-radius:0 12px 12px 0;
+    padding:10px 14px; font-size:14px; color:#37576b; line-height:1.55; white-space:pre-line;
+}
+.ex-list li b { color:#023e50; }
+
+.tbl { width:100%; border-collapse:collapse; margin-top:14px; font-size:14px; }
+.tbl-scroll { overflow-x:auto; margin-top:14px; }
+.tbl-scroll .tbl { margin-top:0; }
+.tbl th {
+    background:#f1f7fb; color:#37576b; font-size:11px; text-transform:uppercase;
+    letter-spacing:.05em; padding:9px 11px; text-align:left; font-weight:800;
+}
+.tbl td { padding:10px 11px; border-top:1px solid #eef3f7; color:#41596a; line-height:1.5; }
+.tbl td:first-child { font-weight:700; color:#023e50; white-space:nowrap; }
+.tbl td b { color:#023e50; }
+
+.rule-card {
+    background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
+    border-radius:22px; padding:22px; margin-bottom:16px;
+    box-shadow:0 8px 26px rgba(0,153,204,.26);
+}
+.rule-card .lbl { font-size:11px; letter-spacing:.1em; opacity:.8; font-weight:800; margin-bottom:8px; }
+.rule-card .txt { font-size:16px; line-height:1.6; font-weight:600; }
+
+.trap { display:flex; gap:12px; padding:13px 0; border-top:1px solid #f1f5f9; }
+.trap:first-of-type { border-top:none; padding-top:4px; }
+.trap .ic { flex-shrink:0; font-size:18px; }
+.trap .q { font-weight:800; color:#023e50; font-size:14px; margin-bottom:4px; }
+.trap .a { font-size:14px; color:#546e7a; line-height:1.6; }
+.trap .a b { color:#023e50; }
+
+.link-row {
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:#f7fbfd; border:1px solid #e6eef4; border-radius:15px;
+    padding:13px 15px; margin-bottom:9px; cursor:pointer; transition:.15s;
+    font-family:inherit;
+}
+.link-row:hover { background:#eef7fc; border-color:#7dd3fc; transform:translateX(3px); }
+.link-row .li { font-size:20px; flex-shrink:0; }
+.link-row .lt { flex:1; }
+.link-row .ln { font-weight:800; color:#023e50; font-size:14px; }
+.link-row .lw { font-size:12.5px; color:#8095a3; margin-top:2px; line-height:1.45; }
+.link-row .lc { color:#b6c6d2; flex-shrink:0; }
+
+.sec-title {
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+    color:#8095a3; margin:22px 4px 11px;
+}
+
+/* ═════ ПРАКТИКА ═════ */
+.q-kind {
+    font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:#0099cc; margin-bottom:9px;
+}
+.q-text { font-size:19px; color:#023e50; line-height:1.45; font-weight:700; margin-bottom:20px; }
+.q-text .gap {
+    display:inline-block; min-width:62px; border-bottom:3px solid #0099cc;
+    text-align:center; color:#0099cc; font-weight:800;
+}
+/* пропуск буквы внутри слова — узкий, чтобы слово не разъезжалось */
+.q-text .gap.narrow { min-width:24px; }
+
+.opts { display:flex; flex-direction:column; gap:10px; }
+.opt {
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border:2px solid #e6eef4; border-radius:16px;
+    padding:14px 16px; cursor:pointer; transition:.14s;
+    font-size:15px; color:#37576b; font-family:inherit; text-align:left; width:100%;
+    font-weight:600;
+}
+.opt:hover:not(:disabled) { border-color:#7dd3fc; background:#f7fcff; }
+.opt .key {
+    width:26px; height:26px; border-radius:8px; background:#f1f5f9; color:#8095a3;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; flex-shrink:0; transition:.14s;
+}
+.opt.sel { border-color:#0099cc; background:#eff9ff; }
+.opt.sel .key { background:#0099cc; color:#fff; }
+.opt.ok { border-color:#22c55e; background:#f0fdf4; }
+.opt.ok .key { background:#22c55e; color:#fff; }
+.opt.bad { border-color:#ef4444; background:#fef2f2; }
+.opt.bad .key { background:#ef4444; color:#fff; }
+.opt:disabled { cursor:default; }
+
+.opts.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.opts.grid2 .opt { justify-content:center; font-size:16px; font-weight:800; }
+
+/* сопоставление */
+.match-wrap { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.match-col { display:flex; flex-direction:column; gap:9px; }
+.mtile {
+    background:#fff; border:2px solid #e6eef4; border-radius:14px;
+    padding:13px 12px; cursor:pointer; transition:.14s;
+    font-size:14px; color:#37576b; font-weight:600; font-family:inherit;
+    text-align:left; line-height:1.4;
+}
+.mtile:hover:not(:disabled) { border-color:#7dd3fc; }
+.mtile.sel { border-color:#0099cc; background:#eff9ff; }
+.mtile.done { border-color:#22c55e; background:#f0fdf4; color:#15803d; }
+.mtile.miss { border-color:#ef4444; background:#fef2f2; animation:shake .35s; }
+.mtile:disabled { cursor:default; opacity:.55; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+/* порядок */
+.order-slots {
+    min-height:56px; border:2px dashed #cbd9e3; border-radius:16px;
+    padding:10px; display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;
+    background:#fbfdfe;
+}
+.order-slots:empty::after {
+    content:'Нажимай на варианты в правильном порядке';
+    color:#b6c6d2; font-size:13px; padding:6px;
+}
+.otile {
+    background:#fff; border:2px solid #e6eef4; border-radius:12px;
+    padding:9px 13px; font-size:14px; color:#37576b; font-weight:700;
+    cursor:pointer; transition:.14s; font-family:inherit;
+}
+.otile:hover:not(:disabled) { border-color:#7dd3fc; }
+.otile.placed { background:#eff9ff; border-color:#0099cc; color:#0369a1; }
+.otile.used { opacity:.25; pointer-events:none; }
+.otile:disabled { cursor:default; }
+.order-pool { display:flex; flex-wrap:wrap; gap:8px; }
+
+/* ═════ НИЖНЯЯ ПАНЕЛЬ ═════ */
+.footbar {
+    position:fixed; bottom:0; left:0; right:0; z-index:900;
+    background:#fff; border-top:1px solid #e9eff5;
+    box-shadow:0 -4px 22px rgba(2,62,80,.07);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+}
+.footbar-in { max-width:720px; margin:0 auto; }
+.fb-msg { display:none; margin-bottom:12px; }
+.fb-msg.on { display:block; animation:fadeUp .22s; }
+.fb-title { display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; margin-bottom:5px; }
+.fb-msg.good .fb-title { color:#15803d; }
+.fb-msg.bad  .fb-title { color:#b91c1c; }
+.fb-why { font-size:14px; color:#546e7a; line-height:1.6; }
+.fb-why b { color:#023e50; }
+
+.btn {
+    width:100%; border:none; border-radius:16px; padding:16px;
+    font-size:16px; font-weight:800; cursor:pointer; font-family:inherit;
+    transition:.16s; color:#fff;
+}
+.btn:disabled { background:#e2e8f0 !important; color:#94a3b8 !important; cursor:default; box-shadow:none; }
+.btn-primary { background:linear-gradient(135deg,#023e50,#0099cc); box-shadow:0 6px 18px rgba(0,153,204,.3); }
+.btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 9px 24px rgba(0,153,204,.38); }
+.btn-good { background:linear-gradient(135deg,#16a34a,#22c55e); box-shadow:0 6px 18px rgba(34,197,94,.3); }
+.btn-bad  { background:linear-gradient(135deg,#dc2626,#ef4444); box-shadow:0 6px 18px rgba(239,68,68,.3); }
+.btn-ghost { background:#f1f5f9; color:#546e7a; box-shadow:none; margin-top:9px; }
+.btn-ghost:hover { background:#e2e8f0; }
+
+/* ═════ РЕЗУЛЬТАТ ═════ */
+.result { text-align:center; padding:30px 22px; }
+.result .big { font-size:62px; line-height:1; margin-bottom:10px; }
+.result h2 { font-size:25px; color:#023e50; margin-bottom:8px; }
+.result .sub { font-size:15px; color:#546e7a; line-height:1.6; margin-bottom:22px; }
+.res-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px; }
+.res-box { background:#f7fbfd; border-radius:16px; padding:15px 8px; }
+.res-box .v { font-size:23px; font-weight:800; color:#023e50; }
+.res-box .l { font-size:11px; color:#8095a3; font-weight:700; margin-top:3px; }
+.reward-line {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:#fffbeb; border:1px solid #fde68a; border-radius:14px;
+    padding:12px; margin-top:14px; font-weight:800; color:#92400e; font-size:15px;
+}
+
+.loading { text-align:center; padding:70px 20px; color:#8095a3; font-size:15px; }
+.loading i { font-size:28px; color:#0099cc; margin-bottom:12px; display:block; }
+
+@media (max-width:520px) {
+    .wrap { padding:76px 12px 150px; }
+    .hero h1 { font-size:23px; }
+    .q-text { font-size:17px; }
+    .match-wrap { gap:8px; }
+    .mtile { font-size:13px; padding:11px 10px; }
+    .res-grid { gap:7px; }
+}
+</style>
+</head>
+<body>
+
+<div class="lesson-top">
+    <button class="lt-close" id="closeBtn" title="Выйти"><i class="fa-solid fa-xmark"></i></button>
+    <div class="lt-bar"><div class="lt-fill" id="progFill"></div></div>
+    <div class="lt-hearts" id="hearts"></div>
+    <div class="lt-combo" id="combo"></div>
+</div>
+
+<div class="wrap">
+    <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i>Загружаем урок…</div>
+
+    <!-- ЗАСТАВКА -->
+    <section class="phase" id="phaseIntro">
+        <div class="card hero">
+            <div class="icon" id="hIcon">📘</div>
+            <div class="sect" id="hSect"></div>
+            <h1 id="hTitle"></h1>
+            <p class="intro" id="hIntro"></p>
+            <div class="hero-meta" id="hMeta"></div>
+        </div>
+    </section>
+
+    <!-- ТЕОРИЯ -->
+    <section class="phase" id="phaseTheory"><div id="theoryBody"></div></section>
+
+    <!-- ПРАКТИКА -->
+    <section class="phase" id="phasePractice">
+        <div class="card">
+            <div class="q-kind" id="qKind"></div>
+            <div class="q-text" id="qText"></div>
+            <div id="qBody"></div>
+        </div>
+    </section>
+
+    <!-- РЕЗУЛЬТАТ -->
+    <section class="phase" id="phaseResult"><div id="resultBody"></div></section>
+</div>
+
+<div class="footbar" id="footbar" style="display:none">
+    <div class="footbar-in">
+        <div class="fb-msg" id="fbMsg">
+            <div class="fb-title" id="fbTitle"></div>
+            <div class="fb-why" id="fbWhy"></div>
+        </div>
+        <button class="btn btn-primary" id="mainBtn">Начать</button>
+        <button class="btn btn-ghost" id="ghostBtn" style="display:none"></button>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script src="lessons/index.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   Плеер урока: заставка → теория → практика → результат.
+
+   Устройство простое и намеренно без фреймворка: одно состояние `S`,
+   один рендер на фазу. Ответы проверяются на клиенте, а награду за
+   пройденную тему выдаёт сервер по идентификатору темы — накрутить XP,
+   подделав ответы, нельзя: за одну тему награда даётся один раз.
+   ═══════════════════════════════════════════════════════════════════ */
+
+if (!requireAuth()) throw new Error('redirect');
+
+const MAX_HEARTS = 3;
+const PASS_RATIO = 0.7;   // сколько нужно решить, чтобы тема засчиталась
+
+const S = {
+    lesson: null,
+    phase: 'intro',        // intro | theory | practice | result
+    stepIdx: 0,            // текущий блок теории
+    qIdx: 0,               // текущее задание
+    hearts: MAX_HEARTS,
+    correct: 0,
+    streak: 0,
+    bestStreak: 0,
+    answered: false,       // ответ на текущее задание уже проверен
+    pick: null,            // выбранный вариант / массив / порядок
+    matchLeft: null,       // выбранная плитка слева в «сопоставь»
+    matchDone: [],
+    matchErrors: 0,        // ошибки внутри текущего «сопоставь»
+    order: [],
+    saving: false,
+    saved: null,           // ответ сервера о начислении
+};
+
+const $ = id => document.getElementById(id);
+
+/* ── Загрузка ──────────────────────────────────────────────────── */
+(async function boot() {
+    const id = new URLSearchParams(location.search).get('id');
+    const lesson = id ? await loadLesson(id).catch(() => null) : null;
+
+    if (!lesson) {
+        $('loading').innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i>Урок не найден.' +
+            '<br><br><a href="tree.html" style="color:#0099cc;font-weight:700">Вернуться к дереву</a>';
+        return;
+    }
+
+    S.lesson = lesson;
+    document.title = 'RootRy | ' + lesson.title;
+    $('loading').style.display = 'none';
+    $('footbar').style.display = 'block';
+
+    await API.refreshUser().catch(() => {});
+    renderIntro();
+})();
+
+$('closeBtn').onclick = () => {
+    if (S.phase === 'practice' && !S.saved) {
+        if (!confirm('Выйти из урока? Прогресс практики не сохранится.')) return;
+    }
+    location.href = 'tree.html';
+};
+
+/* ── Заставка ──────────────────────────────────────────────────── */
+function renderIntro() {
+    S.phase = 'intro';
+    const L = S.lesson;
+    $('hIcon').textContent = L.icon || '📘';
+    $('hSect').textContent = L.section;
+    $('hTitle').textContent = L.title;
+    $('hIntro').textContent = L.intro;
+
+    const done = (API.user()?.completed_topics || []).includes(L.id);
+    $('hMeta').innerHTML =
+        `<span class="chip">📖 ${L.steps.length} блока теории</span>` +
+        `<span class="chip">✍️ ${L.practice.length} заданий</span>` +
+        (done ? '<span class="chip done">✓ Уже пройдено</span>'
+              : `<span class="chip">⚡ +${L.xp} XP</span>`);
+
+    showPhase('phaseIntro');
+    setProgress(0);
+    renderHearts();
+    setMain('Начать урок', 'btn-primary', startTheory);
+    hideGhost();
+}
+
+/* ── Теория ────────────────────────────────────────────────────── */
+function startTheory() {
+    S.phase = 'theory';
+    S.stepIdx = 0;
+    renderTheory();
+}
+
+function renderTheory() {
+    const L = S.lesson;
+    const total = L.steps.length + 1;               // +1 — итоговый экран
+    const isSummary = S.stepIdx >= L.steps.length;
+    setProgress((S.stepIdx / total) * 40);          // теория занимает 40% полосы
+
+    if (!isSummary) {
+        const st = L.steps[S.stepIdx];
+        $('theoryBody').innerHTML = `
+            <div class="card">
+                <div class="step-h">
+                    <div class="step-num">${S.stepIdx + 1}</div>
+                    <h2>${esc(st.h)}</h2>
+                </div>
+                <div class="step-t">${st.t}</div>
+                ${st.ex ? `<ul class="ex-list">${st.ex.map(e => `<li>${e}</li>`).join('')}</ul>` : ''}
+                ${st.table ? renderTable(st) : ''}
+            </div>`;
+        setMain(S.stepIdx === L.steps.length - 1 ? 'К правилу' : 'Дальше', 'btn-primary', () => {
+            S.stepIdx++; renderTheory(); window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        hideGhost();
+    } else {
+        $('theoryBody').innerHTML = `
+            <div class="rule-card">
+                <div class="lbl">ЗАПОМНИ</div>
+                <div class="txt">${esc(L.rule)}</div>
+            </div>
+            ${L.traps?.length ? `
+            <div class="sec-title"><i class="fa-solid fa-triangle-exclamation"></i> Частые ошибки</div>
+            <div class="card">
+                ${L.traps.map(t => `
+                    <div class="trap">
+                        <div class="ic">⚠️</div>
+                        <div><div class="q">${esc(t.q)}</div><div class="a">${t.a}</div></div>
+                    </div>`).join('')}
+            </div>` : ''}
+            ${L.links?.length ? `
+            <div class="sec-title"><i class="fa-solid fa-diagram-project"></i> Связано с темами</div>
+            <div class="card" style="padding:14px">${renderLinks(L.links)}</div>` : ''}`;
+        bindLinks();
+        setMain('Перейти к практике →', 'btn-primary', startPractice);
+        showGhost('Повторить теорию', () => { S.stepIdx = 0; renderTheory(); window.scrollTo({ top: 0 }); });
+    }
+    showPhase('phaseTheory');
+}
+
+function renderTable(st) {
+    const head = st.tableHead && st.tableHead.some(h => h)
+        ? `<thead><tr>${st.tableHead.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` : '';
+    const body = st.table.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+    return `<div class="tbl-scroll"><table class="tbl">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+function renderLinks(links) {
+    return links.map(l => {
+        const meta = LESSON_BY_ID[l.id];
+        if (!meta) return '';
+        return `<button class="link-row" data-goto="${esc(meta.id)}">
+            <span class="li">${meta.icon}</span>
+            <span class="lt"><span class="ln">${esc(meta.title)}</span><span class="lw">${esc(l.why)}</span></span>
+            <span class="lc"><i class="fa-solid fa-chevron-right"></i></span>
+        </button>`;
+    }).join('');
+}
+
+function bindLinks() {
+    document.querySelectorAll('[data-goto]').forEach(b => {
+        b.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(b.dataset.goto); };
+    });
+}
+
+/* ── Практика ──────────────────────────────────────────────────── */
+function startPractice() {
+    S.phase = 'practice';
+    S.qIdx = 0; S.hearts = MAX_HEARTS; S.correct = 0;
+    S.streak = 0; S.bestStreak = 0;
+    renderHearts();
+    renderQuestion();
+    window.scrollTo({ top: 0 });
+}
+
+const KIND_LABEL = {
+    choice:'Выбери ответ', fill:'Вставь пропущенное', tf:'Верно или неверно',
+    multi:'Выбери все верные', match:'Сопоставь пары', order:'Расставь по порядку'
+};
+
+function renderQuestion() {
+    const L = S.lesson;
+    const q = L.practice[S.qIdx];
+
+    S.answered = false; S.pick = null;
+    S.matchLeft = null; S.matchDone = []; S.matchErrors = 0; S.order = [];
+
+    setProgress(40 + (S.qIdx / L.practice.length) * 60);
+    $('qKind').textContent = `${KIND_LABEL[q.type] || 'Задание'} · ${S.qIdx + 1} из ${L.practice.length}`;
+    $('qText').innerHTML = formatGap(q.q);
+    $('qBody').innerHTML = '';
+
+    ({ choice:renderChoice, fill:renderChoice, tf:renderTF,
+       multi:renderMulti, match:renderMatch, order:renderOrder }[q.type] || renderChoice)(q);
+
+    hideFeedback();
+    showPhase('phasePractice');
+    setMain('Проверить', 'btn-primary', checkAnswer);
+    $('mainBtn').disabled = true;
+    hideGhost();
+}
+
+// Пропуск в задании бывает двух видов: целое слово («___») и буква внутри
+// слова («предл_гает»). Первый рисуем широким, второй — узким, чтобы слово
+// не разъезжалось. Заполняется всегда первый пропуск в тексте.
+function formatGap(text) {
+    let first = true;
+    return esc(text).replace(/_+/g, run => {
+        const wide = run.length > 1;
+        const id = first ? ' id="gapSlot"' : '';
+        first = false;
+        return `<span class="gap${wide ? '' : ' narrow'}"${id}>&nbsp;</span>`;
+    });
+}
+function fillGap(txt) {
+    const slot = $('gapSlot');
+    if (slot) slot.textContent = txt;
+}
+
+const LETTERS = ['А','Б','В','Г','Д','Е'];
+
+function renderChoice(q) {
+    $('qBody').innerHTML = `<div class="opts">${
+        q.options.map((o, i) =>
+            `<button class="opt" data-i="${i}"><span class="key">${LETTERS[i] || i + 1}</span><span>${esc(o)}</span></button>`
+        ).join('')}</div>`;
+    document.querySelectorAll('.opt').forEach(b => {
+        b.onclick = () => {
+            if (S.answered) return;
+            document.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
+            b.classList.add('sel');
+            S.pick = +b.dataset.i;
+            if (q.type === 'fill') fillGap(q.options[S.pick]);
+            $('mainBtn').disabled = false;
+            Sound.click();
+        };
+    });
+}
+
+function renderTF(q) {
+    $('qBody').innerHTML = `<div class="opts grid2">
+        <button class="opt" data-i="1"><span>✓ Верно</span></button>
+        <button class="opt" data-i="0"><span>✕ Неверно</span></button>
+    </div>`;
+    document.querySelectorAll('.opt').forEach(b => {
+        b.onclick = () => {
+            if (S.answered) return;
+            document.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
+            b.classList.add('sel');
+            S.pick = b.dataset.i === '1';
+            $('mainBtn').disabled = false;
+            Sound.click();
+        };
+    });
+}
+
+function renderMulti(q) {
+    S.pick = [];
+    $('qBody').innerHTML = `<div class="opts">${
+        q.options.map((o, i) =>
+            `<button class="opt" data-i="${i}"><span class="key">${LETTERS[i] || i + 1}</span><span>${esc(o)}</span></button>`
+        ).join('')}</div>`;
+    document.querySelectorAll('.opt').forEach(b => {
+        b.onclick = () => {
+            if (S.answered) return;
+            const i = +b.dataset.i;
+            const at = S.pick.indexOf(i);
+            if (at >= 0) { S.pick.splice(at, 1); b.classList.remove('sel'); }
+            else { S.pick.push(i); b.classList.add('sel'); }
+            $('mainBtn').disabled = S.pick.length === 0;
+            Sound.click();
+        };
+    });
+}
+
+function renderMatch(q) {
+    // Правая колонка перемешивается, левая идёт по порядку.
+    const right = q.pairs.map((p, i) => ({ text: p[1], i })).sort(() => Math.random() - 0.5);
+    $('qBody').innerHTML = `<div class="match-wrap">
+        <div class="match-col">${q.pairs.map((p, i) =>
+            `<button class="mtile" data-side="l" data-i="${i}">${esc(p[0])}</button>`).join('')}</div>
+        <div class="match-col">${right.map(r =>
+            `<button class="mtile" data-side="r" data-i="${r.i}">${esc(r.text)}</button>`).join('')}</div>
+    </div>`;
+
+    document.querySelectorAll('.mtile').forEach(t => {
+        t.onclick = () => {
+            if (S.answered || t.classList.contains('done')) return;
+            const side = t.dataset.side, idx = +t.dataset.i;
+
+            if (side === 'l') {
+                document.querySelectorAll('[data-side="l"]').forEach(x => x.classList.remove('sel'));
+                t.classList.add('sel');
+                S.matchLeft = idx;
+                Sound.click();
+                return;
+            }
+            if (S.matchLeft === null) return;
+
+            const leftEl = document.querySelector(`[data-side="l"][data-i="${S.matchLeft}"]`);
+            if (idx === S.matchLeft) {
+                leftEl.classList.remove('sel'); leftEl.classList.add('done');
+                t.classList.add('done');
+                S.matchDone.push(idx);
+                S.matchLeft = null;
+                Sound.correct();
+                if (S.matchDone.length === q.pairs.length) { $('mainBtn').disabled = false; checkAnswer(); }
+            } else {
+                t.classList.add('miss');
+                setTimeout(() => t.classList.remove('miss'), 350);
+                leftEl.classList.remove('sel');
+                S.matchLeft = null;
+                S.matchErrors++;
+                Sound.wrong();
+                loseHeart();
+                // Жизни кончились прямо посреди сопоставления — закрываем задание.
+                if (S.hearts <= 0) { $('mainBtn').disabled = false; checkAnswer(); }
+            }
+        };
+    });
+}
+
+function renderOrder(q) {
+    const shuffled = q.items.map((t, i) => ({ t, i })).sort(() => Math.random() - 0.5);
+    $('qBody').innerHTML = `
+        <div class="order-slots" id="orderSlots"></div>
+        <div class="order-pool" id="orderPool">${shuffled.map(s =>
+            `<button class="otile" data-i="${s.i}">${esc(s.t)}</button>`).join('')}</div>`;
+
+    document.querySelectorAll('#orderPool .otile').forEach(b => {
+        b.onclick = () => {
+            if (S.answered || b.classList.contains('used')) return;
+            b.classList.add('used');
+            S.order.push(+b.dataset.i);
+            redrawSlots(q);
+            Sound.click();
+        };
+    });
+}
+
+function redrawSlots(q) {
+    $('orderSlots').innerHTML = S.order.map((idx, pos) =>
+        `<button class="otile placed" data-pos="${pos}">${esc(q.items[idx])}</button>`).join('');
+    document.querySelectorAll('#orderSlots .otile').forEach(b => {
+        b.onclick = () => {
+            if (S.answered) return;
+            const pos = +b.dataset.pos;
+            const removed = S.order.splice(pos, 1)[0];
+            document.querySelector(`#orderPool .otile[data-i="${removed}"]`)?.classList.remove('used');
+            redrawSlots(q);
+        };
+    });
+    $('mainBtn').disabled = S.order.length !== q.items.length;
+}
+
+/* ── Проверка ──────────────────────────────────────────────────── */
+function isCorrect(q) {
+    switch (q.type) {
+        case 'tf':    return S.pick === q.correct;
+        case 'multi': {
+            const a = [...(S.pick || [])].sort().join(','), b = [...q.correct].sort().join(',');
+            return a === b && a !== '';
+        }
+        // Пары в итоге сходятся всегда — заданием считается решённым только
+        // то сопоставление, которое собрано без единой ошибки.
+        case 'match': return S.matchDone.length === q.pairs.length && S.matchErrors === 0;
+        case 'order': return S.order.join(',') === q.correct.join(',');
+        default:      return S.pick === q.correct;
+    }
+}
+
+function checkAnswer() {
+    if (S.answered) return;
+    const q = S.lesson.practice[S.qIdx];
+    const ok = isCorrect(q);
+    S.answered = true;
+
+    markAnswers(q, ok);
+
+    if (ok) {
+        S.correct++;
+        S.streak++;
+        S.bestStreak = Math.max(S.bestStreak, S.streak);
+        showCombo();
+        Sound.correct();
+        showFeedback(true, q.why);
+    } else {
+        S.streak = 0;
+        hideCombo();
+        if (q.type !== 'match') loseHeart();   // в «сопоставь» жизнь снимается на месте
+        Sound.wrong();
+        showFeedback(false, q.why);
+    }
+
+    const last = S.qIdx === S.lesson.practice.length - 1;
+    if (S.hearts <= 0) {
+        setMain('Посмотреть результат', 'btn-bad', finish);
+    } else {
+        setMain(last ? 'Завершить' : 'Продолжить', ok ? 'btn-good' : 'btn-primary',
+                last ? finish : nextQuestion);
+    }
+    $('mainBtn').disabled = false;
+}
+
+function markAnswers(q, ok) {
+    if (q.type === 'match' || q.type === 'order') {
+        document.querySelectorAll('.mtile, .otile').forEach(t => t.disabled = true);
+        if (q.type === 'order') {
+            document.querySelectorAll('#orderSlots .otile').forEach((el, pos) => {
+                el.classList.add(S.order[pos] === q.correct[pos] ? 'placed' : 'used');
+            });
+        }
+        return;
+    }
+    document.querySelectorAll('.opt').forEach(b => {
+        b.disabled = true;
+        const i = +b.dataset.i;
+        const right = q.type === 'tf' ? (i === 1) === q.correct
+                    : q.type === 'multi' ? q.correct.includes(i)
+                    : i === q.correct;
+        if (right) b.classList.add('ok');
+        else if (b.classList.contains('sel')) b.classList.add('bad');
+        b.classList.remove('sel');
+    });
+    if (q.type === 'fill' && !ok) fillGap(q.options[q.correct]);
+}
+
+function nextQuestion() {
+    S.qIdx++;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── Жизни и комбо ─────────────────────────────────────────────── */
+function loseHeart() {
+    S.hearts = Math.max(0, S.hearts - 1);
+    renderHearts();
+}
+function renderHearts() {
+    $('hearts').innerHTML = Array.from({ length: MAX_HEARTS },
+        (_, i) => `<span class="heart${i < S.hearts ? '' : ' lost'}">❤️</span>`).join('');
+}
+function showCombo() {
+    const el = $('combo');
+    if (S.streak < 2) { hideCombo(); return; }
+    el.textContent = '🔥' + S.streak;
+    el.classList.add('on');
+}
+function hideCombo() { $('combo').classList.remove('on'); }
+
+/* ── Результат ─────────────────────────────────────────────────── */
+async function finish() {
+    S.phase = 'result';
+    setProgress(100);
+    hideFeedback();
+    hideGhost();
+
+    const L = S.lesson;
+    const total = L.practice.length;
+    const ratio = total ? S.correct / total : 0;
+    const passed = S.hearts > 0 && ratio >= PASS_RATIO;
+    const percent = Math.round(ratio * 100);
+    const already = (API.user()?.completed_topics || []).includes(L.id);
+
+    $('resultBody').innerHTML = `
+        <div class="card result">
+            <div class="big">${passed ? '🎉' : '💪'}</div>
+            <h2>${passed ? 'Тема пройдена!' : 'Почти получилось'}</h2>
+            <p class="sub">${passed
+                ? 'Ты разобрался с темой «' + esc(L.title) + '».'
+                : 'Нужно решить не меньше 70% заданий и не потерять все жизни. Повтори теорию и попробуй снова.'}</p>
+            <div class="res-grid">
+                <div class="res-box"><div class="v">${S.correct}/${total}</div><div class="l">ВЕРНО</div></div>
+                <div class="res-box"><div class="v">${percent}%</div><div class="l">ТОЧНОСТЬ</div></div>
+                <div class="res-box"><div class="v">🔥${S.bestStreak}</div><div class="l">СЕРИЯ</div></div>
+            </div>
+            <div id="rewardSlot"></div>
+        </div>
+        ${L.links?.length ? `
+        <div class="sec-title"><i class="fa-solid fa-diagram-project"></i> Куда двигаться дальше</div>
+        <div class="card" style="padding:14px">${renderLinks(L.links)}</div>` : ''}`;
+    bindLinks();
+    showPhase('phaseResult');
+
+    const next = nextLesson(L.id);
+    setMain(next ? 'Следующая тема →' : 'Вернуться к дереву', 'btn-primary',
+        () => { location.href = next ? 'lesson.html?id=' + encodeURIComponent(next.id) : 'tree.html'; });
+    showGhost(passed ? 'К дереву' : 'Пройти заново', () => {
+        if (passed) location.href = 'tree.html';
+        else { S.stepIdx = 0; startTheory(); window.scrollTo({ top: 0 }); }
+    });
+
+    if (passed) { Sound.levelUp(); await saveProgress(already); }
+    else Sound.error();
+}
+
+async function saveProgress(already) {
+    if (S.saving) return;
+    S.saving = true;
+
+    // Награду начисляет сервер по идентификатору темы: сколько XP стоит тема
+    // и была ли она уже пройдена, решает он, а не эта страница.
+    const r = await API.post('/api/topic/complete', {
+        topic: S.lesson.id, correct: S.correct, total: S.lesson.practice.length
+    });
+    S.saving = false;
+    if (!r.ok) return;
+
+    S.saved = r.data;
+    const d = r.data;
+
+    if (d.already_done || already) {
+        $('rewardSlot').innerHTML =
+            '<div class="reward-line">✓ Тема уже была пройдена — награда выдаётся один раз</div>';
+        return;
+    }
+
+    $('rewardSlot').innerHTML =
+        `<div class="reward-line">⚡ +${d.xp_earned} XP &nbsp;·&nbsp; 🪙 +${d.coins_earned} монет</div>` +
+        (d.badge_earned ? `<div class="reward-line">🏅 Новый значок: ${esc(d.badge_earned)}</div>` : '') +
+        `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
+            🌳 Дерево: ${d.completed_count} из ${d.total_topics} тем</div>`;
+
+    const u = API.user();
+    if (u) {
+        u.xp = d.new_xp; u.balance = d.new_balance;
+        u.completed_topics = [...(u.completed_topics || []), S.lesson.id];
+        if (d.badge_earned) u.badges = [...(u.badges || []), d.badge_earned];
+        localStorage.setItem('currentUser', JSON.stringify(u));
+    }
+    if (d.coins_earned > 0) rewardCoins(d.coins_earned, d.new_balance);
+}
+
+/* ── Мелкие помощники интерфейса ───────────────────────────────── */
+function showPhase(id) {
+    document.querySelectorAll('.phase').forEach(p => p.classList.toggle('on', p.id === id));
+}
+function setProgress(pct) { $('progFill').style.width = Math.min(100, Math.max(0, pct)) + '%'; }
+function setMain(text, cls, handler) {
+    const b = $('mainBtn');
+    b.textContent = text;
+    b.className = 'btn ' + cls;
+    b.disabled = false;
+    b.onclick = handler;
+}
+function showGhost(text, handler) {
+    const b = $('ghostBtn');
+    b.textContent = text; b.onclick = handler; b.style.display = 'block';
+}
+function hideGhost() { $('ghostBtn').style.display = 'none'; }
+
+function showFeedback(good, why) {
+    const m = $('fbMsg');
+    m.className = 'fb-msg on ' + (good ? 'good' : 'bad');
+    $('fbTitle').innerHTML = good ? '✅ Верно!' : '❌ Не совсем';
+    $('fbWhy').innerHTML = why || '';
+}
+function hideFeedback() { $('fbMsg').className = 'fb-msg'; }
+</script>
+</body>
+</html>
