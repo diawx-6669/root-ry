@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Дерево</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
@@ -49,80 +50,84 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 .tab-item.active { color:#0099cc; }
 .tab-item.active i { color:#0099cc; }
 
-/* ===== TREE AREA — вертикальное аккордеон-дерево ===== */
+/* ===== TREE AREA — диаграмма-дерево (сверху вниз, D3) ===== */
 #tree-root {
     width:100%;
-    padding:20px 14px 90px;
     margin-top:64px;
-    min-height:calc(100vh - 128px);
+    height:calc(100vh - 64px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
 }
-.tree-container {
-  max-width:640px;
-  margin:0 auto;
+#treeWrap {
+  position:relative;
+  flex:1;
+  width:100%;
+  overflow:hidden;
+  cursor:grab;
+  background:radial-gradient(circle at 50% 0%,#eef5fb 0%,#e6eef6 55%,#dfe9f3 100%);
+}
+#treeWrap.grabbing { cursor:grabbing; }
+#treeSvg { width:100%; height:100%; display:block; }
+
+.link {
+  fill:none;
+  stroke:#a9d6ef;
+  stroke-width:2px;
 }
 
-.branch { position:relative; }
-
-.node {
-  display:flex; align-items:center; gap:10px;
-  padding:13px 18px;
+.node-box {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; height:100%;
+  padding:0 14px;
   border-radius:16px;
-  font-size:15px;
+  font-size:13.5px;
   font-weight:500;
+  font-family:'Segoe UI',sans-serif;
   cursor:pointer;
   border:1.5px solid;
-  transition:transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s ease, filter .18s ease, background .18s ease;
-  position:relative;
+  transition:transform .15s cubic-bezier(.2,.7,.3,1), box-shadow .15s ease, filter .15s ease;
   user-select:none;
-  line-height:1.4;
-  scroll-margin:90px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 3px 10px rgba(2,62,80,.08);
 }
-.node:hover { filter:brightness(1.04); box-shadow:0 4px 14px rgba(2,62,80,.12); }
-.node:active { transform:scale(.985); }
-.node-label { flex:1; min-width:0; }
+.node-box:hover { filter:brightness(1.05); box-shadow:0 5px 16px rgba(2,62,80,.16); transform:translateY(-1px); }
+.node-box:active { transform:translateY(0) scale(.97); }
+.node-label { overflow:hidden; text-overflow:ellipsis; }
 
-.node-root {
-  background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff;
-  font-size:19px; font-weight:700; padding:18px 22px; border-radius:20px; letter-spacing:.3px;
-  box-shadow:0 8px 24px rgba(2,62,80,0.28);
-}
-.node-l1 { background:linear-gradient(160deg,#e6f6ff,#dcf0fd); border-color:#7dd3fc; color:#0c4a6e; font-weight:700; font-size:15px; }
-.node-l2 { background:#f0f9ff; border-color:#bae6fd; color:#075985; font-size:14px; }
-.node-l3 { background:#f8fafc; border-color:#e2e8f0; color:#334155; font-size:13.5px; }
-.node-l4 { background:#fff; border-color:#f1f5f9; color:#64748b; font-size:13px; }
+.node-root { background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff; font-size:16px; font-weight:700; letter-spacing:.3px; box-shadow:0 8px 22px rgba(2,62,80,0.3); }
+.node-l1 { background:linear-gradient(160deg,#e6f6ff,#dcf0fd); border-color:#7dd3fc; color:#0c4a6e; font-weight:700; }
+.node-l2 { background:#f0f9ff; border-color:#bae6fd; color:#075985; }
+.node-l3 { background:#f8fafc; border-color:#e2e8f0; color:#334155; }
+.node-l4 { background:#fff; border-color:#f1f5f9; color:#64748b; font-size:12.5px; }
+.node-box.has-children { border-width:2px; }
+.node-box.search-match { background:#fef3c7 !important; border-color:#f59e0b !important; color:#78350f !important; box-shadow:0 0 0 4px rgba(245,158,11,.35) !important; }
 
-/* Индентация и направляющая линия для каждого уровня вложенности */
-.branch[data-level="0"] { margin-bottom:10px; }
-.branch[data-level="1"] > .children { margin-left:14px; padding-left:16px; border-left:2px solid #bae6fd; }
-.branch[data-level="2"] > .children { margin-left:10px; padding-left:14px; border-left:2px solid #dbeafe; }
-.branch[data-level="3"] > .children { margin-left:8px; padding-left:12px; border-left:2px solid #eef2f7; }
-.branch[data-level="4"] > .children { margin-left:6px; padding-left:10px; border-left:2px solid #f1f5f9; }
-.branch + .branch { margin-top:8px; }
-.children > .branch + .branch { margin-top:8px; }
-
-.chevron {
-  flex-shrink:0; width:20px; height:20px; border-radius:50%;
+.chev-dot {
+  flex-shrink:0; width:14px; height:14px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(255,255,255,0.35);
-  transition:transform .3s cubic-bezier(.4,0,.2,1), background .18s ease;
+  background:rgba(255,255,255,0.3); font-size:8px;
+  transition:transform .25s ease, background .15s ease;
 }
-.node-root .chevron, .node-l1 .chevron { background:rgba(255,255,255,0.28); }
-.node-l2 .chevron, .node-l3 .chevron, .node-l4 .chevron { background:rgba(14,165,233,0.12); }
-.chevron i { font-size:10px; }
-.branch:not(.collapsed) > .node > .chevron { transform:rotate(90deg); }
+.node-l2 .chev-dot, .node-l3 .chev-dot, .node-l4 .chev-dot { background:rgba(14,165,233,0.14); }
+.node-box.expanded .chev-dot { transform:rotate(90deg); }
 
-.connector-wrap {
-  display:grid; grid-template-rows:0fr;
-  transition:grid-template-rows .38s cubic-bezier(.4,0,.2,1);
+/* ===== ZOOM HINT / CONTROLS (минимальные, не мешают) ===== */
+#treeHint {
+  position:absolute; left:50%; top:12px; transform:translateX(-50%);
+  background:rgba(2,62,80,0.82); color:#fff; font-size:11.5px; font-weight:500;
+  padding:6px 14px; border-radius:20px; pointer-events:none;
+  opacity:0; transition:opacity .4s ease; z-index:50; white-space:nowrap;
 }
-.branch:not(.collapsed) > .connector-wrap { grid-template-rows:1fr; }
-.connector-inner { min-height:0; overflow:hidden; }
-.children {
-  padding-top:8px;
-  transition:opacity .3s ease .04s, transform .3s cubic-bezier(.2,.7,.3,1) .04s;
-  opacity:0; transform:translateY(-6px);
+#treeHint.show { opacity:1; }
+#recenterBtn {
+  position:absolute; right:14px; bottom:78px; z-index:60;
+  width:38px; height:38px; border-radius:50%; border:1px solid #e2e8f0;
+  background:rgba(255,255,255,0.95); color:#075985; font-size:15px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 4px 14px rgba(2,62,80,.16);
 }
-.branch:not(.collapsed) > .connector-wrap .children { opacity:1; transform:none; }
+#recenterBtn:active { transform:scale(.92); }
 
 /* ===== TOOLTIP — закреплён снизу экрана ===== */
 .tooltip {
@@ -141,25 +146,15 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 
 #search-bar {
   display:flex; align-items:center; gap:8px;
-  padding:8px 14px; background:#f8fafc; border:1.5px solid #e2e8f0;
-  border-radius:24px; margin:0 8px 14px; position:sticky; top:0;
-  z-index:100; backdrop-filter:blur(8px);
+  padding:8px 14px; background:#f8fafc; border-bottom:1.5px solid #e2e8f0;
+  z-index:100;
+  flex-shrink:0;
 }
 #search-bar input { border:none; outline:none; background:transparent; font-size:13px; color:#334155; flex:1; min-width:0; }
 #search-bar input::placeholder { color:#94a3b8; }
 #search-bar .ico { color:#94a3b8; font-size:14px; }
 #search-count { font-size:12px; color:#0ea5e9; font-weight:500; white-space:nowrap; }
-
-.node.search-dim { opacity:.25; transition:opacity .25s ease; }
-.node.search-match {
-  background:#fef3c7 !important; border-color:#f59e0b !important;
-  color:#78350f !important; box-shadow:0 0 0 3px rgba(245,158,11,.3);
-  animation:matchPulse .5s ease;
-}
-@keyframes matchPulse { 0%{ transform:scale(1); } 40%{ transform:scale(1.06); } 100%{ transform:scale(1); } }
-
-#tree-root::-webkit-scrollbar, .tree-container::-webkit-scrollbar { height:8px; }
-#tree-root::-webkit-scrollbar-thumb { background:#bcd6e8; border-radius:8px; }
+#search-bar button { border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#475569;font-weight:500; flex-shrink:0; }
 
 .tooltip { backdrop-filter:blur(6px); }
     </style>
@@ -185,12 +180,23 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     <span class="ico">🔍</span>
     <input id="q" type="text" placeholder="Поиск по дереву грамматики...">
     <span id="search-count"></span>
-    <button id="exp-all" style="border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#475569;font-weight:500">Развернуть всё</button>
-    <button id="col-all" style="border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#475569;font-weight:500">Свернуть</button>
+    <button id="exp-all">Развернуть всё</button>
+    <button id="col-all">Свернуть</button>
   </div>
-  <div class="tree-container" id="tc"></div>
+  <div id="treeWrap">
+    <div id="treeHint">Тяни пальцем, чтобы двигать • щипок — масштаб</div>
+    <button id="recenterBtn" title="Вернуть в центр"><i class="fa-solid fa-crosshairs"></i></button>
+    <svg id="treeSvg">
+      <g id="viewport">
+        <g id="linksG"></g>
+        <g id="nodesG"></g>
+      </g>
+    </svg>
+  </div>
 </div>
 <div class="tooltip" id="tooltip"></div>
+
+
 
 <!-- BOTTOM TAB BAR -->
 <nav class="bottom-tabbar">
@@ -670,123 +676,201 @@ const TREE = {
   ]
 };
 
-const tc = document.getElementById('tc');
+const svg = d3.select('#treeSvg');
+const viewport = d3.select('#viewport');
+const linksG = d3.select('#linksG');
+const nodesG = d3.select('#nodesG');
+const treeWrap = document.getElementById('treeWrap');
 const tooltip = document.getElementById('tooltip');
 
-function nodeClass(level) {
-  if(level===0) return 'node node-root';
-  if(level===1) return 'node node-l1';
-  if(level===2) return 'node node-l2';
-  if(level===3) return 'node node-l3';
-  return 'node node-l4';
-}
+const NODE_W = 158, NODE_H = 42;
+const DX = 184;  // расстояние между соседними узлами по горизонтали
+const DY = 104;  // расстояние между уровнями по вертикали
 
-// После открытия узла плавно подводим экран так, чтобы сам узел
-// оказался по центру, а дети раскрылись прямо под ним — никакого
-// горизонтального скролла и поиска "куда делось".
-function centerNode(nodeEl) {
-  setTimeout(() => {
-    nodeEl.scrollIntoView({ behavior:'smooth', block:'center' });
-  }, 60); // небольшая задержка, чтобы раскрытие уже началось визуально
-}
+let counter = 0;
+const root = d3.hierarchy(TREE);
+root.x0 = 0;
+root.y0 = 0;
+root.each(d => { d.id = ++counter; });
 
-function build(data, isRoot=false) {
-  const branch = document.createElement('div');
-  branch.className = 'branch';
-  branch.dataset.level = data.level;
-  if(!isRoot) branch.classList.add('collapsed');
-  else branch.classList.add('collapsed'); // и корень тоже стартует свернутым
-
-  const nodeEl = document.createElement('div');
-  nodeEl.className = nodeClass(data.level);
-  nodeEl.dataset.label = data.label;
-
-  const labelEl = document.createElement('span');
-  labelEl.className = 'node-label';
-  labelEl.textContent = data.label;
-  nodeEl.appendChild(labelEl);
-
-  const hasChildren = data.children && data.children.length;
-
-  if(hasChildren) {
-    const chev = document.createElement('span');
-    chev.className = 'chevron';
-    chev.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
-    nodeEl.appendChild(chev);
-
-    nodeEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      branch.classList.toggle('collapsed');
-      if (!branch.classList.contains('collapsed')) centerNode(nodeEl);
-    });
+function collapseAll(d) {
+  if (d.children) {
+    d._children = d.children;
+    d.children.forEach(collapseAll);
+    d.children = null;
   }
+}
+collapseAll(root); // изначально виден только корень
 
-  nodeEl.addEventListener('mouseenter', () => {
-    const def = DEFS[data.label];
-    if(!def) return;
-    tooltip.innerHTML = `<strong>${data.label}</strong>${def}`;
-    tooltip.classList.add('show');
-  });
-  nodeEl.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+const treeLayout = d3.tree().nodeSize([DX, DY]);
+const diagonal = d3.linkVertical().x(d => d.x).y(d => d.y);
 
-  branch.appendChild(nodeEl);
-
-  if(hasChildren) {
-    const connWrap = document.createElement('div');
-    connWrap.className = 'connector-wrap';
-
-    const connInner = document.createElement('div');
-    connInner.className = 'connector-inner';
-
-    const childrenEl = document.createElement('div');
-    childrenEl.className = 'children';
-
-    data.children.forEach(child => {
-      childrenEl.appendChild(build(child));
-    });
-
-    connInner.appendChild(childrenEl);
-    connWrap.appendChild(connInner);
-    branch.appendChild(connWrap);
-  }
-
-  return branch;
+function nodeClass(depth) {
+  if (depth === 0) return 'node-root';
+  if (depth === 1) return 'node-l1';
+  if (depth === 2) return 'node-l2';
+  if (depth === 3) return 'node-l3';
+  return 'node-l4';
 }
 
-const rootBranch = build(TREE, true);
-tc.appendChild(rootBranch);
+let searchQuery = '';
+
+function toggle(d) {
+  if (d.children) { d._children = d.children; d.children = null; }
+  else if (d._children) { d.children = d._children; d._children = null; }
+}
+
+function update(source) {
+  const treeData = treeLayout(root);
+  const nodes = treeData.descendants();
+  const links = treeData.links();
+
+  // ===== NODES =====
+  const node = nodesG.selectAll('g.node-g').data(nodes, d => d.id);
+
+  const nodeEnter = node.enter().append('g')
+      .attr('class', 'node-g')
+      .attr('transform', `translate(${source.x0},${source.y0})`)
+      .style('opacity', 0);
+
+  const fo = nodeEnter.append('foreignObject')
+      .attr('width', NODE_W).attr('height', NODE_H)
+      .attr('x', -NODE_W / 2).attr('y', -NODE_H / 2)
+      .style('overflow', 'visible');
+
+  const div = fo.append('xhtml:div')
+      .attr('class', d => 'node-box ' + nodeClass(d.depth))
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        toggle(d);
+        update(d);
+        setTimeout(() => centerOn(d), 50);
+      })
+      .on('mouseenter', (event, d) => {
+        const def = DEFS[d.data.label];
+        if (!def) return;
+        tooltip.innerHTML = `<strong>${d.data.label}</strong>${def}`;
+        tooltip.classList.add('show');
+      })
+      .on('mouseleave', () => tooltip.classList.remove('show'));
+
+  div.append('span').attr('class', 'node-label').text(d => d.data.label);
+  div.filter(d => d.children || d._children)
+     .append('span').attr('class', 'chev-dot')
+     .html('<i class="fa-solid fa-chevron-right"></i>');
+
+  const nodeMerge = nodeEnter.merge(node);
+
+  nodeMerge.select('.node-box')
+      .classed('has-children', d => !!(d.children || d._children))
+      .classed('expanded', d => !!d.children)
+      .classed('search-match', d => !!searchQuery && d.data.label.toLowerCase().includes(searchQuery));
+
+  nodeMerge.transition().duration(380)
+      .attr('transform', d => `translate(${d.x},${d.y})`)
+      .style('opacity', 1);
+
+  node.exit().transition().duration(280)
+      .attr('transform', d => `translate(${source.x},${source.y})`)
+      .style('opacity', 0)
+      .remove();
+
+  // ===== LINKS (плавные кривые, как в туmalas) =====
+  const link = linksG.selectAll('path.link').data(links, d => d.target.id);
+
+  const linkEnter = link.enter().insert('path', 'g')
+      .attr('class', 'link')
+      .attr('d', d => { const o = {x: source.x0, y: source.y0}; return diagonal({source:o, target:o}); });
+
+  linkEnter.merge(link).transition().duration(380).attr('d', diagonal);
+
+  link.exit().transition().duration(280)
+      .attr('d', d => { const o = {x: source.x, y: source.y}; return diagonal({source:o, target:o}); })
+      .remove();
+
+  nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+}
+
+// ===== ZOOM / PAN (жестами — пинч, скролл, перетаскивание) =====
+const zoomBehavior = d3.zoom()
+    .scaleExtent([0.35, 2.2])
+    .on('start', () => treeWrap.classList.add('grabbing'))
+    .on('zoom', (event) => viewport.attr('transform', event.transform))
+    .on('end', () => treeWrap.classList.remove('grabbing'));
+
+svg.call(zoomBehavior).on('dblclick.zoom', null);
+
+function viewportSize() {
+  const r = treeWrap.getBoundingClientRect();
+  return { w: r.width, h: r.height };
+}
+
+// Плавно подводим экран так, чтобы открытый узел оказался по центру,
+// а его дети, раскрывающиеся ниже, сразу были видны — без ручного скролла.
+function centerOn(d, instant = false) {
+  const { w, h } = viewportSize();
+  const scale = d3.zoomTransform(svg.node()).k || 1;
+  const targetX = w / 2 - d.x * scale;
+  const targetY = h * 0.26 - d.y * scale;
+  const t = d3.zoomIdentity.translate(targetX, targetY).scale(scale);
+  if (instant) svg.call(zoomBehavior.transform, t);
+  else svg.transition().duration(430).call(zoomBehavior.transform, t);
+}
+
+update(root);
+requestAnimationFrame(() => centerOn(root, true));
+
+// Небольшая подсказка про жесты — показываем один раз и прячем
+const hint = document.getElementById('treeHint');
+setTimeout(() => hint.classList.add('show'), 500);
+setTimeout(() => hint.classList.remove('show'), 4200);
+
+document.getElementById('recenterBtn').addEventListener('click', () => centerOn(root));
 
 document.getElementById('exp-all').addEventListener('click', () => {
-  tc.querySelectorAll('.branch').forEach(b => b.classList.remove('collapsed'));
+  function expandAll(d) {
+    if (d._children) { d.children = d._children; d._children = null; }
+    if (d.children) d.children.forEach(expandAll);
+  }
+  expandAll(root);
+  update(root);
+  centerOn(root);
 });
 document.getElementById('col-all').addEventListener('click', () => {
-  tc.querySelectorAll('.branch').forEach(b => b.classList.add('collapsed'));
-  window.scrollTo({top:0, behavior:'smooth'});
+  collapseAll(root);
+  update(root);
+  centerOn(root);
 });
+
+// ===== ПОИСК =====
+function allNodes(d, arr = []) {
+  arr.push(d);
+  const kids = d.children || d._children;
+  if (kids) kids.forEach(k => allNodes(k, arr));
+  return arr;
+}
+function expandPathTo(d) {
+  let p = d.parent;
+  while (p) {
+    if (p._children) { p.children = p._children; p._children = null; }
+    p = p.parent;
+  }
+}
 
 const qEl = document.getElementById('q');
 const scEl = document.getElementById('search-count');
+let searchDebounce;
 qEl.addEventListener('input', () => {
-  const q = qEl.value.trim().toLowerCase();
-  const allNodes = tc.querySelectorAll('.node');
-  allNodes.forEach(n => { n.classList.remove('search-match','search-dim'); });
-  if(!q) { scEl.textContent=''; return; }
-  let count = 0;
-  allNodes.forEach(n => {
-    const lbl = (n.dataset.label||'').toLowerCase();
-    if(lbl.includes(q)) {
-      n.classList.add('search-match');
-      count++;
-      let b = n.closest('.branch');
-      while(b) {
-        b.classList.remove('collapsed');
-        b = b.parentElement?.closest('.branch');
-      }
-    } else {
-      n.classList.add('search-dim');
-    }
-  });
-  scEl.textContent = count ? `Найдено: ${count}` : 'Не найдено';
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    searchQuery = qEl.value.trim().toLowerCase();
+    if (!searchQuery) { scEl.textContent = ''; update(root); return; }
+    const matches = allNodes(root).filter(d => d.data.label.toLowerCase().includes(searchQuery));
+    matches.forEach(expandPathTo);
+    update(root);
+    scEl.textContent = matches.length ? `Найдено: ${matches.length}` : 'Не найдено';
+    if (matches.length) setTimeout(() => centerOn(matches[0]), 420);
+  }, 220);
 });
 </script>
 </body>
