@@ -313,14 +313,14 @@
                     <div class="tag-dropdown" id="tagDropdown">
                         <div class="tag-dropdown-title">Выбери хэштег</div>
                         <div class="tag-cloud" id="tagCloud"></div>
-                        <button class="tag-clear" onclick="clearTags()">✕ Сбросить фильтр</button>
+                        <button class="tag-clear" onclick="clearTags()"><i class="fa-solid fa-xmark"></i> Сбросить фильтр</button>
                     </div>
                 </div>
             </div>
 
             <!-- Любимые игры -->
             <div id="favSection" style="display:none;">
-                <div class="games-section-title">❤️ Любимые игры</div>
+                <div class="games-section-title"><i class="fa-solid fa-heart" style="color:#e74c3c;"></i> Любимые игры</div>
                 <div class="games-grid" id="favGrid"></div>
             </div>
 
@@ -359,7 +359,7 @@
         {
             id: 'comma_ninja',
             title: '«Запятая-ниндзя»',
-            icon: '🥷',
+            icon: 'fa-solid fa-user-ninja',
             image: 'img/game_comma_ninja.png',
             desc: 'Свайпом разруби предложение в правильных местах! Аркада по пунктуации в стиле Fruit Ninja.',
             fullDesc: 'На экране снизу вверх вылетают длинные предложения с причастными оборотами, вводными словами и однородными членами. Свайпни по предложению ровно там, где должна стоять запятая, двоеточие или тире. Ошибёшься — потеряешь жизнь!',
@@ -376,7 +376,7 @@
         {
             id: 'word_alchemist',
             title: '«Алхимик слов»',
-            icon: '⚗️',
+            icon: 'fa-solid fa-flask-vial',
             image: 'img/game_word_alchemist.png',
             desc: 'Собирай слова из падающих морфем! Головоломка в стиле Тетриса про словообразование.',
             fullDesc: 'В твоём распоряжении падающие блоки с приставками, корнями, суффиксами и окончаниями. Комбинируй их так, чтобы получались реальные русские слова. На старших уровнях нужно собирать слова по заданным схемам!',
@@ -393,7 +393,7 @@
         {
             id: 'stress_space',
             title: '«Ударный космос»',
-            icon: '🚀',
+            icon: 'fa-solid fa-rocket',
             image: 'img/game_stress_space.png',
             desc: 'Уничтожай астероиды-слова! Стреляй лазером точно в ударную гласную.',
             fullDesc: 'Управляй космическим кораблём — на тебя летят астероиды с трудными словами (ЖАЛЮЗИ, КАТАЛОГ, ЗВОНИТ, ТВОРОГ). Все гласные подсвечены. Выстрели лазером ровно в ту, на которую падает правильное ударение. Серия правильных ударений даёт защитный щит!',
@@ -410,7 +410,7 @@
         {
             id: 'detective_case',
             title: '«Детектив Падеж»',
-            icon: '🕵️',
+            icon: 'fa-solid fa-magnifying-glass',
             image: 'img/game_detective_case.png',
             desc: 'Детективный квест! Вставь слова в правильном падеже, чтобы раскрыть дело.',
             fullDesc: 'Ты — детектив. Чтобы получить показания свидетеля или открыть кодовый замок, нужно вставить в текст слова в правильном падеже, числе или роде. Например: «с пятьюстами шестьюдесятью тремя рублями». Ошибка пускает тебя по ложному следу!',
@@ -427,7 +427,7 @@
         {
             id: 'minefield',
             title: '«Минное поле»',
-            icon: '💣',
+            icon: 'fa-solid fa-bomb',
             image: 'img/game_minefield.png',
             desc: 'Перейди пропасть по плитам с правильными словами. Ошибёшься — упадёшь в лаву!',
             fullDesc: 'Перед тобой пропасть. На каждой плите — слово (Н/НН, чередующиеся корни, ЖИ-ШИ и другие правила). Наступать можно только на плиты с правильным написанием — плиты с ошибками проваливаются в лаву. Чем дальше — тем сложнее!',
@@ -444,7 +444,7 @@
         {
             id: 'paronym_duel',
             title: '«Дуэль паронимов»',
-            icon: '⚖️',
+            icon: 'fa-solid fa-scale-balanced',
             image: 'img/game_paronym_duel.png',
             desc: 'Выбери слово, которое подходит по смыслу! Дуэль похожих по звучанию, но разных по значению слов.',
             fullDesc: 'Паронимы — слова, похожие по звучанию, но разные по значению: «одеть» и «надеть», «эффектный» и «эффективный». В каждом раунде — предложение с пропуском и два похожих слова. Выбери верное по смыслу. После ответа — объяснение, чем слова отличаются.',
@@ -461,7 +461,7 @@
         {
             id: 'sentence_builder',
             title: '«Строитель предложений»',
-            icon: '🧩',
+            icon: 'fa-solid fa-puzzle-piece',
             image: 'img/game_sentence_builder.png',
             desc: 'Собери слова в правильном порядке! Учись строить предложения без речевых ошибок.',
             fullDesc: 'Слова в предложении перепутаны местами. Собери их в правильном порядке так, чтобы причастные и деепричастные обороты стояли на своих местах — это одна из самых частых ошибок на экзамене. После каждого ответа — объяснение правила порядка слов.',
@@ -630,9 +630,9 @@
             img.style.display = 'none';
             const ph = document.createElement('div');
             ph.className = 'game-thumb-placeholder';
-            const iconSpan = document.createElement('span');
+            const iconSpan = document.createElement('i');
+            iconSpan.className = g.icon;
             iconSpan.style.fontSize = '36px';
-            iconSpan.textContent = g.icon;
             const lblSpan = document.createElement('span');
             lblSpan.textContent = 'Изображение';
             ph.appendChild(iconSpan);
@@ -693,9 +693,9 @@
             img.style.display = 'none';
             const ph = document.createElement('div');
             ph.className = 'detail-thumb-placeholder';
-            const iconSpan = document.createElement('span');
+            const iconSpan = document.createElement('i');
+            iconSpan.className = g.icon;
             iconSpan.style.fontSize = '56px';
-            iconSpan.textContent = g.icon;
             const lblSpan = document.createElement('span');
             lblSpan.textContent = 'Изображение';
             ph.appendChild(iconSpan);

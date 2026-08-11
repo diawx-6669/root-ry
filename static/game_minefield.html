@@ -147,6 +147,26 @@
         }
         @keyframes stepPop { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.5);} 30%{opacity:1;transform:translate(-50%,-70%) scale(1.2);} 80%{opacity:1;} 100%{opacity:0;transform:translate(-50%,-90%) scale(0.9);} }
 
+        /* Rule explanation popup */
+        .rule-popup {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            max-width: 600px; width: 90%; background: rgba(15,15,15,0.96); color: #fff;
+            border: 1px solid rgba(255,255,255,0.12); padding: 12px 18px; border-radius: 14px;
+            font-size: 13px; font-weight: 600; line-height: 1.5; z-index: 250; opacity: 0;
+            animation: rulePopIn 3.2s ease forwards; box-sizing: border-box;
+        }
+        .rule-popup.wrong { border-color: rgba(231,76,60,0.5); }
+        .rule-popup.correct { border-color: rgba(46,204,113,0.5); }
+        .rule-popup i { margin-right: 8px; }
+        .rule-popup.correct i { color: #2ecc71; }
+        .rule-popup.wrong i { color: #e74c3c; }
+        @keyframes rulePopIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            8% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         /* Overlays */
         .overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.96); z-index: 300; align-items: center; justify-content: center; flex-direction: column; }
         .overlay.show { display: flex; }
@@ -169,7 +189,7 @@
     <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Root<span>Ry</span></div>
     <div class="hud">
         <div class="hud-item"><i class="fa-solid fa-star" style="color:#f39c12"></i><span class="score-num" id="scoreDisplay">0</span></div>
-        <div class="hud-item"><span class="lives-row" id="livesDisplay">❤️❤️❤️</span></div>
+        <div class="hud-item"><span class="lives-row" id="livesDisplay"><i class="fa-solid fa-heart"></i><i class="fa-solid fa-heart"></i><i class="fa-solid fa-heart"></i></span></div>
         <div class="hud-item" style="color:rgba(255,255,255,0.5);font-size:12px;" id="levelDisplay">Уровень 1/5</div>
     </div>
     <button class="surrender-btn" onclick="confirmSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
@@ -184,7 +204,7 @@
         <div class="topic-label" id="topicBadge">Н и НН</div>
         <div class="step-progress" id="progressDots">
             </div>
-        <div id="player">🧑‍🦯</div>
+        <div id="player"><i class="fa-solid fa-person-walking" style="color:#fff;"></i></div>
         <div class="platform-row" id="platforms">
             </div>
         <div class="lava"></div>
@@ -197,7 +217,7 @@
 
 <div class="overlay show" id="startOverlay">
     <div class="overlay-box">
-        <div style="font-size:56px;margin-bottom:10px;">💣</div>
+        <div style="font-size:56px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-bomb"></i></div>
         <h2>Минное поле</h2>
         <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Каждый уровень — это мост из 5 шагов.<br>Выбирай плиту с <strong>правильным</strong> написанием.<br>Ошибка = потеря жизни и возврат в начало моста!</p>
         <button class="action-btn safe" onclick="startGame()"><i class="fa-solid fa-person-walking"></i> Начать переправу</button>
@@ -207,7 +227,7 @@
 
 <div class="overlay" id="levelOverlay">
     <div class="overlay-box">
-        <div style="font-size:56px;margin-bottom:10px;" id="levelEmoji">🏆</div>
+        <div style="font-size:56px;margin-bottom:10px;color:#f39c12;" id="levelEmoji"><i class="fa-solid fa-trophy"></i></div>
         <h2 id="levelTitle">Мост пройден!</h2>
         <p style="color:#666;font-size:14px;margin:8px 0 20px;" id="levelMsg">Следующий уровень</p>
         <button class="action-btn safe" id="nextLevelBtn" onclick="nextLevel()"><i class="fa-solid fa-arrow-right"></i> Дальше</button>
@@ -216,7 +236,7 @@
 
 <div class="overlay" id="endOverlay">
     <div class="overlay-box">
-        <div class="stars" id="endStars">⭐</div>
+        <div class="stars" id="endStars"></div>
         <h2 id="endTitle">Финиш!</h2>
         <div class="big-num" id="endScore">0</div>
         <p style="color:#666;font-size:14px;margin:8px 0 20px;">Пройдено мостов: <strong id="levelsPassed">0</strong> из 5</p>
@@ -227,7 +247,7 @@
 
 <div class="overlay" id="surrenderOverlay">
     <div class="overlay-box">
-        <div style="font-size:48px;margin-bottom:10px;">🏳️</div>
+        <div style="font-size:48px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
         <h2>Сдаться?</h2>
         <p style="color:#666;font-size:14px;">Счёт: <strong id="surrenderScore">0</strong></p>
         <button class="action-btn" onclick="endGame()">Сдаться</button>
@@ -248,6 +268,13 @@ const LEVELS = [
             [{ word: 'ветреный', correct: true }, { word: 'ветренный', correct: false }],
             [{ word: 'стеклянный', correct: true }, { word: 'стекляный', correct: false }],
             [{ word: 'оловянный', correct: true }, { word: 'оловяный', correct: false }]
+        ],
+        rules: [
+            '«Деревянный», «стеклянный» и «оловянный» — три слова-исключения: пишутся с «НН», хотя суффикс «-ян-» обычно требует одного «Н».',
+            'Прилагательные с суффиксом «-ян-», обозначающим материал, пишутся с одним «Н»: серебряный, кожаный, глиняный (кроме исключений).',
+            '«Ветреный» (день, человек) — слово-исключение, пишется с одним «Н». Но с приставкой — «безветренный» — уже с «НН».',
+            '«Стеклянный» — одно из трёх слов-исключений (вместе с «деревянный» и «оловянный»), пишется с «НН».',
+            '«Оловянный» — третье слово-исключение из этой тройки, пишется с «НН».'
         ]
     },
     {
@@ -257,8 +284,15 @@ const LEVELS = [
             [{ word: 'росток', correct: true }, { word: 'расток', correct: false }],
             [{ word: 'загорелый', correct: true }, { word: 'загарелый', correct: false }],
             [{ word: 'вырасти', correct: true }, { word: 'вырости', correct: false }],
-            [{ word: 'собирать', correct: true }, { word: 'соберать', correct: false }],
-            [{ word: 'блестеть', correct: true }, { word: 'блистеть', correct: false }]
+            [{ word: 'загар', correct: true }, { word: 'загор', correct: false }],
+            [{ word: 'скакать', correct: true }, { word: 'скокать', correct: false }]
+        ],
+        rules: [
+            'В корне -раст-/-ращ-/-рос- перед «ст» и «щ» обычно пишется «а» (растение, выращенный), но «росток», «ростовщик», «Ростов», «отрасль» — исключения с «о».',
+            'В корне -гар-/-гор- без ударения всегда пишется «о»: загорелый, загореть.',
+            'В корне -раст-/-рос- перед «ст» пишется «а»: вырасти, растение (кроме исключений «росток», «Ростов»).',
+            'В корне -гар-/-гор- под ударением всегда пишется «а»: зага́р. Без ударения — «о»: загоре́лый.',
+            'В корне -скак-/-скоч- перед «к» пишется «а»: скакать, вскачь. Перед «ч» — «о»: выскочить, скачок.'
         ]
     },
     {
@@ -269,7 +303,14 @@ const LEVELS = [
             [{ word: 'преграда', correct: true }, { word: 'приграда', correct: false }],
             [{ word: 'привычка', correct: true }, { word: 'превычка', correct: false }],
             [{ word: 'премудрый', correct: true }, { word: 'примудрый', correct: false }],
-            [{ word: 'президент', correct: true }, { word: 'призидент', correct: false }]
+            [{ word: 'приоткрыть', correct: true }, { word: 'преоткрыть', correct: false }]
+        ],
+        rules: [
+            'Приставка «при-» пишется при значении приближения: приехать — прибыть куда-либо.',
+            'Приставка «пре-» здесь близка по значению к «пере-»: преграда — то, что стоит поперёк пути.',
+            'Приставка «при-» обозначает присоединение или постепенность действия: привыкнуть постепенно к чему-либо.',
+            'Приставка «пре-» в значении «очень»: премудрый — очень мудрый.',
+            'Приставка «при-» обозначает неполноту действия: приоткрыть — открыть немного, не до конца.'
         ]
     },
     {
@@ -281,6 +322,13 @@ const LEVELS = [
             [{ word: 'привилегия', correct: true }, { word: 'превилегия', correct: false }],
             [{ word: 'апелляция', correct: true }, { word: 'апеляция', correct: false }],
             [{ word: 'дилетант', correct: true }, { word: 'диллитант', correct: false }]
+        ],
+        rules: [
+            '«Интеллигент» — словарное слово с удвоенной «лл»; написание нужно запомнить.',
+            '«Компрометировать» пишется без «н» перед «т» — частая ошибка добавить лишнюю «н» по аналогии со словом «документ».',
+            '«Привилегия» — словарное слово с «и» в первом слоге, а не «е»; написание нужно запомнить.',
+            '«Апелляция» пишется с удвоенной «лл», как и другие термины на «-ация» латинского происхождения.',
+            '«Дилетант» пишется с одной «л» и одной «т» — согласные часто ошибочно удваивают.'
         ]
     },
     {
@@ -292,6 +340,13 @@ const LEVELS = [
             [{ word: 'крыжовник', correct: true }, { word: 'крыжёвник', correct: false }],
             [{ word: 'жёлудь', correct: true }, { word: 'жолудь', correct: false }],
             [{ word: 'чёрный', correct: true }, { word: 'чорный', correct: false }]
+        ],
+        rules: [
+            '«Шёпот» пишется через «ё», так как чередуется с «е» в родственном слове «шептать».',
+            '«Капюшон» — слово-исключение: в суффиксе после шипящей под ударением пишется «о», а не «ё».',
+            '«Крыжовник» — исключение, пишется с «о» после шипящей, хотя стоит под ударением.',
+            '«Жёлудь» пишется через «ё» — чередуется с «е»: жёлуди, желудёвый.',
+            '«Чёрный» пишется через «ё», так как чередуется с «е»: чернеть, чернота.'
         ]
     }
 ];
@@ -358,10 +413,12 @@ function renderStep() {
 function handleTileClick(tile, isCorrect) {
     if (isAnimating) return;
     isAnimating = true;
+    const rule = (LEVELS[currentLevel].rules && LEVELS[currentLevel].rules[currentStep]) || '';
 
     if (isCorrect) {
         tile.classList.add('correct-step');
-        showPopup('✅ Верно!', '#2ecc71');
+        showPopup('<i class="fa-solid fa-circle-check"></i> Верно!', '#2ecc71');
+        showRulePopup(rule, true);
         score += 10;
         currentStep++;
         updateHUD();
@@ -373,11 +430,12 @@ function handleTileClick(tile, isCorrect) {
             } else {
                 renderStep();
             }
-        }, 600);
+        }, 2200);
 
     } else {
         tile.classList.add('explode');
-        showPopup('💥 Мина!', '#e74c3c');
+        showPopup('<i class="fa-solid fa-explosion"></i> Мина!', '#e74c3c');
+        showRulePopup(rule, false);
         lives--;
         updateHUD();
 
@@ -385,25 +443,25 @@ function handleTileClick(tile, isCorrect) {
             if (lives <= 0) {
                 endGame();
             } else {
-                showPopup('🔄 Сброс уровня!', '#f39c12');
+                showPopup('<i class="fa-solid fa-rotate-left"></i> Сброс уровня!', '#f39c12');
                 currentStep = 0; // Возвращаем в начало моста за ошибку
                 setTimeout(renderStep, 800);
             }
-        }, 1200);
+        }, 2200);
     }
 }
 
 function showLevelComplete() {
     if (currentLevel >= LEVELS.length - 1) {
-        document.getElementById('levelTitle').textContent = '🏆 Все мосты пройдены!';
+        document.getElementById('levelTitle').innerHTML = '<i class="fa-solid fa-trophy"></i> Все мосты пройдены!';
         document.getElementById('levelMsg').textContent = `Итог: ${score} очков`;
-        document.getElementById('levelEmoji').textContent = '🎉';
+        document.getElementById('levelEmoji').innerHTML = '<i class="fa-solid fa-flag-checkered"></i>';
         document.getElementById('nextLevelBtn').innerHTML = '<i class="fa-solid fa-flag-checkered"></i> К результатам';
         document.getElementById('nextLevelBtn').onclick = endGame;
     } else {
         document.getElementById('levelTitle').textContent = `Уровень ${currentLevel+1} пройден!`;
         document.getElementById('levelMsg').textContent = `Следующий: ${LEVELS[currentLevel+1].topic}`;
-        document.getElementById('levelEmoji').textContent = '🏆';
+        document.getElementById('levelEmoji').innerHTML = '<i class="fa-solid fa-trophy"></i>';
         document.getElementById('nextLevelBtn').innerHTML = '<i class="fa-solid fa-arrow-right"></i> Следующий уровень';
         document.getElementById('nextLevelBtn').onclick = nextLevel;
     }
@@ -422,8 +480,11 @@ function endGame() {
     hideOverlay('levelOverlay');
 
     const pct = Math.round((levelsPassed / LEVELS.length) * 100);
-    document.getElementById('endStars').textContent = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
-    document.getElementById('endTitle').textContent = pct >= 80 ? '💎 Сапёр-эксперт!' : pct >= 40 ? '💣 Неплохо!' : '📚 Нужна практика!';
+    let starCount = pct >= 80 ? 3 : pct >= 60 ? 2 : 1;
+    document.getElementById('endStars').innerHTML =
+        '<i class="fa-solid fa-star" style="color:#f39c12"></i>'.repeat(starCount) +
+        '<i class="fa-regular fa-star" style="color:#555"></i>'.repeat(3 - starCount);
+    document.getElementById('endTitle').innerHTML = pct >= 80 ? '<i class="fa-solid fa-gem"></i> Сапёр-эксперт!' : pct >= 40 ? '<i class="fa-solid fa-bomb"></i> Неплохо!' : '<i class="fa-solid fa-book"></i> Нужна практика!';
     document.getElementById('endScore').textContent = score;
     document.getElementById('levelsPassed').textContent = levelsPassed;
     if(typeof submitGameResult==='function')submitGameResult('grammar', typeof score!=='undefined'?score:0);
@@ -432,17 +493,30 @@ function endGame() {
 
 function updateHUD() {
     document.getElementById('scoreDisplay').textContent = score;
-    const h = ['','❤️','❤️❤️','❤️❤️❤️'];
-    document.getElementById('livesDisplay').textContent = h[Math.max(0,lives)] || '💔';
+    const n = Math.max(0, lives);
+    document.getElementById('livesDisplay').innerHTML = n > 0
+        ? '<i class="fa-solid fa-heart"></i>'.repeat(n)
+        : '<i class="fa-regular fa-heart-crack"></i>';
 }
 
-function showPopup(text, color) {
+function showPopup(html, color) {
     const el = document.createElement('div');
     el.className = 'step-popup';
     el.style.color = color;
-    el.textContent = text;
+    el.innerHTML = html;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 800);
+}
+
+function showRulePopup(text, isCorrect) {
+    if (!text) return;
+    document.querySelectorAll('.rule-popup').forEach(el => el.remove());
+    const el = document.createElement('div');
+    el.className = 'rule-popup ' + (isCorrect ? 'correct' : 'wrong');
+    const icon = isCorrect ? 'fa-circle-check' : 'fa-circle-info';
+    el.innerHTML = `<i class="fa-solid ${icon}"></i>${text}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
 }
 
 function confirmSurrender() {

@@ -115,6 +115,24 @@
         .combo-big { font-size: 22px; color: #f39c12; animation: comboPop 0.3s ease; }
         @keyframes comboPop { 0%{transform:scale(1.4);} 100%{transform:scale(1);} }
 
+        /* Rule tip */
+        .rule-tip {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            max-width: 600px; width: 90%; background: rgba(2,8,20,0.96); color: #e8f4fd;
+            border: 1px solid rgba(0,153,204,0.4); padding: 12px 18px; border-radius: 14px;
+            font-size: 13px; font-weight: 600; line-height: 1.5; z-index: 250; opacity: 0;
+            animation: ruleTipIn 3s ease forwards;
+        }
+        .rule-tip.wrong { border-color: rgba(231,76,60,0.5); }
+        .rule-tip i { margin-right: 8px; color: #0099cc; }
+        .rule-tip.wrong i { color: #e74c3c; }
+        @keyframes ruleTipIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            8% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         /* Overlays */
         .overlay { display: none; position: fixed; inset: 0; background: rgba(2,8,20,0.96); z-index: 300; align-items: center; justify-content: center; flex-direction: column; }
         .overlay.show { display: flex; }
@@ -150,21 +168,21 @@
         <div class="shield-pip" id="sp2"></div>
     </div>
     <div id="comboBar">Комбо: <span id="comboNum">0</span></div>
-    <div id="ship" style="left:50%;">🚀</div>
+    <div id="ship" style="left:50%;"><i class="fa-solid fa-rocket" style="color:#0099cc;"></i></div>
 </div>
 
 <div class="overlay show" id="startOverlay">
     <div class="overlay-box">
-        <div style="font-size:56px;margin-bottom:10px;">🚀</div>
+        <div style="font-size:56px;margin-bottom:10px;color:#0099cc;"><i class="fa-solid fa-rocket"></i></div>
         <h2>Ударный космос</h2>
-        <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Астероиды летят на тебя! Кликни на слог с <strong>правильным ударением</strong>, чтобы уничтожить астероид.<br><br>🛡️ Серия из 3 правильных — получаешь щит!</p>
+        <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Астероиды летят на тебя! Кликни на слог с <strong>правильным ударением</strong>, чтобы уничтожить астероид.<br><br><i class="fa-solid fa-shield-halved" style="color:#f39c12;"></i> Серия из 3 правильных — получаешь щит!</p>
         <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-rocket"></i> Запустить!</button>
     </div>
 </div>
 
 <div class="overlay" id="endOverlay">
     <div class="overlay-box">
-        <div class="stars" id="endStars">⭐</div>
+        <div class="stars" id="endStars"></div>
         <h2 id="endTitle">Готово!</h2>
         <div class="big-num" id="endScore">0</div>
         <p style="color:#666;font-size:14px;margin:8px 0 20px;">Точность: <strong id="accuracy">0%</strong></p>
@@ -175,7 +193,7 @@
 
 <div class="overlay" id="surrenderOverlay">
     <div class="overlay-box">
-        <div style="font-size:48px;margin-bottom:10px;">🏳️</div>
+        <div style="font-size:48px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
         <h2>Сдаться?</h2>
         <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
         <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="endGame()"><i class="fa-solid fa-flag"></i> Завершить</button>
@@ -207,18 +225,30 @@ drawStars();
 
 // Исправленный словарь ударений
 const WORDS = [
-    { word: 'ЗВОНИТ',    syllables: ['зво', 'нит'], correct: 1 },
-    { word: 'КАТАЛОГ',   syllables: ['ка', 'та', 'лог'], correct: 2 },
-    { word: 'ТОРТЫ',     syllables: ['тор', 'ты'], correct: 0 },
-    { word: 'КРАСИВЕЕ',  syllables: ['кра', 'си', 'ве', 'е'], correct: 1 },
-    { word: 'ЖАЛЮЗИ',    syllables: ['жа', 'лю', 'зи'], correct: 2 },
-    { word: 'ВКЛЮЧИТ',   syllables: ['вклю', 'чит'], correct: 1 },
-    { word: 'АЭРОПОРТЫ', syllables: ['а', 'э', 'ро', 'пор', 'ты'], correct: 3 },
-    { word: 'БАНТЫ',     syllables: ['бан', 'ты'], correct: 0 },
-    { word: 'ШОФЁР',     syllables: ['шо', 'фёр'], correct: 1 },
-    { word: 'ДОГОВОР',   syllables: ['до', 'го', 'вор'], correct: 2 },
-    { word: 'СВЁКЛА',    syllables: ['свё', 'кла'], correct: 0 },
-    { word: 'ОБЕСПЕЧЕНИЕ', syllables: ['о', 'бес', 'пе', 'че', 'ни', 'е'], correct: 2 }
+    { word: 'ЗВОНИТ',    syllables: ['зво', 'нит'], correct: 1,
+      rule: 'Во всех формах глагола «звонить» ударение падает на окончание: звоню́, звони́шь, звони́т, позвони́м.' },
+    { word: 'КАТАЛОГ',   syllables: ['ка', 'та', 'лог'], correct: 2,
+      rule: 'Слова на «-лог» (катало́г, диало́г, моноло́г) имеют ударение на последнем слоге.' },
+    { word: 'ТОРТЫ',     syllables: ['тор', 'ты'], correct: 0,
+      rule: 'При образовании множественного числа ударение остаётся на первом слоге: то́рт — то́рты, как «шарф — ша́рфы».' },
+    { word: 'КРАСИВЕЕ',  syllables: ['кра', 'си', 'ве', 'е'], correct: 1,
+      rule: 'В сравнительной степени ударение сохраняется там же, где в исходном прилагательном: краси́вый — краси́вее.' },
+    { word: 'ЖАЛЮЗИ',    syllables: ['жа', 'лю', 'зи'], correct: 2,
+      rule: 'Слово французского происхождения — ударение всегда на последнем слоге, как в «шасси́», «пари́».' },
+    { word: 'ВКЛЮЧИТ',   syllables: ['вклю', 'чит'], correct: 1,
+      rule: 'Как и «звонит», глагол «включить» во всех формах имеет ударение на окончании: включу́, включи́шь, включи́т.' },
+    { word: 'АЭРОПОРТЫ', syllables: ['а', 'э', 'ро', 'пор', 'ты'], correct: 3,
+      rule: 'Во всех падежах, кроме предложного с предлогом «в» («в аэропорту́»), ударение падает на «порт»: аэропо́рт, аэропо́рты.' },
+    { word: 'БАНТЫ',     syllables: ['бан', 'ты'], correct: 0,
+      rule: 'Как и «то́рты», ударение остаётся на первом слоге и во множественном числе: ба́нт — ба́нты.' },
+    { word: 'ШОФЁР',     syllables: ['шо', 'фёр'], correct: 1,
+      rule: 'Буква «ё» в русском языке всегда стоит под ударением, поэтому — шофёр, а не шо́фер.' },
+    { word: 'ДОГОВОР',   syllables: ['до', 'го', 'вор'], correct: 2,
+      rule: 'Нормативное ударение — на последнем слоге: догово́р, как «разгово́р», «прогово́р».' },
+    { word: 'СВЁКЛА',    syllables: ['свё', 'кла'], correct: 0,
+      rule: 'Буква «ё» всегда под ударением: свёкла. Частая ошибка — «свекла́».' },
+    { word: 'ОБЕСПЕЧЕНИЕ', syllables: ['о', 'бес', 'пе', 'че', 'ни', 'е'], correct: 2,
+      rule: 'Ударение падает на «пе», как в глаголе обеспе́чить, а не на «че» — «обеспече́ние» ошибочно.' }
 ];
 
 let score = 0, correct = 0, total = 0, combo = 0, shield = 0;
@@ -319,7 +349,7 @@ function handleMiss(asteroid, w) {
     if (shield > 0) { 
         shield--; 
         updateShieldUI(); 
-        showComboFlash('🛡️ Щит спас от падения!'); 
+        showComboFlash('<i class="fa-solid fa-shield-halved"></i> Щит спас от падения!'); 
     } else { 
         combo = 0; 
         updateCombo(); 
@@ -332,6 +362,7 @@ function handleMiss(asteroid, w) {
     }
     
     document.getElementById('shieldDisplay').textContent = shield;
+    showRuleTip(w.word.charAt(0) + w.word.slice(1).toLowerCase() + ': ' + w.rule, false);
 }
 
 function handleShot(btn, isCorrect, asteroid, w) {
@@ -340,23 +371,26 @@ function handleShot(btn, isCorrect, asteroid, w) {
     
     fireLaser(btn);
 
+    const wordLabel = w.word.charAt(0) + w.word.slice(1).toLowerCase();
     if (isCorrect) {
         btn.classList.add('hit-correct');
         score += 10 + (combo >= 2 ? 5 : 0);
         correct++;
         combo++;
-        if (combo % 3 === 0 && shield < 3) { shield++; updateShieldUI(); showComboFlash('🛡️ +Щит!'); }
-        else if (combo > 1) { showComboFlash(`🔥 Серия ${combo}!`); }
+        if (combo % 3 === 0 && shield < 3) { shield++; updateShieldUI(); showComboFlash('<i class="fa-solid fa-shield-halved"></i> +Щит!'); }
+        else if (combo > 1) { showComboFlash(`<i class="fa-solid fa-fire"></i> Серия ${combo}!`); }
         updateCombo();
+        showRuleTip(`${wordLabel}: ${w.rule}`, true);
     } else {
         btn.classList.add('hit-wrong');
-        if (shield > 0) { shield--; updateShieldUI(); showComboFlash('🛡️ Щит поглотил урон!'); }
+        if (shield > 0) { shield--; updateShieldUI(); showComboFlash('<i class="fa-solid fa-shield-halved"></i> Щит поглотил урон!'); }
         else { combo = 0; }
         updateCombo();
         
         // Подсвечиваем правильный
         const buttons = asteroid.querySelectorAll('.vowel-btn');
         if (buttons[w.correct]) buttons[w.correct].classList.add('hit-correct');
+        showRuleTip(`${wordLabel}: ${w.rule}`, false);
     }
 
     document.getElementById('scoreDisplay').textContent = score;
@@ -365,7 +399,7 @@ function handleShot(btn, isCorrect, asteroid, w) {
     setTimeout(() => {
         if (asteroid.parentNode) asteroid.remove();
         spawnNext();
-    }, 800);
+    }, 1600);
 }
 
 function updateShieldUI() {
@@ -381,12 +415,22 @@ function updateCombo() {
     if (combo > 1) { el.className = 'combo-big'; setTimeout(() => el.className = '', 300); }
 }
 
-function showComboFlash(text) {
+function showComboFlash(html) {
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#f39c12;color:#fff;padding:8px 22px;border-radius:20px;font-size:14px;font-weight:800;z-index:200;animation:flashAnim 1.5s ease forwards;pointer-events:none;';
-    el.textContent = text;
+    el.innerHTML = html;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
+}
+
+function showRuleTip(text, isCorrect) {
+    document.querySelectorAll('.rule-tip').forEach(el => el.remove());
+    const el = document.createElement('div');
+    el.className = 'rule-tip ' + (isCorrect ? '' : 'wrong');
+    const icon = isCorrect ? 'fa-circle-check' : 'fa-circle-info';
+    el.innerHTML = `<i class="fa-solid ${icon}"></i>${text}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
 }
 
 function endGame() {
@@ -396,8 +440,11 @@ function endGame() {
     hideOverlay('surrenderOverlay');
 
     const pct = total > 0 ? Math.round((correct/total)*100) : 0;
-    document.getElementById('endStars').textContent = pct >= 85 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
-    document.getElementById('endTitle').textContent = pct >= 85 ? '🏆 Космический ас!' : pct >= 60 ? '🚀 Хорошо!' : '📚 Учи ударения!';
+    let starCount = pct >= 85 ? 3 : pct >= 60 ? 2 : 1;
+    document.getElementById('endStars').innerHTML =
+        '<i class="fa-solid fa-star" style="color:#f39c12"></i>'.repeat(starCount) +
+        '<i class="fa-regular fa-star" style="color:#4a4a5a"></i>'.repeat(3 - starCount);
+    document.getElementById('endTitle').innerHTML = pct >= 85 ? '<i class="fa-solid fa-trophy"></i> Космический ас!' : pct >= 60 ? '<i class="fa-solid fa-rocket"></i> Хорошо!' : '<i class="fa-solid fa-book"></i> Учи ударения!';
     document.getElementById('endScore').textContent = score;
     document.getElementById('accuracy').textContent = pct + '%';
     if(typeof submitGameResult==='function')submitGameResult('stress', typeof score!=='undefined'?score:0);

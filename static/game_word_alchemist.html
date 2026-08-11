@@ -87,17 +87,48 @@
             font-size: 15px;
             font-weight: 800;
             cursor: pointer;
-            transition: 0.2s;
+            transition: transform 0.15s, box-shadow 0.15s;
             user-select: none;
             border: 2px solid transparent;
             letter-spacing: 1px;
+            opacity: 0;
+            transform: translateY(-160px) rotate(-10deg);
+            animation: blockFall 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;
         }
-        .morpheme:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        @keyframes blockFall {
+            0% { opacity: 0; transform: translateY(-160px) rotate(-10deg); }
+            65% { opacity: 1; transform: translateY(8px) rotate(3deg); }
+            100% { opacity: 1; transform: translateY(0) rotate(0); }
+        }
+        .morpheme.collected { animation: blockCollected 0.35s ease forwards; }
+        @keyframes blockCollected {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.15) translateY(-6px); }
+            100% { transform: scale(1) translateY(0); opacity: 0.4; }
+        }
+        .morpheme:hover:not(.selected) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
         .morpheme.prefix  { background: rgba(231,76,60,0.2);  color: #e74c3c;  border-color: rgba(231,76,60,0.5); }
         .morpheme.root    { background: rgba(46,204,113,0.2);  color: #2ecc71;  border-color: rgba(46,204,113,0.5); }
         .morpheme.suffix  { background: rgba(52,152,219,0.2);  color: #3498db;  border-color: rgba(52,152,219,0.5); }
         .morpheme.ending  { background: rgba(243,156,18,0.2);  color: #f39c12;  border-color: rgba(243,156,18,0.5); }
-        .morpheme.selected { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+        .morpheme.postfix { background: rgba(155,89,182,0.2);  color: #9b59b6;  border-color: rgba(155,89,182,0.5); }
+        .morpheme.selected { opacity: 0.4; cursor: default; box-shadow: none; }
+
+        .assembly-zone.pulse { animation: zonePulse 0.35s ease; }
+        @keyframes zonePulse {
+            0% { box-shadow: 0 0 0 0 rgba(155,89,182,0.6); }
+            100% { box-shadow: 0 0 0 14px rgba(155,89,182,0); }
+        }
+
+        /* Rule explanation popup */
+        .rule-banner {
+            width: 100%; padding: 12px 18px; border-radius: 14px;
+            text-align: left; font-size: 13px; font-weight: 600; line-height: 1.5;
+            display: none; color: #e8d9f0; background: rgba(155,89,182,0.12);
+            border: 1px solid rgba(155,89,182,0.35);
+        }
+        .rule-banner.show { display: block; }
+        .rule-banner i { margin-right: 8px; color: #9b59b6; }
 
         .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); }
@@ -184,6 +215,7 @@
         <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div>Корень</div>
         <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div>Суффикс</div>
         <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div>Окончание</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div>Постфикс</div>
     </div>
 
     <div class="assembly-zone" id="assemblyZone">
@@ -192,6 +224,7 @@
     </div>
 
     <div class="feedback-banner" id="feedbackBanner"></div>
+    <div class="rule-banner" id="ruleBanner"></div>
 
     <div class="morphemes-area" id="morphemesArea"></div>
 
@@ -204,7 +237,7 @@
 <!-- Start overlay -->
 <div class="overlay show" id="startOverlay">
     <div class="overlay-box">
-        <div style="font-size:56px;margin-bottom:10px;">⚗️</div>
+        <div style="font-size:56px;margin-bottom:10px;color:#9b59b6;"><i class="fa-solid fa-flask-vial"></i></div>
         <h2>Алхимик слов</h2>
         <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Собирай реальные русские слова из морфем.<br>Клики по блокам — строй слово в правильном порядке!</p>
         <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-flask"></i> Начать алхимию!</button>
@@ -214,7 +247,7 @@
 <!-- End overlay -->
 <div class="overlay" id="endOverlay">
     <div class="overlay-box">
-        <div class="stars" id="endStars">⭐</div>
+        <div class="stars" id="endStars"></div>
         <h2 id="endTitle">Готово!</h2>
         <div class="big-num" id="endScore">0</div>
         <p style="color:#666;font-size:14px;margin:8px 0 20px;">Правильных слов: <strong id="correctWords">0</strong> из <strong id="totalWords">0</strong></p>
@@ -226,7 +259,7 @@
 <!-- Surrender overlay -->
 <div class="overlay" id="surrenderOverlay">
     <div class="overlay-box">
-        <div style="font-size:48px;margin-bottom:10px;">🏳️</div>
+        <div style="font-size:48px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
         <h2>Сдаться?</h2>
         <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
         <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="doSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
@@ -238,29 +271,37 @@
 <script>
 const WORDS = [
     { word: 'подберёзовик', morphemes: [
-        {text:'под-', type:'prefix'}, {text:'-бер-', type:'root'}, {text:'-ёз-', type:'suffix'}, {text:'-овик', type:'suffix'}
-    ], decoys: [{text:'-раз-', type:'root'}, {text:'-ость', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Гриб в лесу' },
+        {text:'под-', type:'prefix'}, {text:'-берёз-', type:'root'}, {text:'-ов-', type:'suffix'}, {text:'-ик', type:'suffix'}
+    ], decoys: [{text:'-раз-', type:'root'}, {text:'-ость', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Гриб в лесу',
+      explain: 'Приставка под- указывает «под чем-то» (под берёзой). Корень -берёз- — от слова «берёза». Суффиксы -ов- и -ик- вместе образуют название гриба.' },
     { word: 'разбежался', morphemes: [
-        {text:'раз-', type:'prefix'}, {text:'-беж-', type:'root'}, {text:'-а-', type:'suffix'}, {text:'-л-', type:'suffix'}, {text:'-ся', type:'ending'}
-    ], decoys: [{text:'по-', type:'prefix'}, {text:'-ить', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс + окончание', hint: 'Начал бежать во все стороны' },
+        {text:'раз-', type:'prefix'}, {text:'-беж-', type:'root'}, {text:'-а-', type:'suffix'}, {text:'-л-', type:'suffix'}, {text:'-ся', type:'postfix'}
+    ], decoys: [{text:'по-', type:'prefix'}, {text:'-ить', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс + постфикс', hint: 'Начал бежать во все стороны',
+      explain: 'Приставка раз- означает «в разные стороны». Корень -беж- — вариант корня -бег- (чередование г/ж: бегу — бежишь). Постфикс -ся указывает на возвратность действия.' },
     { word: 'подружиться', morphemes: [
-        {text:'по-', type:'prefix'}, {text:'-друж-', type:'root'}, {text:'-и-', type:'suffix'}, {text:'-ться', type:'ending'}
-    ], decoys: [{text:'раз-', type:'prefix'}, {text:'-ок', type:'suffix'}], scheme: 'приставка + корень + суффикс + окончание', hint: 'Стать друзьями' },
+        {text:'по-', type:'prefix'}, {text:'-друж-', type:'root'}, {text:'-и-', type:'suffix'}, {text:'-ть', type:'ending'}, {text:'-ся', type:'postfix'}
+    ], decoys: [{text:'раз-', type:'prefix'}, {text:'-ок', type:'suffix'}], scheme: 'приставка + корень + суффикс + окончание + постфикс', hint: 'Стать друзьями',
+      explain: 'Приставка по- + корень -друж- (от «друг», чередование г/ж) + суффикс -и- + окончание -ть неопределённой формы + постфикс -ся (возвратный глагол).' },
     { word: 'перечитать', morphemes: [
         {text:'пере-', type:'prefix'}, {text:'-чит-', type:'root'}, {text:'-а-', type:'suffix'}, {text:'-ть', type:'ending'}
-    ], decoys: [{text:'под-', type:'prefix'}, {text:'-ал', type:'ending'}], scheme: 'приставка + корень + суффикс + окончание', hint: 'Читать заново' },
+    ], decoys: [{text:'под-', type:'prefix'}, {text:'-ал', type:'ending'}], scheme: 'приставка + корень + суффикс + окончание', hint: 'Читать заново',
+      explain: 'Приставка пере- означает повторное действие. Корень -чит- — от «читать». Суффикс -а- образует глагольную основу, -ть — окончание неопределённой формы.' },
     { word: 'выносливость', morphemes: [
         {text:'вы-', type:'prefix'}, {text:'-нос-', type:'root'}, {text:'-лив-', type:'suffix'}, {text:'-ость', type:'suffix'}
-    ], decoys: [{text:'за-', type:'prefix'}, {text:'-ение', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Способность терпеть' },
+    ], decoys: [{text:'за-', type:'prefix'}, {text:'-ение', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Способность терпеть',
+      explain: 'Приставка вы- + корень -нос- (от «носить», «выносить») + суффикс -лив- (способность к чему-либо) + суффикс -ость (образует абстрактное существительное).' },
     { word: 'написание', morphemes: [
         {text:'на-', type:'prefix'}, {text:'-пис-', type:'root'}, {text:'-а-', type:'suffix'}, {text:'-ние', type:'suffix'}
-    ], decoys: [{text:'под-', type:'prefix'}, {text:'-ка', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Процесс письма' },
+    ], decoys: [{text:'под-', type:'prefix'}, {text:'-ка', type:'suffix'}], scheme: 'приставка + корень + суффикс + суффикс', hint: 'Процесс письма',
+      explain: 'Приставка на- + корень -пис- (от «писать») + суффикс -а- + суффикс -ние, образующий отглагольное существительное.' },
     { word: 'предположить', morphemes: [
         {text:'пред-', type:'prefix'}, {text:'по-', type:'prefix'}, {text:'-лож-', type:'root'}, {text:'-и-', type:'suffix'}, {text:'-ть', type:'ending'}
-    ], decoys: [{text:'раз-', type:'prefix'}, {text:'-ать', type:'ending'}], scheme: 'приставка + приставка + корень + суффикс + окончание', hint: 'Выдвинуть гипотезу' },
+    ], decoys: [{text:'раз-', type:'prefix'}, {text:'-ать', type:'ending'}], scheme: 'приставка + приставка + корень + суффикс + окончание', hint: 'Выдвинуть гипотезу',
+      explain: 'Две приставки — пред- и по- — плюс корень -лож- (чередование г/ж: лаг-/лож-) + суффикс -и- + окончание -ть.' },
     { word: 'безработица', morphemes: [
         {text:'без-', type:'prefix'}, {text:'-работ-', type:'root'}, {text:'-иц-', type:'suffix'}, {text:'-а', type:'ending'}
-    ], decoys: [{text:'со-', type:'prefix'}, {text:'-ник', type:'suffix'}], scheme: 'приставка + корень + суффикс + окончание', hint: 'Отсутствие работы' }
+    ], decoys: [{text:'со-', type:'prefix'}, {text:'-ник', type:'suffix'}], scheme: 'приставка + корень + суффикс + окончание', hint: 'Отсутствие работы',
+      explain: 'Приставка без- (отсутствие чего-либо) + корень -работ- + суффикс -иц- + окончание -а существительного женского рода.' }
 ];
 
 let score = 0, currentIdx = 0, correctCount = 0;
@@ -282,7 +323,7 @@ function renderWord() {
     document.getElementById('levelDisplay').textContent = `Слово ${currentIdx+1}/${WORDS.length}`;
     document.getElementById('progressBar').style.width = `${(currentIdx/WORDS.length)*100}%`;
     document.getElementById('targetScheme').textContent = currentWord.scheme;
-    document.getElementById('targetHint').textContent = '💡 ' + currentWord.hint;
+    document.getElementById('targetHint').innerHTML = '<i class="fa-solid fa-lightbulb"></i> ' + currentWord.hint;
 
     document.getElementById('assemblyPlaceholder').style.display = '';
     document.getElementById('assembledWord').style.display = 'none';
@@ -291,6 +332,8 @@ function renderWord() {
 
     const fb = document.getElementById('feedbackBanner');
     fb.className = 'feedback-banner'; fb.textContent = '';
+    const rb = document.getElementById('ruleBanner');
+    rb.className = 'rule-banner'; rb.innerHTML = '';
 
     // Build shuffled morpheme pool
     const all = [...currentWord.morphemes, ...currentWord.decoys];
@@ -303,6 +346,7 @@ function renderWord() {
         btn.className = `morpheme ${m.type}`;
         btn.textContent = m.text;
         btn.dataset.idx = i;
+        btn.style.animationDelay = `${i * 90}ms`;
         btn.onclick = () => pickMorpheme(btn, m);
         area.appendChild(btn);
     });
@@ -310,23 +354,28 @@ function renderWord() {
 
 function pickMorpheme(btn, m) {
     if (btn.classList.contains('selected')) return;
-    btn.classList.add('selected');
+    btn.classList.add('collected');
+    setTimeout(() => btn.classList.add('selected'), 200);
     selectedMorphemes.push(m);
     updateAssembly();
 }
 
 function updateAssembly() {
+    const zone = document.getElementById('assemblyZone');
     const word = selectedMorphemes.map(m => m.text.replace(/-/g, '')).join('');
     if (word) {
         document.getElementById('assemblyPlaceholder').style.display = 'none';
         document.getElementById('assembledWord').style.display = '';
         document.getElementById('assembledWord').textContent = word;
-        document.getElementById('assemblyZone').classList.add('has-content');
+        zone.classList.add('has-content');
     } else {
         document.getElementById('assemblyPlaceholder').style.display = '';
         document.getElementById('assembledWord').style.display = 'none';
-        document.getElementById('assemblyZone').classList.remove('has-content');
+        zone.classList.remove('has-content');
     }
+    zone.classList.remove('pulse');
+    void zone.offsetWidth; // restart animation
+    zone.classList.add('pulse');
 }
 
 function clearAssembly() {
@@ -342,28 +391,32 @@ function checkWord() {
     const assembled = selectedMorphemes.map(m => m.text.replace(/-/g, '')).join('');
     const correct = currentWord.morphemes.map(m => m.text.replace(/-/g, '')).join('');
     const fb = document.getElementById('feedbackBanner');
+    const rb = document.getElementById('ruleBanner');
 
     // Check both assembled text and morpheme sequence
     const morphemeMatch = selectedMorphemes.length === currentWord.morphemes.length &&
         currentWord.morphemes.every((m, i) => selectedMorphemes[i] && selectedMorphemes[i].text === m.text);
 
+    rb.className = 'rule-banner show';
+    rb.innerHTML = `<i class="fa-solid fa-lightbulb"></i>${currentWord.explain || ''}`;
+
     if (morphemeMatch) {
         fb.className = 'feedback-banner correct';
-        fb.textContent = `✅ Верно! «${assembled}» — отличное слово!`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-check"></i> Верно! «${assembled}» — отличное слово!`;
         score += 15;
         correctCount++;
-        setTimeout(() => { currentIdx++; renderWord(); }, 1400);
+        setTimeout(() => { currentIdx++; renderWord(); }, 3000);
     } else if (assembled === correct) {
         fb.className = 'feedback-banner correct';
-        fb.textContent = `✅ Слово верное, но порядок морфем другой. Засчитываем!`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-check"></i> Слово верное, но порядок морфем другой. Засчитываем!`;
         score += 10;
         correctCount++;
-        setTimeout(() => { currentIdx++; renderWord(); }, 1600);
+        setTimeout(() => { currentIdx++; renderWord(); }, 3000);
     } else {
         fb.className = 'feedback-banner wrong';
-        fb.textContent = `❌ Не то слово. Правильно: «${correct}». Попробуй ещё!`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Не то слово. Правильно: «${correct}». Попробуй ещё!`;
         // Reset after showing answer
-        setTimeout(() => { clearAssembly(); fb.className = 'feedback-banner'; }, 2000);
+        setTimeout(() => { clearAssembly(); fb.className = 'feedback-banner'; rb.className = 'rule-banner'; }, 3200);
     }
     document.getElementById('scoreDisplay').textContent = score;
 }
@@ -373,8 +426,11 @@ function endGame() {
     hideOverlay('surrenderOverlay');
 
     const pct = Math.round((correctCount / WORDS.length) * 100);
-    document.getElementById('endStars').textContent = pct >= 88 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
-    document.getElementById('endTitle').textContent = pct >= 88 ? '🏆 Великий Алхимик!' : pct >= 60 ? '⚗️ Хороший результат!' : '📚 Нужна практика';
+    let starCount = pct >= 88 ? 3 : pct >= 60 ? 2 : 1;
+    document.getElementById('endStars').innerHTML =
+        '<i class="fa-solid fa-star" style="color:#f39c12"></i>'.repeat(starCount) +
+        '<i class="fa-regular fa-star" style="color:#d0d0d0"></i>'.repeat(3 - starCount);
+    document.getElementById('endTitle').innerHTML = pct >= 88 ? '<i class="fa-solid fa-trophy"></i> Великий Алхимик!' : pct >= 60 ? '<i class="fa-solid fa-flask-vial"></i> Хороший результат!' : '<i class="fa-solid fa-book"></i> Нужна практика';
     document.getElementById('endScore').textContent = score;
     document.getElementById('correctWords').textContent = correctCount;
     document.getElementById('totalWords').textContent = WORDS.length;

@@ -151,6 +151,25 @@
         }
         @keyframes comboIn { 0%{opacity:0;transform:translateX(-50%) scale(0.8);} 15%{opacity:1;transform:translateX(-50%) scale(1.1);} 30%{transform:translateX(-50%) scale(1);} 80%{opacity:1;} 100%{opacity:0;} }
 
+        /* Rule explanation popup */
+        .rule-flash {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            max-width: 640px; width: 90%; background: #fff; color: #023e50;
+            padding: 14px 20px; border-radius: 14px; font-size: 13px; font-weight: 600; line-height: 1.5;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35); z-index: 250; opacity: 0;
+            animation: ruleIn 3.2s ease forwards; border-left: 5px solid #2ecc71;
+        }
+        .rule-flash.wrong { border-left-color: #e74c3c; }
+        .rule-flash i { margin-right: 8px; }
+        .rule-flash.correct i { color: #2ecc71; }
+        .rule-flash.wrong i { color: #e74c3c; }
+        @keyframes ruleIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            8% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         /* Pause indicator */
         #pauseBar {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -165,7 +184,7 @@
     <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Root<span>Ry</span></div>
     <div class="hud">
         <div class="hud-item"><i class="fa-solid fa-star" style="color:#f39c12"></i><span class="score-num" id="scoreDisplay">0</span></div>
-        <div class="hud-item"><span class="lives" id="livesDisplay">❤️❤️❤️</span></div>
+        <div class="hud-item"><span class="lives" id="livesDisplay"><i class="fa-solid fa-heart"></i><i class="fa-solid fa-heart"></i><i class="fa-solid fa-heart"></i></span></div>
     </div>
     <button class="surrender-btn" onclick="confirmSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
 </div>
@@ -175,13 +194,13 @@
 <!-- Start overlay -->
 <div class="overlay show" id="startOverlay">
     <div class="overlay-box">
-        <div style="font-size:60px;margin-bottom:10px;">🥷</div>
+        <div style="font-size:60px;margin-bottom:10px;color:#0099cc;"><i class="fa-solid fa-user-ninja"></i></div>
         <h2>Запятая-ниндзя</h2>
         <p>Предложения вылетают снизу вверх. <strong>Кликни</strong> между словами там, где нужна запятая.<br>Не ошибись — за лишний знак теряешь жизнь!</p>
         <div style="background:#f7f9fb;border-radius:14px;padding:14px 18px;margin:14px 0;text-align:left;font-size:13px;color:#555;line-height:1.7;">
-            ✅ Правильный разруб — <strong>+10 очков</strong><br>
-            ❌ Лишняя запятая — <strong>−1 жизнь</strong><br>
-            ❤️ У тебя <strong>3 жизни</strong>
+            <i class="fa-solid fa-check" style="color:#2ecc71"></i> Правильный разруб — <strong>+10 очков</strong><br>
+            <i class="fa-solid fa-xmark" style="color:#e74c3c"></i> Лишняя запятая — <strong>−1 жизнь</strong><br>
+            <i class="fa-solid fa-heart" style="color:#e74c3c"></i> У тебя <strong>3 жизни</strong>
         </div>
         <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-play"></i> Начать!</button>
     </div>
@@ -190,7 +209,7 @@
 <!-- Game over overlay -->
 <div class="overlay" id="endOverlay">
     <div class="overlay-box">
-        <div class="stars" id="endStars">⭐</div>
+        <div class="stars" id="endStars"></div>
         <h2 id="endTitle">Молодец!</h2>
         <div class="big-num" id="endScore">0</div>
         <p id="endMsg">Правильных разрубов: <strong id="correctCount">0</strong> из <strong id="totalCount">0</strong></p>
@@ -202,7 +221,7 @@
 <!-- Surrender overlay -->
 <div class="overlay" id="surrenderOverlay">
     <div class="overlay-box">
-        <div style="font-size:48px;margin-bottom:10px;">🏳️</div>
+        <div style="font-size:48px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
         <h2>Сдаться?</h2>
         <p>Твой текущий счёт: <strong id="surrenderScore">0</strong> очков.<br>Прогресс будет потерян.</p>
         <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="endGame(true)"><i class="fa-solid fa-flag"></i> Сдаться</button>
@@ -217,53 +236,53 @@
 const SENTENCES = [
     {
         parts: ['Читая', ' книгу', ',', ' он', ' не', ' замечал', ',', ' как', ' проходит', ' время', '.'],
-        cuts: [1, 6], // after index 1 and 6 (0-based gap index)
-        gaps: 10
+        cuts: [1, 4], // after word "книгу" and after word "замечал"
+        rule: 'Деепричастный оборот «Читая книгу» в начале предложения всегда обособляется запятой. Придаточная часть «как проходит время» присоединяется союзным словом «как» и отделяется запятой от главной части.'
     },
     {
         parts: ['Подбежав', ' к', ' двери', ',', ' мальчик', ' остановился', ' и', ' прислушался', '.'],
         cuts: [2],
-        gaps: 8
+        rule: 'Деепричастный оборот, стоящий в начале предложения, всегда выделяется запятой.'
     },
     {
         parts: ['На', ' столе', ' лежали', ' книги', ',', ' ручки', ',', ' карандаши', ' и', ' тетради', '.'],
-        cuts: [3, 5],
-        gaps: 10
+        cuts: [3, 4], // after "книги" and after "ручки"
+        rule: 'Однородные члены предложения разделяются запятыми. Перед одиночным союзом «и», соединяющим последние два однородных члена, запятая не ставится.'
     },
     {
         parts: ['Конечно', ',', ' мы', ' придём', ' на', ' праздник', '.'],
         cuts: [0],
-        gaps: 6
+        rule: 'Вводное слово «конечно» (выражает уверенность говорящего) отделяется запятой от остальной части предложения.'
     },
     {
         parts: ['Учитель', ',', ' объяснявший', ' новую', ' тему', ',', ' говорил', ' медленно', '.'],
-        cuts: [0, 4],
-        gaps: 8
+        cuts: [0, 3], // after "Учитель" and after "тему"
+        rule: 'Причастный оборот «объяснявший новую тему», стоящий после определяемого слова «учитель», выделяется запятыми с обеих сторон.'
     },
     {
-        parts: ['Однако', ',', ' по', ' мнению', ' экспертов', ',', ' ситуация', ' изменится', '.'],
-        cuts: [0, 4],
-        gaps: 8
+        parts: ['Однако', ' по', ' мнению', ' экспертов', ',', ' ситуация', ' изменится', '.'],
+        cuts: [3], // only after "экспертов" — "однако" в начале предложения = союз "но" и запятой не отделяется
+        rule: '«По мнению экспертов» — вводное словосочетание, указывающее на источник сообщения, поэтому оно выделяется запятой. А союз «однако» в начале предложения (в значении «но») запятой не отделяется.'
     },
     {
         parts: ['Он', ' бежал', ' быстро', ',', ' не', ' оглядываясь', '.'],
         cuts: [2],
-        gaps: 6
+        rule: 'Одиночное деепричастие «не оглядываясь» сохраняет значение добавочного действия и обособляется запятой.'
     },
     {
         parts: ['В', ' городе', ' были', ' театры', ',', ' музеи', ',', ' парки', ' и', ' кафе', '.'],
-        cuts: [3, 5],
-        gaps: 10
+        cuts: [3, 4], // after "театры" and after "музеи"
+        rule: 'Однородные члены предложения разделяются запятыми, а перед одиночным союзом «и» перед последним членом запятая не нужна.'
     },
     {
         parts: ['Написав', ' письмо', ',', ' она', ' задумалась', '.'],
         cuts: [1],
-        gaps: 5
+        rule: 'Деепричастный оборот «Написав письмо» в начале предложения обособляется запятой.'
     },
     {
         parts: ['Он', ' любил', ' читать', ',', ' мечтать', ' и', ' рисовать', '.'],
         cuts: [2],
-        gaps: 7
+        rule: 'Однородные члены (три инфинитива) разделяются запятой; перед последним, присоединённым союзом «и», запятая не нужна.'
     }
 ];
 
@@ -346,15 +365,17 @@ function spawnSentence() {
                     score += 10 * (combo > 2 ? 2 : 1);
                     correctCuts++;
                     combo++;
-                    if (combo === 3) showCombo('🔥 Комбо x2!');
-                    if (combo === 5) showCombo('⚡ Комбо x2 МАСТЕР!');
+                    if (combo === 3) showCombo('<i class="fa-solid fa-fire"></i> Комбо x2!');
+                    if (combo === 5) showCombo('<i class="fa-solid fa-bolt"></i> Комбо x2 МАСТЕР!');
                     showScorePopup(e.clientX, e.clientY, '+10', '#2ecc71');
+                    showRule(data.rule, true);
                 } else {
                     zone.classList.add('wrong-cut');
                     lives--;
                     combo = 0;
-                    showScorePopup(e.clientX, e.clientY, '−❤️', '#e74c3c');
+                    showScorePopup(e.clientX, e.clientY, '−<i class="fa-solid fa-heart"></i>', '#e74c3c');
                     shakeScreen();
+                    showRule(data.rule, false);
                     if (lives <= 0) { setTimeout(() => endGame(false), 600); }
                 }
                 updateHUD();
@@ -386,17 +407,28 @@ function showScorePopup(x, y, text, color) {
     const el = document.createElement('div');
     el.className = 'score-popup';
     el.style.cssText = `left:${x-20}px;top:${y-30}px;color:${color};`;
-    el.textContent = text;
+    el.innerHTML = text;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 900);
 }
 
-function showCombo(text) {
+function showCombo(html) {
     const el = document.createElement('div');
     el.className = 'combo-flash';
-    el.textContent = text;
+    el.innerHTML = html;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
+}
+
+function showRule(rule, isCorrect) {
+    if (!rule) return;
+    document.querySelectorAll('.rule-flash').forEach(el => el.remove());
+    const el = document.createElement('div');
+    el.className = 'rule-flash ' + (isCorrect ? 'correct' : 'wrong');
+    const icon = isCorrect ? 'fa-circle-check' : 'fa-circle-xmark';
+    el.innerHTML = `<i class="fa-solid ${icon}"></i>${rule}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
 }
 
 function shakeScreen() {
@@ -408,8 +440,8 @@ function shakeScreen() {
 
 function updateHUD() {
     document.getElementById('scoreDisplay').textContent = score;
-    const hearts = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
-    document.getElementById('livesDisplay').textContent = hearts[Math.max(0, lives)] || '';
+    const n = Math.max(0, lives);
+    document.getElementById('livesDisplay').innerHTML = '<i class="fa-solid fa-heart"></i>'.repeat(n);
 }
 
 function endGame(surrendered) {
@@ -420,10 +452,12 @@ function endGame(surrendered) {
     hideOverlay('surrenderOverlay'); 
 
     const pct = totalRequired > 0 ? Math.round((correctCuts / totalRequired) * 100) : 0;
-    let stars = pct >= 90 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+    let starCount = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
     let title = pct >= 90 ? 'Сенсей пунктуации!' : pct >= 60 ? 'Хороший ниндзя!' : surrendered ? 'Сдался...' : 'Нужно тренироваться!';
 
-    document.getElementById('endStars').textContent = stars;
+    document.getElementById('endStars').innerHTML =
+        '<i class="fa-solid fa-star" style="color:#f39c12"></i>'.repeat(starCount) +
+        '<i class="fa-regular fa-star" style="color:#d0d0d0"></i>'.repeat(3 - starCount);
     document.getElementById('endTitle').textContent = title;
     document.getElementById('endScore').textContent = score;
     document.getElementById('correctCount').textContent = correctCuts;
