@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Строитель предложений | RootRy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        body { background: #0a1a2e; min-height: 100vh; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
+
+        .game-header {
+            width: 100%; background: rgba(26,10,46,0.97); display: flex; align-items: center;
+            justify-content: space-between; padding: 14px 24px; position: fixed; top: 0; left: 0; z-index: 100;
+            border-bottom: 1px solid rgba(41,128,185,0.4);
+        }
+        .brand { color: #fff; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .brand span { color: #2980b9; }
+        .hud { display: flex; gap: 20px; align-items: center; }
+        .hud-item { color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .score-num { color: #2980b9; font-size: 20px; }
+
+        .surrender-btn {
+            background: rgba(231,76,60,0.2); border: 1px solid #e74c3c; color: #e74c3c;
+            padding: 8px 18px; border-radius: 12px; font-family: 'Montserrat', sans-serif;
+            font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .surrender-btn:hover { background: rgba(231,76,60,0.4); }
+
+        /* Arena */
+        #arena {
+            margin-top: 70px;
+            width: 100%; max-width: 680px;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+
+        /* Target word display */
+        .target-box {
+            background: rgba(41,128,185,0.15);
+            border: 2px solid rgba(41,128,185,0.5);
+            border-radius: 20px;
+            padding: 18px 30px;
+            text-align: center;
+            width: 100%;
+        }
+        .target-label { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .target-scheme { color: #d7bde2; font-size: 14px; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+        .target-hint { color: #2980b9; font-size: 13px; font-weight: 600; }
+
+        /* Assembly zone */
+        .assembly-zone {
+            width: 100%;
+            min-height: 70px;
+            background: rgba(255,255,255,0.04);
+            border: 2px dashed rgba(41,128,185,0.4);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 14px;
+            transition: 0.2s;
+        }
+        .assembly-zone.has-content { border-color: rgba(41,128,185,0.8); }
+        .assembly-placeholder { color: rgba(255,255,255,0.2); font-size: 13px; font-weight: 600; }
+
+        /* Assembled word preview */
+        .assembled-word {
+            color: #fff; font-size: 24px; font-weight: 800; letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(41,128,185,0.8);
+        }
+
+        /* Morpheme blocks */
+        .morphemes-area {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .morpheme {
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            user-select: none;
+            border: 2px solid transparent;
+            letter-spacing: 1px;
+        }
+        .morpheme:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .morpheme.prefix  { background: rgba(231,76,60,0.2);  color: #e74c3c;  border-color: rgba(231,76,60,0.5); }
+        .morpheme.root    { background: rgba(46,204,113,0.2);  color: #2ecc71;  border-color: rgba(46,204,113,0.5); }
+        .morpheme.suffix  { background: rgba(52,152,219,0.2);  color: #3498db;  border-color: rgba(52,152,219,0.5); }
+        .morpheme.ending  { background: rgba(243,156,18,0.2);  color: #f39c12;  border-color: rgba(243,156,18,0.5); }
+        .morpheme.selected { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+
+        .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 12px; }
+        .check-btn {
+            padding: 12px 28px; border-radius: 14px; font-family: 'Montserrat', sans-serif;
+            font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; border: none;
+            background: linear-gradient(90deg, #1a5276, #2980b9); color: #fff;
+        }
+        .check-btn:hover { box-shadow: 0 6px 20px rgba(41,128,185,0.5); transform: translateY(-2px); }
+        .clear-btn {
+            padding: 12px 20px; border-radius: 14px; font-family: 'Montserrat', sans-serif;
+            font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); border: none;
+        }
+        .clear-btn:hover { background: rgba(255,255,255,0.15); }
+
+        /* Feedback */
+        .feedback-banner {
+            width: 100%; padding: 14px 20px; border-radius: 14px;
+            text-align: center; font-size: 15px; font-weight: 700;
+            display: none;
+        }
+        .feedback-banner.correct { display: block; background: rgba(46,204,113,0.2); color: #2ecc71; border: 1px solid rgba(46,204,113,0.4); }
+        .feedback-banner.wrong   { display: block; background: rgba(231,76,60,0.2);  color: #e74c3c;  border: 1px solid rgba(231,76,60,0.4); }
+
+        /* Progress */
+        .progress-bar-outer { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 6px; }
+        .progress-bar-inner { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #1a5276, #2980b9); transition: 0.4s; }
+
+        /* Overlays */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(26,10,46,0.95); z-index: 300;
+            align-items: center; justify-content: center; flex-direction: column;
+        }
+        .overlay.show { display: flex; }
+        .overlay-box {
+            background: #fff; border-radius: 28px; padding: 40px 50px;
+            max-width: 460px; width: 90%; text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes popIn { from{opacity:0;transform:scale(0.8);} to{opacity:1;transform:scale(1);} }
+        .overlay-box h2 { color: #023e50; font-size: 26px; margin-bottom: 8px; }
+        .big-num { font-size: 64px; font-weight: 800; color: #2980b9; line-height: 1; margin: 10px 0; }
+        .stars { font-size: 32px; margin: 8px 0; }
+        .action-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: linear-gradient(90deg, #1a5276, #2980b9); color: #fff;
+            border: none; border-radius: 16px; padding: 14px 28px;
+            font-size: 15px; font-weight: 700; font-family: 'Montserrat', sans-serif;
+            cursor: pointer; transition: 0.2s; margin: 4px;
+        }
+        .action-btn:hover { box-shadow: 0 8px 24px rgba(41,128,185,0.4); transform: translateY(-2px); }
+        .action-btn.secondary { background: #e9eff5; color: #023e50; }
+        .action-btn.secondary:hover { box-shadow: none; background: #d0dce6; transform: none; }
+        .overlay-icon { font-size: 46px; color: #2980b9; margin-bottom: 10px; }
+        .parse-line { margin-top: 6px; font-size: 13px; font-weight: 600; opacity: 0.9; }
+        .parse-line b { font-weight: 800; }
+    </style>
+</head>
+<body>
+
+<div class="game-header">
+    <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Root<span>Ry</span></div>
+    <div class="hud">
+        <div class="hud-item"><i class="fa-solid fa-star" style="color:#2980b9"></i><span class="score-num" id="scoreDisplay">0</span></div>
+        <div class="hud-item" id="levelDisplay" style="color:rgba(255,255,255,0.6);font-size:12px;">Предложение 1/8</div>
+    </div>
+    <button class="surrender-btn" onclick="confirmSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
+</div>
+
+<div id="arena">
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar" style="width:0%"></div></div>
+
+    <div class="target-box">
+        <div class="target-label">Собери предложение</div>
+        <div class="target-scheme" id="targetScheme">Расставь слова в правильном порядке</div>
+        <div class="target-hint" id="targetHint">Тема: синтаксис</div>
+    </div>
+
+    <div class="assembly-zone" id="assemblyZone">
+        <div class="assembly-placeholder" id="assemblyPlaceholder">Кликай на слова ниже, чтобы собирать предложение →</div>
+        <div class="assembled-word" id="assembledWord" style="display:none;"></div>
+    </div>
+
+    <div class="feedback-banner" id="feedbackBanner"></div>
+
+    <div class="morphemes-area" id="morphemesArea"></div>
+
+    <div class="btn-row">
+        <button class="clear-btn" onclick="clearAssembly()"><i class="fa-solid fa-rotate-left"></i> Сбросить</button>
+        <button class="check-btn" onclick="checkWord()"><i class="fa-solid fa-check"></i> Проверить!</button>
+    </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon"><i class="fa-solid fa-diagram-project"></i></div>
+        <h2>Строитель предложений</h2>
+        <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Слова перепутаны местами. Кликай на них, чтобы собрать грамматически верное предложение.<br>После каждого предложения ты узнаешь правило порядка слов или согласования, которое здесь работает.</p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-diagram-project"></i> Начать стройку!</button>
+    </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay" id="endOverlay">
+    <div class="overlay-box">
+        <div class="stars" id="endStars"></div>
+        <h2 id="endTitle">Готово!</h2>
+        <div class="big-num" id="endScore">0</div>
+        <p style="color:#666;font-size:14px;margin:8px 0 20px;">Правильных предложений: <strong id="correctWords">0</strong> из <strong id="totalWords">0</strong></p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-rotate-right"></i> Ещё раз</button>
+        <button class="action-btn secondary" onclick="window.location.href='games.html'"><i class="fa-solid fa-arrow-left"></i> Назад</button>
+    </div>
+</div>
+
+<!-- Surrender overlay -->
+<div class="overlay" id="surrenderOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon" style="color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
+        <h2>Сдаться?</h2>
+        <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
+        <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="doSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
+        <button class="action-btn secondary" onclick="hideOverlay('surrenderOverlay')">Продолжить</button>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const SENTENCES = [
+    {
+        words: ['Собака,', 'потерявшая', 'хозяина,', 'жалобно', 'скулила', 'у', 'ворот.'],
+        hint: 'Причастный оборот при существительном',
+        rule: 'Причастный оборот «потерявшая хозяина» стоит сразу после определяемого слова «собака», к которому относится.'
+    },
+    {
+        words: ['Внимательно', 'прочитав', 'инструкцию,', 'мастер', 'приступил', 'к', 'сборке.'],
+        hint: 'Деепричастный оборот в начале предложения',
+        rule: 'Деепричастие «прочитав» обозначает добавочное действие того же лица, что и сказуемое «приступил» — оба действия относятся к мастеру.'
+    },
+    {
+        words: ['Мы', 'долго', 'добирались', 'до', 'маленькой', 'деревни,', 'затерянной', 'среди', 'лесов.'],
+        hint: 'Причастный оборот при существительном',
+        rule: 'Причастный оборот «затерянной среди лесов» стоит сразу после определяемого слова «деревни».'
+    },
+    {
+        words: ['Ученик,', 'решивший', 'сложную', 'задачу,', 'поднял', 'руку.'],
+        hint: 'Причастный оборот при подлежащем',
+        rule: 'Причастный оборот «решивший сложную задачу» относится к слову «ученик» и стоит сразу после него.'
+    },
+    {
+        words: ['Быстро', 'одевшись,', 'мальчик', 'выбежал', 'на', 'улицу.'],
+        hint: 'Деепричастный оборот в начале предложения',
+        rule: 'Деепричастие «одевшись» указывает на действие того же лица, что и «выбежал»: оба действия совершает мальчик.'
+    },
+    {
+        words: ['Лишь', 'только', 'рассвело,', 'охотники', 'отправились', 'в', 'путь.'],
+        hint: 'Составной подчинительный союз в начале предложения',
+        rule: 'Союз «лишь только» (=как только) обычно открывает придаточную часть сложноподчинённого предложения.'
+    },
+    {
+        words: ['Не', 'успев', 'закончить', 'работу,', 'инженер', 'ушёл', 'домой.'],
+        hint: 'Деепричастный оборот с отрицанием',
+        rule: 'Деепричастие «не успев» относится к тому же лицу, что и сказуемое «ушёл» — то есть к инженеру.'
+    },
+    {
+        words: ['Дети,', 'гулявшие', 'в', 'парке,', 'заметили', 'странного', 'человека.'],
+        hint: 'Причастный оборот при подлежащем',
+        rule: 'Причастный оборот «гулявшие в парке» стоит сразу после определяемого слова «дети».'
+    }
+];
+
+let score = 0, currentIdx = 0, correctCount = 0;
+let selectedWords = [];
+let currentSentence = null;
+
+function startGame() {
+    hideOverlay('startOverlay'); hideOverlay('endOverlay'); hideOverlay('surrenderOverlay');
+    score = 0; currentIdx = 0; correctCount = 0;
+    renderWord();
+}
+
+function renderWord() {
+    if (currentIdx >= SENTENCES.length) { endGame(); return; }
+    currentSentence = SENTENCES[currentIdx];
+    selectedWords = [];
+
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('levelDisplay').textContent = `Предложение ${currentIdx+1}/${SENTENCES.length}`;
+    document.getElementById('progressBar').style.width = `${(currentIdx/SENTENCES.length)*100}%`;
+    document.getElementById('targetScheme').textContent = `Слов в предложении: ${currentSentence.words.length}`;
+    document.getElementById('targetHint').textContent = currentSentence.hint;
+
+    document.getElementById('assemblyPlaceholder').style.display = '';
+    document.getElementById('assembledWord').style.display = 'none';
+    document.getElementById('assembledWord').textContent = '';
+    document.getElementById('assemblyZone').classList.remove('has-content');
+
+    const fb = document.getElementById('feedbackBanner');
+    fb.className = 'feedback-banner'; fb.textContent = '';
+
+    const all = currentSentence.words.map((w, i) => ({ text: w, origIdx: i }));
+    shuffle(all);
+
+    const area = document.getElementById('morphemesArea');
+    area.innerHTML = '';
+    all.forEach((w) => {
+        const btn = document.createElement('button');
+        btn.className = 'morpheme root';
+        btn.textContent = w.text;
+        btn.onclick = () => pickMorpheme(btn, w);
+        area.appendChild(btn);
+    });
+}
+
+function pickMorpheme(btn, w) {
+    if (btn.classList.contains('selected')) return;
+    btn.classList.add('selected');
+    selectedWords.push(w);
+    updateAssembly();
+}
+
+function updateAssembly() {
+    const sentence = selectedWords.map(w => w.text).join(' ');
+    if (sentence) {
+        document.getElementById('assemblyPlaceholder').style.display = 'none';
+        document.getElementById('assembledWord').style.display = '';
+        document.getElementById('assembledWord').textContent = sentence;
+        document.getElementById('assemblyZone').classList.add('has-content');
+    } else {
+        document.getElementById('assemblyPlaceholder').style.display = '';
+        document.getElementById('assembledWord').style.display = 'none';
+        document.getElementById('assemblyZone').classList.remove('has-content');
+    }
+}
+
+function clearAssembly() {
+    selectedWords = [];
+    document.querySelectorAll('.morpheme.selected').forEach(b => b.classList.remove('selected'));
+    updateAssembly();
+    const fb = document.getElementById('feedbackBanner');
+    fb.className = 'feedback-banner';
+}
+
+function checkWord() {
+    if (selectedWords.length !== currentSentence.words.length) return;
+    const correctSentence = currentSentence.words.join(' ');
+    const isMatch = selectedWords.every((w, i) => w.origIdx === i);
+    const fb = document.getElementById('feedbackBanner');
+
+    if (isMatch) {
+        fb.className = 'feedback-banner correct';
+        fb.innerHTML = `<i class="fa-solid fa-check"></i> Верно! Предложение построено правильно.<div class="parse-line">${currentSentence.rule}</div>`;
+        score += 15;
+        correctCount++;
+        setTimeout(() => { currentIdx++; renderWord(); }, 2400);
+    } else {
+        fb.className = 'feedback-banner wrong';
+        fb.innerHTML = `<i class="fa-solid fa-xmark"></i> Не тот порядок. Правильно: «${correctSentence}»<div class="parse-line">${currentSentence.rule}</div>`;
+        setTimeout(() => { clearAssembly(); fb.className = 'feedback-banner'; }, 3000);
+    }
+    document.getElementById('scoreDisplay').textContent = score;
+}
+
+function endGame() {
+    // Закрываем окно подтверждения сдачи
+    hideOverlay('surrenderOverlay');
+
+    const pct = Math.round((correctCount / SENTENCES.length) * 100);
+    document.getElementById('endStars').innerHTML = starIcons(pct >= 88 ? 3 : pct >= 60 ? 2 : 1);
+    document.getElementById('endTitle').textContent = pct >= 88 ? 'Мастер синтаксиса!' : pct >= 60 ? 'Хороший результат!' : 'Нужна практика';
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('correctWords').textContent = correctCount;
+    document.getElementById('totalWords').textContent = SENTENCES.length;
+    if(typeof submitGameResult==='function')submitGameResult('syntax', typeof score!=='undefined'?score:0);
+    showOverlay('endOverlay');
+}
+
+function confirmSurrender() {
+    document.getElementById('surrenderScore').textContent = score;
+    showOverlay('surrenderOverlay');
+}
+function doSurrender() { endGame(); }
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function shuffle(arr) {
+    for (let i = arr.length-1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function starIcons(n) {
+    let h = '';
+    for (let i = 0; i < 3; i++) h += `<i class="fa-solid fa-star" style="color:${i < n ? '#f39c12' : 'rgba(0,0,0,0.15)'};margin:0 2px;"></i>`;
+    return h;
+}
+</script>
+</body>
+</html>
