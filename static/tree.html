@@ -228,7 +228,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 
 <div id="tree-root">
   <div id="lesson-progress">
-    <span id="lp-label">🌳 Дерево грамматики</span>
+    <span id="lp-label">Дерево грамматики</span>
     <div id="lp-bar"><div id="lp-fill"></div></div>
     <span id="lp-text">0 / 0</span>
     <span id="lp-legend">
@@ -239,7 +239,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     <button id="lp-continue">Продолжить</button>
   </div>
   <div id="search-bar">
-    <span class="ico">🔍</span>
+    <span class="ico"><i class="fa-solid fa-magnifying-glass"></i></span>
     <input id="q" type="text" placeholder="Поиск по дереву грамматики...">
     <span id="search-count"></span>
     <button id="exp-all">Развернуть всё</button>
@@ -798,6 +798,15 @@ let topicState = new Map();
 function lessonFor(d) { return lessonForNode(d.data); }
 function isDone(id)   { return completedTopics.has(id); }
 
+/* Подпись состояния в подсказке к узлу. Иконок здесь нет намеренно:
+   подсказка рисуется поверх дерева и должна читаться одной строкой. */
+const TOOLTIP_STATE = {
+  new:      l => 'есть урок · +' + l.xp + ' XP',
+  learning: l => 'изучается · +' + l.xp + ' XP за прохождение',
+  mastered: () => 'освоено — повторение пока не нужно',
+  due:      () => 'пора повторить',
+};
+
 /* Состояние темы для окраски узла.
 
    new       — тему не открывали;
@@ -851,7 +860,7 @@ function renderProgress() {
                   - (topicState.get(a.id)?.overdue_days || 0));
 
   if (due.length) {
-    btn.textContent = `🔁 Повторить (${due.length})`;
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Повторить (${due.length})`;
     btn.onclick = () => {
       location.href = 'lesson.html?id=' + encodeURIComponent(due[0].id) + '&review=1';
     };
@@ -863,7 +872,7 @@ function renderProgress() {
     btn.textContent = done ? 'Продолжить' : 'Начать';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(next.id); };
   } else {
-    btn.textContent = '🌳 Всё пройдено';
+    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Всё пройдено';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(LESSON_INDEX[0].id); };
   }
 }
@@ -931,7 +940,7 @@ function update(source) {
         if (!def && !lesson) return;
         tooltip.innerHTML = `<strong>${d.data.label}</strong>${def || ''}` +
           (lesson ? `<div style="margin-top:6px;color:#7dd3fc;font-size:12px">
-                       ${isDone(lesson.id) ? '✓ урок пройден' : '📘 есть урок · +' + lesson.xp + ' XP'}
+                       ${TOOLTIP_STATE[statusOf(lesson.id)](lesson)}
                      </div>` : '');
         tooltip.classList.add('show');
       })

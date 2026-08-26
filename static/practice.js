@@ -248,7 +248,8 @@ const PracticeDrill = {
         fb.hidden = false;
         fb.className = 'pd-feedback ' + (ok ? 'good' : 'bad');
         fb.innerHTML =
-            `<div class="pd-verdict">${ok ? '✓ Верно' : '✗ Мимо'}</div>` +
+            `<div class="pd-verdict"><i class="fa-solid ${ok ? 'fa-check' : 'fa-xmark'}"></i>` +
+            `${ok ? 'Верно' : 'Мимо'}</div>` +
             (item.q.why ? `<div class="pd-why">${this._esc(item.q.why)}</div>` : '');
 
         const btn = s.root.querySelector('#pdBtn');
@@ -288,7 +289,7 @@ const PracticeDrill = {
         const s = this._s;
         s.root.innerHTML = `
             <div class="pd-done">
-                <div class="pd-done-icon">${s.correct === s.items.length ? '🎯' : '💪'}</div>
+                <i class="fa-solid ${s.correct === s.items.length ? 'fa-circle-check' : 'fa-arrow-rotate-right'}"></i>
                 <div class="pd-done-title">Разбор окончен</div>
                 <div class="pd-done-score">${s.correct} из ${s.items.length} верно</div>
                 <div class="pd-done-note">Задание уходит из тетради после двух верных

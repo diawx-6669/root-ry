@@ -8,142 +8,270 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
-        .today-hero {
-            background: linear-gradient(135deg, #0099cc, #0077aa);
-            border-radius: 22px; padding: 26px 28px; color: #fff; margin-bottom: 22px;
-        }
-        .today-hero h1 { margin: 0 0 6px; font-size: 26px; font-weight: 800; }
-        .today-hero p { margin: 0; font-size: 15px; opacity: .92; line-height: 1.5; max-width: 60ch; }
-        .today-stats { display: flex; gap: 26px; margin-top: 18px; flex-wrap: wrap; }
-        .today-stat .v { font-size: 26px; font-weight: 800; line-height: 1; }
-        .today-stat .l { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; opacity: .8; margin-top: 5px; }
+        /* ═══════════════════════════════════════════════════════════
+           «Сегодня» — рабочий экран, а не витрина.
 
-        .sec { margin-bottom: 26px; }
-        .sec-head {
-            display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap;
-        }
-        .sec-head h2 { margin: 0; font-size: 19px; font-weight: 800; color: #023e50; }
-        .sec-head .badge {
-            background: #e6f6fc; color: #0077aa; border-radius: 999px;
-            padding: 3px 11px; font-size: 13px; font-weight: 700;
-        }
-        .sec-head .badge.warn { background: #fdf0e6; color: #b0632b; }
-        .sec-sub { margin: 0 0 14px; color: #8e9fae; font-size: 14px; line-height: 1.5; max-width: 66ch; }
+           Состояние читается формой и цветом: тонкая полоса слева задаёт
+           срочность, шкала коробок показывает, насколько тема закрепилась.
+           Иконки — Font Awesome, как во всём проекте.
+           ═══════════════════════════════════════════════════════════ */
+        .td {
+            --ink:        #0a2836;
+            --ink-2:      #55707f;
+            --ink-3:      #8ba0ac;
+            --line:       #e4ecf1;
+            --line-2:     #cfdde5;
+            --surface:    #ffffff;
+            --accent:     #0099cc;
+            --accent-ink: #036389;
+            --accent-bg:  #eaf7fc;
+            --due:        #b26a24;
+            --due-bg:     #fdf4ea;
+            --ok:         #1e7a5b;
+            --ok-bg:      #e8f4ef;
 
-        .due-list { display: flex; flex-direction: column; gap: 10px; }
-        .due-card {
-            display: flex; align-items: center; gap: 14px;
-            background: #fff; border: 2px solid #e9eff5; border-radius: 16px;
-            padding: 14px 18px; text-decoration: none; color: inherit; transition: .18s;
+            font-variant-numeric: tabular-nums;
+            padding-bottom: 20px;
         }
-        .due-card:hover { border-color: #0099cc; transform: translateY(-1px); }
-        .due-icon { font-size: 22px; width: 30px; text-align: center; flex: none; }
-        .due-main { flex: 1; min-width: 0; }
-        .due-title { font-weight: 700; font-size: 15px; color: #023e50; }
-        .due-sect { font-size: 12px; color: #8e9fae; margin-top: 2px; }
-        .due-meta { text-align: right; flex: none; }
-        .due-when { font-size: 13px; font-weight: 700; color: #0077aa; white-space: nowrap; }
-        .due-when.late { color: #b0632b; }
-        .due-xp { font-size: 12px; color: #8e9fae; margin-top: 3px; white-space: nowrap; }
 
-        .boxbar { display: flex; gap: 3px; margin-top: 6px; }
-        .boxbar span { width: 15px; height: 4px; border-radius: 2px; background: #e3ebf0; }
-        .boxbar span.on { background: #0099cc; }
+        /* ── Шапка экрана ───────────────────────────────────────── */
+        .td-hero {
+            background: linear-gradient(155deg, #0a2f40 0%, #073243 55%, #05485f 100%);
+            border-radius: 20px;
+            padding: 30px 34px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .td-hero::after {
+            content: '';
+            position: absolute; inset: 0 0 auto 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent 70%);
+        }
+        .td-eyebrow {
+            font-size: 11px; font-weight: 700; letter-spacing: .16em;
+            text-transform: uppercase; color: #6fc6e6; margin: 0 0 10px;
+        }
+        /* Цвет задан явно: в home-style.css у h1 есть тёмный цвет, и без
+           этой строки заголовок оказывался тёмно-синим на тёмном фоне. */
+        .td-hero h1 {
+            margin: 0 0 8px; font-size: 27px; font-weight: 700;
+            letter-spacing: -.01em; color: #fff;
+        }
+        .td-hero p { margin: 0; font-size: 14.5px; line-height: 1.6; color: #b8d2dd; max-width: 62ch; }
 
-        .empty {
-            background: #fff; border: 2px dashed #dbe6ec; border-radius: 16px;
-            padding: 26px 22px; text-align: center; color: #8e9fae; font-size: 15px; line-height: 1.55;
+        .td-stats {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1px; background: rgba(255,255,255,.11);
+            border-radius: 12px; overflow: hidden; margin-top: 24px;
         }
-        .empty .big { font-size: 30px; margin-bottom: 8px; }
+        .td-stat { background: rgba(255,255,255,.04); padding: 14px 16px; }
+        .td-stat .v { font-size: 23px; font-weight: 700; line-height: 1.1; }
+        .td-stat .v small { font-size: 14px; font-weight: 600; color: #8fb2c1; }
+        .td-stat .l {
+            font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+            color: #8fb2c1; margin-top: 6px;
+        }
+        .td-stat.is-due .v { color: #f0b878; }
 
-        .mistake-panel {
-            background: #fff; border: 2px solid #e9eff5; border-radius: 18px; padding: 20px 22px;
+        /* ── Секции ─────────────────────────────────────────────── */
+        .td-sec { margin-top: 32px; }
+        .td-sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .td-sec-head h2 {
+            margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
         }
-        .mistake-row {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px 0; border-bottom: 1px solid #f1f5f8; font-size: 14px;
+        .td-count {
+            font-size: 12px; font-weight: 700; color: var(--accent-ink);
+            background: var(--accent-bg); border-radius: 999px; padding: 2px 9px;
         }
-        .mistake-row:last-child { border-bottom: none; }
-        .mistake-topic { flex: 1; min-width: 0; }
-        .mistake-q {
-            color: #023e50; font-weight: 600; line-height: 1.35;
-            overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
-            -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        .td-count.is-due { color: var(--due); background: var(--due-bg); }
+        .td-sec-sub {
+            margin: 0 0 16px; color: var(--ink-3); font-size: 13.5px;
+            line-height: 1.6; max-width: 70ch;
         }
-        .mistake-src { color: #8e9fae; font-size: 12px; margin-top: 2px; }
-        .mistake-count { color: #b0632b; font-size: 13px; white-space: nowrap; }
-        .mistake-when { color: #8e9fae; font-size: 12px; white-space: nowrap; }
 
-        .drill-btn {
-            width: 100%; margin-top: 16px; border: none; border-radius: 14px;
-            background: #0099cc; color: #fff; font-family: inherit;
-            font-size: 15px; font-weight: 700; padding: 14px; cursor: pointer; transition: .2s;
+        /* ── Карточка темы к повторению ─────────────────────────── */
+        .td-list { display: flex; flex-direction: column; gap: 9px; }
+        .td-card {
+            display: flex; align-items: center; gap: 16px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-left: 3px solid var(--line-2); border-radius: 12px;
+            padding: 15px 20px; text-decoration: none; color: inherit;
+            transition: border-color .16s, box-shadow .16s, transform .16s;
         }
-        .drill-btn:hover { background: #0077aa; }
-        .drill-btn:disabled { background: #b9cbd2; cursor: default; }
+        .td-card:hover {
+            border-color: var(--line-2); border-left-color: var(--accent);
+            box-shadow: 0 6px 20px rgba(10,40,54,.07); transform: translateY(-1px);
+        }
+        .td-card.is-late, .td-card.is-late:hover { border-left-color: var(--due); }
 
-        /* ── Тренажёр (practice.js) ── */
-        .pd-wrap { background: #fff; border: 2px solid #e9eff5; border-radius: 18px; padding: 22px 24px; }
-        .pd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 4px; }
-        .pd-kind { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: #0099cc; font-weight: 700; }
-        .pd-count { font-size: 12px; color: #8e9fae; }
-        .pd-topic { font-size: 12px; color: #8e9fae; margin-bottom: 12px; }
-        .pd-q { font-size: 17px; font-weight: 700; color: #023e50; line-height: 1.45; margin-bottom: 16px; }
-        .pd-gap { color: #0099cc; letter-spacing: 2px; }
+        .td-card-main { flex: 1; min-width: 0; }
+        .td-card-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+        .td-card-sect {
+            font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+            color: var(--ink-3); margin-top: 3px;
+        }
+        .td-card-meta { text-align: right; flex: none; }
+        .td-when { font-size: 13px; font-weight: 700; color: var(--accent-ink); white-space: nowrap; }
+        .td-when.is-late { color: var(--due); }
+        .td-reward { font-size: 12px; color: var(--ink-3); margin-top: 4px; white-space: nowrap; }
+        .td-reward i { font-size: 10px; margin-right: 2px; }
+
+        /* Шкала коробок: насколько тема закрепилась. */
+        .td-boxes { display: flex; gap: 3px; margin-top: 8px; }
+        .td-boxes span { width: 18px; height: 3px; border-radius: 2px; background: var(--line); }
+        .td-boxes span.on { background: var(--accent); }
+        .is-late .td-boxes span.on { background: var(--due); }
+
+        /* ── Пустое состояние ───────────────────────────────────── */
+        .td-empty {
+            background: var(--surface); border: 1px dashed var(--line-2);
+            border-radius: 12px; padding: 30px 26px; text-align: center;
+        }
+        .td-empty > i { font-size: 21px; color: var(--line-2); margin-bottom: 12px; display: block; }
+        .td-empty-title { font-size: 15px; font-weight: 700; color: var(--ink-2); }
+        .td-empty-note {
+            font-size: 13.5px; color: var(--ink-3); line-height: 1.6;
+            margin-top: 6px; max-width: 46ch; margin-inline: auto;
+        }
+
+        /* ── Тетрадь ошибок ─────────────────────────────────────── */
+        .td-panel {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 14px; overflow: hidden;
+        }
+        .td-row {
+            display: flex; align-items: center; gap: 16px;
+            padding: 13px 20px; border-bottom: 1px solid var(--line);
+        }
+        .td-row:last-of-type { border-bottom: none; }
+        .td-row-main { flex: 1; min-width: 0; }
+        .td-row-q {
+            font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .td-row-src {
+            font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+            color: var(--ink-3); margin-top: 3px;
+        }
+        .td-tag {
+            font-size: 11.5px; font-weight: 700; color: var(--due);
+            background: var(--due-bg); border-radius: 999px; padding: 3px 9px;
+            white-space: nowrap; flex: none;
+        }
+        .td-row-when {
+            font-size: 12px; color: var(--ink-3); white-space: nowrap;
+            flex: none; width: 82px; text-align: right;
+        }
+        .td-row-more {
+            padding: 11px 20px; font-size: 13px; color: var(--ink-3);
+            border-top: 1px solid var(--line);
+        }
+        .td-action { padding: 16px 20px; border-top: 1px solid var(--line); background: #fbfdfe; }
+        .td-btn {
+            width: 100%; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-family: inherit;
+            font-size: 14.5px; font-weight: 700; padding: 13px; cursor: pointer;
+            transition: background .16s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+        }
+        .td-btn:hover:not(:disabled) { background: var(--accent-ink); }
+        .td-btn:disabled { background: #c3d4dc; cursor: default; }
+
+        /* ── Тренажёр (разметка из practice.js) ─────────────────── */
+        .pd-wrap {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 14px; padding: 26px 28px;
+        }
+        .pd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+        .pd-kind {
+            font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--accent-ink); font-weight: 700;
+        }
+        .pd-count { font-size: 12px; color: var(--ink-3); }
+        .pd-topic {
+            font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+            color: var(--ink-3); margin: 3px 0 14px;
+        }
+        .pd-q { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.45; margin-bottom: 18px; }
+        .pd-gap { color: var(--accent); letter-spacing: 2px; }
         .pd-body { display: flex; flex-direction: column; gap: 8px; }
         .pd-opt {
-            width: 100%; text-align: left; padding: 13px 16px; border-radius: 13px;
-            border: 2px solid #e9eff5; background: #fff; font-family: inherit;
-            font-size: 15px; color: #023e50; cursor: pointer; transition: .15s;
+            width: 100%; text-align: left; padding: 13px 16px; border-radius: 10px;
+            border: 1px solid var(--line-2); background: #fff; font-family: inherit;
+            font-size: 14.5px; color: var(--ink); cursor: pointer; transition: .14s;
         }
-        .pd-opt:hover:not(:disabled) { border-color: #0099cc; }
-        .pd-opt.sel { border-color: #0099cc; background: #f0faff; }
-        .pd-opt.ok { border-color: #2c7a5b; background: #e6f5ee; }
-        .pd-opt.bad { border-color: #c0503c; background: #fbecea; }
+        .pd-opt:hover:not(:disabled) { border-color: var(--accent); background: #fafdff; }
+        .pd-opt.sel { border-color: var(--accent); background: var(--accent-bg); box-shadow: inset 3px 0 0 var(--accent); }
+        .pd-opt.ok  { border-color: var(--ok); background: var(--ok-bg); box-shadow: inset 3px 0 0 var(--ok); }
+        .pd-opt.bad { border-color: #c2553f; background: #fbeeeb; box-shadow: inset 3px 0 0 #c2553f; }
         .pd-opt:disabled { cursor: default; }
 
         .pd-match { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .pd-col { display: flex; flex-direction: column; gap: 8px; }
         .pd-pool, .pd-slots { display: flex; flex-wrap: wrap; gap: 8px; }
-        .pd-slots { min-height: 40px; margin-bottom: 10px; }
+        .pd-slots { min-height: 42px; margin-bottom: 10px; }
         .pd-tile {
-            padding: 10px 14px; border-radius: 11px; border: 2px solid #e9eff5;
-            background: #fff; font-family: inherit; font-size: 14px; color: #023e50;
-            cursor: pointer; transition: .15s;
+            padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line-2);
+            background: #fff; font-family: inherit; font-size: 14px; color: var(--ink);
+            cursor: pointer; transition: .14s;
         }
-        .pd-tile:hover:not(:disabled) { border-color: #0099cc; }
-        .pd-tile.sel { border-color: #0099cc; background: #f0faff; }
-        .pd-tile.done { border-color: #2c7a5b; background: #e6f5ee; opacity: .75; cursor: default; }
-        .pd-tile.used { opacity: .4; cursor: default; }
-        .pd-tile.miss { border-color: #c0503c; background: #fbecea; }
+        .pd-tile:hover:not(:disabled) { border-color: var(--accent); }
+        .pd-tile.sel  { border-color: var(--accent); background: var(--accent-bg); }
+        .pd-tile.done { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); cursor: default; }
+        .pd-tile.used { opacity: .35; cursor: default; }
+        .pd-tile.miss { border-color: #c2553f; background: #fbeeeb; }
         .pd-slot {
-            padding: 10px 14px; border-radius: 11px; background: #f0faff;
-            border: 2px solid #cfeaf6; font-size: 14px; color: #023e50;
+            padding: 10px 14px; border-radius: 9px; background: var(--accent-bg);
+            border: 1px solid #bfe4f2; font-size: 14px; color: var(--ink);
         }
-        .pd-slot.ok { border-color: #2c7a5b; background: #e6f5ee; }
-        .pd-slot.bad { border-color: #c0503c; background: #fbecea; }
+        .pd-slot.ok  { border-color: var(--ok); background: var(--ok-bg); }
+        .pd-slot.bad { border-color: #c2553f; background: #fbeeeb; }
 
-        .pd-feedback { margin-top: 16px; padding: 14px 16px; border-radius: 13px; font-size: 14px; line-height: 1.55; }
-        .pd-feedback.good { background: #e6f5ee; border: 1px solid #b9dfcd; color: #1d5c45; }
-        .pd-feedback.bad { background: #fbecea; border: 1px solid #efc4bd; color: #8f3a2a; }
-        .pd-verdict { font-weight: 800; margin-bottom: 4px; }
-        .pd-why { opacity: .92; }
+        .pd-feedback {
+            margin-top: 18px; padding: 15px 17px; border-radius: 10px;
+            font-size: 14px; line-height: 1.6; border: 1px solid;
+        }
+        .pd-feedback.good { background: var(--ok-bg); border-color: #bfded1; color: #175c45; }
+        .pd-feedback.bad  { background: #fbeeeb; border-color: #eecbc3; color: #8c3c2a; }
+        .pd-verdict {
+            font-weight: 700; margin-bottom: 5px; font-size: 12px;
+            letter-spacing: .09em; text-transform: uppercase;
+        }
+        .pd-verdict i { margin-right: 6px; }
+        .pd-why { opacity: .95; }
         .pd-btn {
-            width: 100%; margin-top: 16px; border: none; border-radius: 14px;
-            background: #0099cc; color: #fff; font-family: inherit;
-            font-size: 15px; font-weight: 700; padding: 14px; cursor: pointer;
+            width: 100%; margin-top: 18px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-family: inherit;
+            font-size: 14.5px; font-weight: 700; padding: 13px; cursor: pointer;
+            transition: background .16s;
         }
-        .pd-btn:disabled { background: #cfdae1; cursor: default; }
-        .pd-done { text-align: center; padding: 20px 10px; }
-        .pd-done-icon { font-size: 38px; margin-bottom: 10px; }
-        .pd-done-title { font-size: 20px; font-weight: 800; color: #023e50; }
-        .pd-done-score { font-size: 15px; color: #0077aa; font-weight: 700; margin-top: 6px; }
-        .pd-done-note { font-size: 13px; color: #8e9fae; margin-top: 12px; line-height: 1.55; max-width: 46ch; margin-inline: auto; }
+        .pd-btn:hover:not(:disabled) { background: var(--accent-ink); }
+        .pd-btn:disabled { background: #c3d4dc; cursor: default; }
 
-        @media (max-width: 520px) {
-            .today-hero { padding: 20px; }
-            .due-card { padding: 12px 14px; }
+        .pd-done { text-align: center; padding: 26px 12px; }
+        .pd-done > i { font-size: 26px; color: var(--ok); margin-bottom: 14px; display: block; }
+        .pd-done-title { font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.01em; }
+        .pd-done-score { font-size: 14px; color: var(--accent-ink); font-weight: 700; margin-top: 7px; }
+        .pd-done-note {
+            font-size: 13px; color: var(--ink-3); margin-top: 14px; line-height: 1.6;
+            max-width: 48ch; margin-inline: auto;
+        }
+
+        .td-loading { padding: 24px 0; color: var(--ink-3); font-size: 14.5px; }
+
+        @media (max-width: 640px) {
+            .td-hero { padding: 24px 22px; }
+            .td-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .td-card { padding: 13px 15px; gap: 12px; }
+            .td-row { padding: 12px 15px; gap: 10px; }
+            .td-row-when { display: none; }
+            .pd-wrap { padding: 20px 18px; }
             .pd-match { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .td-card { transition: none; }
         }
     </style>
 </head>
@@ -163,10 +291,8 @@
 
     <main class="main-content">
         <section class="app-window">
-            <div id="content">
-                <div style="color:#8e9fae;font-size:15px;padding:20px 0">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i> Собираю план...
-                </div>
+            <div class="td" id="content">
+                <div class="td-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Собираю план...</div>
             </div>
         </section>
     </main>
@@ -186,12 +312,12 @@
     <script src="lessons/index.js"></script>
     <script>
 /* ═══════════════════════════════════════════════════════════════════
-   «Сегодня» — единственный экран, который отвечает на вопрос
-   «чем мне сейчас заняться».
+   «Сегодня» — единственный экран, отвечающий на вопрос «чем сейчас
+   заняться».
 
    Раньше приложение открывалось лентой игр, и выбор темы был делом
    вкуса. Здесь порядок задаёт модель знаний: сначала то, что забывается
-   прямо сейчас, потом собственные ошибки.
+   прямо сейчас, потом собственные ошибки. Новое — в дереве.
    ═══════════════════════════════════════════════════════════════════ */
 
 if (!requireAuth()) throw new Error('redirect');
@@ -209,9 +335,12 @@ const STATE = { plan: null, mistakes: null, drillItems: null };
     ]);
 
     if (!planRes.ok || !mistRes.ok) {
-        $('content').innerHTML =
-            '<div class="empty"><div class="big">😕</div>Не получилось загрузить план.' +
-            '<br>Обнови страницу — данные никуда не делись.</div>';
+        $('content').innerHTML = `
+            <div class="td-empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div class="td-empty-title">Не получилось загрузить план</div>
+                <div class="td-empty-note">Обнови страницу — данные никуда не делись.</div>
+            </div>`;
         return;
     }
 
@@ -240,82 +369,100 @@ function render() {
 }
 
 function renderHero(p, due, mistakes) {
-    const nothing = due.length === 0 && mistakes.length === 0;
+    const clear = due.length === 0 && mistakes.length === 0;
     return `
-    <div class="today-hero">
-        <h1>${nothing ? 'На сегодня всё' : 'План на сегодня'}</h1>
-        <p>${nothing
-            ? 'Ничего не просрочено и ошибок не осталось. Самое время открыть новую тему в дереве — оно как раз для этого.'
-            : 'Здесь только то, что начинает забываться, и то, в чём ты уже ошибался. Новые темы — в дереве, они никуда не денутся.'}</p>
-        <div class="today-stats">
-            <div class="today-stat"><div class="v">${due.length}</div><div class="l">повторить</div></div>
-            <div class="today-stat"><div class="v">${mistakes.length}</div><div class="l">в тетради ошибок</div></div>
-            <div class="today-stat"><div class="v">${p.mastered || 0}</div><div class="l">освоено тем</div></div>
-            <div class="today-stat"><div class="v">${p.learned || 0} / ${p.total_topics || 0}</div><div class="l">начато</div></div>
+    <div class="td-hero">
+        <p class="td-eyebrow">План занятий</p>
+        <h1>${clear ? 'На сегодня всё' : 'Сегодня'}</h1>
+        <p>${clear
+            ? 'Ничего не просрочено, ошибок не осталось. Хорошее время открыть новую тему в дереве.'
+            : 'Здесь только то, что начинает забываться, и то, в чём ты уже ошибался. Новые темы ждут в дереве и никуда не денутся.'}</p>
+        <div class="td-stats">
+            <div class="td-stat${due.length ? ' is-due' : ''}">
+                <div class="v">${due.length}</div><div class="l">к повторению</div></div>
+            <div class="td-stat">
+                <div class="v">${mistakes.length}</div><div class="l">в тетради ошибок</div></div>
+            <div class="td-stat">
+                <div class="v">${p.mastered || 0}</div><div class="l">освоено тем</div></div>
+            <div class="td-stat">
+                <div class="v">${p.learned || 0}<small> / ${p.total_topics || 0}</small></div>
+                <div class="l">начато тем</div></div>
         </div>
     </div>`;
 }
 
 function renderDueSection(due, p) {
     const head = `
-    <div class="sec">
-        <div class="sec-head">
+    <div class="td-sec">
+        <div class="td-sec-head">
             <h2>Пора повторить</h2>
-            ${due.length ? `<span class="badge">${due.length}</span>` : ''}
+            ${due.length ? `<span class="td-count is-due">${due.length}</span>` : ''}
         </div>
-        <p class="sec-sub">Тема всплывает по расширяющемуся интервалу: через день, три,
-           неделю, две с половиной и пять. Чем дольше она держится, тем реже возвращается.</p>`;
+        <p class="td-sec-sub">Тема возвращается по расширяющемуся интервалу: через день, три,
+           неделю, две с половиной, пять. Чем дольше она держится в памяти, тем реже
+           показывается.</p>`;
 
     if (!due.length) {
         return head + `
-        <div class="empty">
-            <div class="big">🌱</div>
-            Ни одна тема пока не просрочена.
-            ${p.learned ? '' : '<br>Открой первую тему в дереве — и она появится здесь через день.'}
+        <div class="td-empty">
+            <i class="fa-solid fa-circle-check"></i>
+            <div class="td-empty-title">Ни одна тема не просрочена</div>
+            <div class="td-empty-note">${p.learned
+                ? 'Всё, что ты проходил, пока держится. Возвращаться рано.'
+                : 'Открой первую тему в дереве — она появится здесь через день.'}</div>
         </div></div>`;
     }
 
     const cards = due.map(t => {
         const late = t.overdue_days > 0;
         return `
-        <a class="due-card" href="lesson.html?id=${encodeURIComponent(t.topic_id)}&review=1">
-            <div class="due-icon">${late ? '🔁' : '📘'}</div>
-            <div class="due-main">
-                <div class="due-title">${esc(t.title)}</div>
-                <div class="due-sect">${esc(t.section)}</div>
-                <div class="boxbar">${
+        <a class="td-card${late ? ' is-late' : ''}"
+           href="lesson.html?id=${encodeURIComponent(t.topic_id)}&review=1">
+            <div class="td-card-main">
+                <div class="td-card-title">${esc(t.title)}</div>
+                <div class="td-card-sect">${esc(t.section)}</div>
+                <div class="td-boxes">${
                     Array.from({ length: 5 }, (_, i) =>
                         `<span class="${i < t.box ? 'on' : ''}"></span>`).join('')
                 }</div>
             </div>
-            <div class="due-meta">
-                <div class="due-when ${late ? 'late' : ''}">${
-                    late ? esc(plural(t.overdue_days, 'день', 'дня', 'дней')) + ' назад' : 'сегодня'
+            <div class="td-card-meta">
+                <div class="td-when${late ? ' is-late' : ''}">${
+                    late ? 'просрочено ' + esc(plural(t.overdue_days, 'день', 'дня', 'дней'))
+                         : 'срок сегодня'
                 }</div>
-                <div class="due-xp">+${t.xp} XP · +${t.coins} 🪙</div>
+                <div class="td-reward">
+                    <i class="fa-solid fa-star"></i>${t.xp} XP
+                    &nbsp;<i class="fa-solid fa-coins"></i>${t.coins}
+                </div>
             </div>
         </a>`;
     }).join('');
 
-    return head + `<div class="due-list">${cards}</div></div>`;
+    return head + `<div class="td-list">${cards}</div></div>`;
 }
 
 function renderMistakeSection(items, m) {
+    const days = m.days_to_resolve || 2;
     const head = `
-    <div class="sec">
-        <div class="sec-head">
+    <div class="td-sec">
+        <div class="td-sec-head">
             <h2>Работа над ошибками</h2>
-            ${items.length ? `<span class="badge warn">${items.length}</span>` : ''}
+            ${items.length ? `<span class="td-count is-due">${items.length}</span>` : ''}
         </div>
-        <p class="sec-sub">Задание уходит отсюда после
-           ${esc(plural(m.days_to_resolve || 2, 'верного ответа', 'верных ответов', 'верных ответов'))}
+        <p class="td-sec-sub">Задание уходит отсюда после
+           ${esc(plural(days, 'верного ответа', 'верных ответов', 'верных ответов'))}
            в разные дни. Ответ сразу после разбора не считается: это память о только что
            прочитанном, а не знание.</p>`;
 
     if (!items.length) {
         return head + `
-        <div class="empty"><div class="big">✨</div>Тетрадь пуста.
-            <br>Ошибки будут попадать сюда сами — и сами уходить, когда разберёшься.</div></div>`;
+        <div class="td-empty">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <div class="td-empty-title">Тетрадь пуста</div>
+            <div class="td-empty-note">Ошибки будут попадать сюда сами — и сами уходить,
+                когда разберёшься.</div>
+        </div></div>`;
     }
 
     const byItem = new Map((STATE.drillItems || []).map(d => [d.itemId, d]));
@@ -325,40 +472,43 @@ function renderMistakeSection(items, m) {
         const meta = (typeof LESSON_BY_ID !== 'undefined' && LESSON_BY_ID[it.topic_id]) || null;
         const question = drill ? drill.q.q.replace(/_{2,}/g, '…') : (meta ? meta.title : it.topic_id);
         return `
-        <div class="mistake-row">
-            <div class="mistake-topic">
-                <div class="mistake-q">${esc(question)}</div>
-                <div class="mistake-src">${esc(meta ? meta.title : it.topic_id)}</div>
+        <div class="td-row">
+            <div class="td-row-main">
+                <div class="td-row-q">${esc(question)}</div>
+                <div class="td-row-src">${esc(meta ? meta.title : it.topic_id)}</div>
             </div>
-            <div class="mistake-count">${esc(plural(it.wrong_count, 'ошибка', 'ошибки', 'ошибок'))}</div>
-            <div class="mistake-when">${esc(formatDate(it.last_wrong))}</div>
+            <span class="td-tag">${esc(plural(it.wrong_count, 'ошибка', 'ошибки', 'ошибок'))}</span>
+            <div class="td-row-when">${esc(formatDate(it.last_wrong))}</div>
         </div>`;
     }).join('');
 
     const more = items.length > 12
-        ? `<div class="mistake-row" style="color:#8e9fae">…и ещё ${items.length - 12}</div>` : '';
+        ? `<div class="td-row-more">и ещё ${items.length - 12} в тетради</div>` : '';
 
     const ready = (STATE.drillItems || []).length;
 
     return head + `
-    <div class="mistake-panel" id="mistakePanel">
+    <div class="td-panel" id="mistakePanel">
         ${rows}${more}
-        <button class="drill-btn" id="drillBtn"${ready ? '' : ' disabled'}>
-            ${ready
-                ? 'Прорешать ' + esc(plural(Math.min(ready, 10), 'задание', 'задания', 'заданий'))
-                : 'Задания не загрузились — обнови страницу'}
-        </button>
+        <div class="td-action">
+            <button class="td-btn" id="drillBtn"${ready ? '' : ' disabled'}>
+                <i class="fa-solid fa-pen-to-square"></i>
+                ${ready
+                    ? 'Разобрать ' + esc(plural(Math.min(ready, 10), 'задание', 'задания', 'заданий'))
+                    : 'Задания не загрузились — обнови страницу'}
+            </button>
+        </div>
     </div></div>`;
 }
 
-/* ── Прорешивание ──────────────────────────────────────────────── */
+/* ── Разбор ошибок ─────────────────────────────────────────────── */
 
 /**
  * Собрать задания для тренажёра.
  *
- * Сервер присылает только идентификаторы: сам текст задания и разбор
- * лежат в static/lessons/*.js. Так у текста заданий остаётся один
- * источник правды — иначе база и файлы уроков рано или поздно разошлись бы.
+ * Сервер присылает только идентификаторы: текст задания и разбор лежат в
+ * static/lessons/*.js. Так у текста заданий остаётся один источник правды —
+ * иначе база и файлы уроков рано или поздно разошлись бы.
  */
 async function collectDrillItems(refs) {
     const out = [];
@@ -371,8 +521,8 @@ async function collectDrillItems(refs) {
         let lesson = null;
         try { lesson = await loadLesson(ref.topic_id); } catch { lesson = null; }
         const q = lesson && lesson.practice && lesson.practice[qIdx];
-        // Задание могло исчезнуть после правки урока — тогда просто
-        // пропускаем его, а не роняем весь тренажёр.
+        // Задание могло исчезнуть после правки урока — пропускаем его,
+        // а не роняем весь тренажёр.
         if (!q) continue;
 
         out.push({ topicId: ref.topic_id, itemId: ref.item_id, title: lesson.title, q });
@@ -384,12 +534,12 @@ async function startDrill() {
     const items = (STATE.drillItems || []).slice(0, 10);
     if (!items.length) return;
 
-    // Панель со списком уезжает: во время разбора она только отвлекает,
-    // а после него всё равно перерисуется с новыми данными.
+    // Панель со списком уезжает: во время разбора она отвлекает, а после
+    // него всё равно перерисуется с новыми данными.
     const panel = $('mistakePanel');
     if (panel) panel.hidden = true;
 
-    $('drillSlot').innerHTML = '<div class="sec"><div class="pd-wrap" id="drillRoot"></div></div>';
+    $('drillSlot').innerHTML = '<div class="td-sec"><div class="pd-wrap" id="drillRoot"></div></div>';
     $('drillSlot').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     PracticeDrill.mount($('drillRoot'), items, {
@@ -403,7 +553,7 @@ async function startDrill() {
         },
         onDone: async () => {
             // Очередь ответов дожимается до перезагрузки списка, иначе
-            // тетрадь показала бы старое состояние.
+            // счётчики показали бы старое состояние.
             await Attempts.flush();
             const [mist, plan] = await Promise.all([
                 API.get('/api/mistakes'),
@@ -412,9 +562,10 @@ async function startDrill() {
             if (mist.ok) STATE.mistakes = mist.data;
             if (plan.ok) STATE.plan = plan.data;
             STATE.drillItems = await collectDrillItems(STATE.mistakes.items || []);
-            // Итог разбора остаётся на экране: перерисовываем только
-            // счётчики выше, чтобы ученик увидел, что тетрадь похудела.
-            const hero = document.querySelector('.today-hero');
+
+            // Итог разбора остаётся на экране: обновляем только счётчики
+            // сверху, чтобы было видно, что тетрадь похудела.
+            const hero = document.querySelector('.td-hero');
             if (hero) {
                 hero.outerHTML = renderHero(STATE.plan, STATE.plan.due || [],
                                             STATE.mistakes.items || []);

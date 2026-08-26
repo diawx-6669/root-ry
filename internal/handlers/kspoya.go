@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"rootry/internal/kspoya"
+	"rootry/internal/mastery"
 	"rootry/internal/models"
 	"rootry/internal/store"
+	"rootry/internal/timeutil"
 )
 
 // buildReview собирает разбор попытки: правильные ответы и объяснения.
@@ -191,7 +193,24 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// Уровень без назначения бесполезен — это градусник без лечения.
+	// Поэтому к результату теста прилагается карта пробелов и маршрут:
+	// с каких тем начать и почему именно с них.
+	//
+	// Освоенные темы из маршрута исключаются: если ученик уверенно держит
+	// тему, а раздел просел, дело в других темах этого раздела.
+	known := map[string]bool{}
+	if states, err := h.store.TopicMasteryMap(user.ID); err == nil {
+		for id, st := range states {
+			if st.Status(timeutil.Now()) == mastery.StatusMastered {
+				known[id] = true
+			}
+		}
+	}
+	diagnosis := kspoya.Diagnose(outcome.ByTopic, known)
+
 	writeJSON(w, http.StatusOK, map[string]any{
+		"diagnosis":    diagnosis,
 		"correct":      outcome.Correct,
 		"total":        outcome.Total,
 		"answered":     outcome.Answered,

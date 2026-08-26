@@ -388,6 +388,70 @@
         }
 
         /* ── Result Screen ── */
+        /* ── Персональный маршрут после теста ──────────────────────
+           Уровень без назначения бесполезен: это градусник без лечения.
+           Здесь результат превращается в список тем и объяснение,
+           почему именно они. ───────────────────────────────────── */
+        .route {
+            text-align: left;
+            border-top: 1px solid #e4ecf1;
+            margin-top: 34px;
+            padding-top: 30px;
+            font-variant-numeric: tabular-nums;
+        }
+        .route-eyebrow {
+            font-size: 10.5px; font-weight: 700; letter-spacing: .15em;
+            text-transform: uppercase; color: #0099cc; margin-bottom: 9px;
+        }
+        .route h3 {
+            margin: 0 0 7px; font-size: 20px; font-weight: 700;
+            color: #0a2836; letter-spacing: -.01em;
+        }
+        .route-lead {
+            margin: 0 0 22px; font-size: 13.5px; line-height: 1.6;
+            color: #8ba0ac; max-width: 66ch;
+        }
+
+        /* Карта пробелов: раздел, шкала, доля. */
+        .gap-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; }
+        .gap-row { display: grid; grid-template-columns: 1fr 132px 58px; gap: 14px; align-items: center; }
+        .gap-name { font-size: 13.5px; font-weight: 600; color: #0a2836; }
+        .gap-name.is-weak { color: #b26a24; }
+        .gap-track { height: 6px; border-radius: 3px; background: #edf3f6; overflow: hidden; }
+        .gap-fill { height: 100%; border-radius: 3px; background: #1e7a5b; transition: width .5s ease; }
+        .gap-fill.is-weak { background: #d08a3c; }
+        .gap-score { font-size: 12.5px; color: #8ba0ac; text-align: right; white-space: nowrap; }
+
+        /* Шаги маршрута. */
+        .route-steps { display: flex; flex-direction: column; gap: 8px; }
+        .route-step {
+            display: flex; gap: 15px; align-items: flex-start;
+            border: 1px solid #e4ecf1; border-radius: 12px;
+            padding: 14px 18px; background: #fff; text-decoration: none; color: inherit;
+            transition: border-color .16s, box-shadow .16s;
+        }
+        .route-step:hover { border-color: #0099cc; box-shadow: 0 6px 20px rgba(10,40,54,.07); }
+        .route-num {
+            flex: none; width: 26px; height: 26px; border-radius: 8px;
+            background: #eaf7fc; color: #036389;
+            font-size: 12.5px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .route-step.is-precise .route-num { background: #fdf4ea; color: #b26a24; }
+        .route-body { flex: 1; min-width: 0; }
+        .route-title { font-size: 14.5px; font-weight: 700; color: #0a2836; }
+        .route-why { font-size: 12.5px; color: #8ba0ac; margin-top: 3px; line-height: 1.5; }
+        .route-xp { font-size: 12px; color: #8ba0ac; white-space: nowrap; flex: none; padding-top: 4px; }
+        .route-clear {
+            border: 1px dashed #cfdde5; border-radius: 12px;
+            padding: 24px; text-align: center; color: #8ba0ac; font-size: 14px; line-height: 1.6;
+        }
+        .route-clear i { display: block; font-size: 19px; color: #cfdde5; margin-bottom: 10px; }
+        @media (max-width: 560px) {
+            .gap-row { grid-template-columns: 1fr 80px 50px; gap: 10px; }
+            .route-step { padding: 12px 14px; gap: 11px; }
+        }
+
         .result-card {
             background: #fff;
             border-radius: 28px;
@@ -1943,6 +2007,9 @@
                 card.appendChild(rewardsRow);
             }
 
+            const route = buildRouteBlock(data.diagnosis);
+            if (route) card.appendChild(route);
+
             card.appendChild(buildAnalytics(data, 'Расширенная аналитика'));
 
             const retry = document.createElement('button');
@@ -1950,6 +2017,117 @@
             retry.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Пройти снова';
             retry.onclick = retryTest;
             card.appendChild(retry);
+        }
+
+        /* Персональный маршрут: карта пробелов и что учить дальше.
+
+           Всё считает сервер (internal/kspoya/route.go): какие разделы
+           просели, какие темы попали в маршрут и почему. Здесь только
+           отрисовка — иначе правила отбора жили бы в двух местах. */
+        function buildRouteBlock(diagnosis) {
+            if (!diagnosis) return null;
+            const gaps = diagnosis.gaps || [];
+            const route = diagnosis.route || [];
+            if (!gaps.length) return null;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'route';
+
+            const eyebrow = document.createElement('div');
+            eyebrow.className = 'route-eyebrow';
+            eyebrow.textContent = 'Что делать дальше';
+            wrap.appendChild(eyebrow);
+
+            const h = document.createElement('h3');
+            h.textContent = route.length ? 'Персональный маршрут' : 'Карта разделов';
+            wrap.appendChild(h);
+
+            const lead = document.createElement('p');
+            lead.className = 'route-lead';
+            lead.textContent = route.length
+                ? 'Разделы отсортированы по тому, как вы с ними справились. Ниже — темы, ' +
+                  'с которых стоит начать: сначала те, где ошибка была прямой, затем ' +
+                  'остальные темы просевших разделов в порядке дерева.'
+                : 'Все разделы держатся. Провальных нет, поэтому маршрут не нужен — ' +
+                  'смотрите разбор ниже, там к каждому вопросу приложено правило.';
+            wrap.appendChild(lead);
+
+            // ── Карта пробелов ──
+            const list = document.createElement('div');
+            list.className = 'gap-list';
+            gaps.forEach(g => {
+                const row = document.createElement('div');
+                row.className = 'gap-row';
+
+                const name = document.createElement('div');
+                name.className = 'gap-name' + (g.weak ? ' is-weak' : '');
+                name.textContent = g.section;
+                row.appendChild(name);
+
+                const track = document.createElement('div');
+                track.className = 'gap-track';
+                const fill = document.createElement('div');
+                fill.className = 'gap-fill' + (g.weak ? ' is-weak' : '');
+                fill.style.width = Math.round(g.accuracy * 100) + '%';
+                track.appendChild(fill);
+                row.appendChild(track);
+
+                const score = document.createElement('div');
+                score.className = 'gap-score';
+                score.textContent = g.correct + ' / ' + g.total;
+                row.appendChild(score);
+
+                list.appendChild(row);
+            });
+            wrap.appendChild(list);
+
+            // ── Маршрут ──
+            if (!route.length) {
+                const clear = document.createElement('div');
+                clear.className = 'route-clear';
+                clear.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                clear.appendChild(document.createTextNode(
+                    'Провальных разделов нет. Держите форму: наборы вопросов каждый раз разные.'));
+                wrap.appendChild(clear);
+                return wrap;
+            }
+
+            const steps = document.createElement('div');
+            steps.className = 'route-steps';
+            route.forEach((t, i) => {
+                const a = document.createElement('a');
+                a.className = 'route-step' + (t.precise ? ' is-precise' : '');
+                a.href = 'lesson.html?id=' + encodeURIComponent(t.id);
+
+                const num = document.createElement('div');
+                num.className = 'route-num';
+                num.textContent = String(i + 1);
+                a.appendChild(num);
+
+                const body = document.createElement('div');
+                body.className = 'route-body';
+
+                const title = document.createElement('div');
+                title.className = 'route-title';
+                title.textContent = t.title;
+                body.appendChild(title);
+
+                const why = document.createElement('div');
+                why.className = 'route-why';
+                why.textContent = t.reason;
+                body.appendChild(why);
+
+                a.appendChild(body);
+
+                const xp = document.createElement('div');
+                xp.className = 'route-xp';
+                xp.textContent = '+' + t.xp + ' XP';
+                a.appendChild(xp);
+
+                steps.appendChild(a);
+            });
+            wrap.appendChild(steps);
+            return wrap;
         }
 
         // Цветной блок с уровнем — то, что видно первым.

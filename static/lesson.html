@@ -845,7 +845,7 @@ async function saveProgress(already) {
     if (d.reward === 'none' || (!d.reward && (d.already_done || already))) {
         const when = d.next_reward_on ? formatDate(d.next_reward_on) : null;
         $('rewardSlot').innerHTML =
-            '<div class="reward-line">✓ Тема свежая — повторять её пока незачем' +
+            '<div class="reward-line"><i class="fa-solid fa-circle-check"></i> Тема свежая — повторять её пока незачем' +
             (when ? '<br><span style="opacity:.75">Следующее повторение: ' + esc(when) + '</span>' : '') +
             '</div>';
         return;
@@ -853,9 +853,9 @@ async function saveProgress(already) {
 
     if (d.reward === 'review') {
         $('rewardSlot').innerHTML =
-            `<div class="reward-line">🔁 Повторение засчитано &nbsp;·&nbsp; ⚡ +${d.xp_earned} XP &nbsp;·&nbsp; 🪙 +${d.coins_earned}</div>` +
+            `<div class="reward-line"><i class="fa-solid fa-rotate-right"></i> Повторение засчитано &nbsp;·&nbsp; +${d.xp_earned} XP &nbsp;·&nbsp; +${d.coins_earned} монет</div>` +
             (d.next_reward_on ? `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
-                📅 Вернёмся к теме: ${esc(formatDate(d.next_reward_on))}</div>` : '');
+                <i class="fa-solid fa-calendar-day"></i> Вернёмся к теме: ${esc(formatDate(d.next_reward_on))}</div>` : '');
         const u2 = API.user();
         if (u2) {
             u2.xp = d.new_xp; u2.balance = d.new_balance;
