@@ -117,7 +117,13 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
    Нажатие на неё открывает урок, нажатие на остальную часть узла —
    по-прежнему раскрывает ветку. */
 .node-box.has-lesson { border-color:#0ea5e9; }
-.node-box.lesson-done { background:#ecfdf5 !important; border-color:#34d399 !important; color:#065f46 !important; }
+/* Четыре состояния темы. Раньше их было два — «пройдено» и «нет», —
+   и зелёная галочка стояла вечно, даже когда тема давно забылась.
+   Теперь цвет узла показывает, что система реально знает о теме:
+   изучается, освоена или пора возвращаться. */
+.node-box.lesson-learning { background:#eff6ff !important; border-color:#60a5fa !important; color:#1e40af !important; }
+.node-box.lesson-done     { background:#ecfdf5 !important; border-color:#34d399 !important; color:#065f46 !important; }
+.node-box.lesson-due      { background:#fffbeb !important; border-color:#f59e0b !important; color:#92400e !important; }
 
 .lesson-btn {
   flex-shrink:0; width:22px; height:22px; border-radius:8px;
@@ -128,7 +134,9 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
   box-shadow:0 2px 6px rgba(0,153,204,.35);
 }
 .lesson-btn:hover { transform:scale(1.14); box-shadow:0 3px 10px rgba(0,153,204,.5); }
-.lesson-done .lesson-btn { background:linear-gradient(135deg,#059669,#34d399); box-shadow:0 2px 6px rgba(52,211,153,.4); }
+.lesson-done .lesson-btn     { background:linear-gradient(135deg,#059669,#34d399); box-shadow:0 2px 6px rgba(52,211,153,.4); }
+.lesson-learning .lesson-btn { background:linear-gradient(135deg,#2563eb,#60a5fa); box-shadow:0 2px 6px rgba(96,165,250,.4); }
+.lesson-due .lesson-btn      { background:linear-gradient(135deg,#d97706,#f59e0b); box-shadow:0 2px 6px rgba(245,158,11,.45); }
 
 /* ===== ПОЛОСА ПРОГРЕССА ПО ДЕРЕВУ ===== */
 #lesson-progress {
@@ -140,6 +148,13 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 #lp-fill { height:100%; width:0%; background:linear-gradient(90deg,#0099cc,#22c55e); border-radius:8px; transition:width .5s cubic-bezier(.4,0,.2,1); }
 #lp-text { font-size:12px; font-weight:700; color:#37576b; white-space:nowrap; }
 #lp-label { font-size:12px; color:#8095a3; white-space:nowrap; }
+#lp-legend { display:flex; gap:11px; font-size:11px; color:#8095a3; white-space:nowrap; }
+#lp-legend b { font-weight:700; }
+#lp-legend .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+#lp-legend .dot.learning { background:#60a5fa; }
+#lp-legend .dot.mastered { background:#34d399; }
+#lp-legend .dot.due      { background:#f59e0b; }
+@media (max-width:860px) { #lp-legend { display:none; } }
 #lp-continue {
   border:none; background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
   border-radius:11px; padding:6px 13px; font-size:12px; font-weight:700;
@@ -216,6 +231,11 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     <span id="lp-label">🌳 Дерево грамматики</span>
     <div id="lp-bar"><div id="lp-fill"></div></div>
     <span id="lp-text">0 / 0</span>
+    <span id="lp-legend">
+      <span><span class="dot learning"></span><b id="lp-learning">0</b> изучается</span>
+      <span><span class="dot mastered"></span><b id="lp-mastered">0</b> освоено</span>
+      <span><span class="dot due"></span><b id="lp-due">0</b> повторить</span>
+    </span>
     <button id="lp-continue">Продолжить</button>
   </div>
   <div id="search-bar">
@@ -242,6 +262,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 
 <!-- BOTTOM TAB BAR -->
 <nav class="bottom-tabbar">
+    <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
     <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
     <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
     <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
@@ -769,14 +790,37 @@ let searchQuery = '';
 
 let completedTopics = new Set();
 
+// Состояние тем из модели знаний: id → { status, box, overdue_days }.
+// Пока /api/progress не ответил, карта пуста и дерево рисуется по
+// completed_topics — как раньше.
+let topicState = new Map();
+
 function lessonFor(d) { return lessonForNode(d.data); }
 function isDone(id)   { return completedTopics.has(id); }
+
+/* Состояние темы для окраски узла.
+
+   new       — тему не открывали;
+   learning  — изучается, подтверждений в разные дни ещё мало;
+   mastered  — освоена, повторение пока не требуется;
+   due       — пора повторить.
+
+   Если модель знаний ещё не загрузилась, откатываемся на старую логику:
+   пройденная тема считается освоенной. */
+function statusOf(id) {
+  const st = topicState.get(id);
+  if (st) return st.status;
+  return completedTopics.has(id) ? 'mastered' : 'new';
+}
 
 function openLesson(d) {
   const lesson = lessonFor(d);
   if (!lesson) return;
   if (typeof Sound !== 'undefined') Sound.click();
-  location.href = 'lesson.html?id=' + encodeURIComponent(lesson.id);
+  // Просроченная тема открывается как повторение: ответы помечаются
+  // источником review, и в исследовании их видно отдельно от изучения.
+  const review = statusOf(lesson.id) === 'due' ? '&review=1' : '';
+  location.href = 'lesson.html?id=' + encodeURIComponent(lesson.id) + review;
 }
 
 function renderProgress() {
@@ -787,9 +831,34 @@ function renderProgress() {
   document.getElementById('lp-fill').style.width = pct + '%';
   document.getElementById('lp-text').textContent = `${done} / ${total}`;
 
-  // Кнопка ведёт к первой непройденной теме по порядку дерева.
+  const counts = { learning: 0, mastered: 0, due: 0 };
+  for (const l of LESSON_INDEX) {
+    const st = statusOf(l.id);
+    if (counts[st] !== undefined) counts[st]++;
+  }
+  document.getElementById('lp-learning').textContent = counts.learning;
+  document.getElementById('lp-mastered').textContent = counts.mastered;
+  document.getElementById('lp-due').textContent = counts.due;
+
+  const btn = document.getElementById('lp-continue');
+
+  // Просроченное важнее нового: сначала возвращаем ученика к тому, что
+  // начало забываться, и только потом ведём дальше по дереву. Иначе
+  // прогресс растёт вширь, а знания сзади осыпаются.
+  const due = LESSON_INDEX
+    .filter(l => statusOf(l.id) === 'due')
+    .sort((a, b) => (topicState.get(b.id)?.overdue_days || 0)
+                  - (topicState.get(a.id)?.overdue_days || 0));
+
+  if (due.length) {
+    btn.textContent = `🔁 Повторить (${due.length})`;
+    btn.onclick = () => {
+      location.href = 'lesson.html?id=' + encodeURIComponent(due[0].id) + '&review=1';
+    };
+    return;
+  }
+
   const next = LESSON_INDEX.find(l => !completedTopics.has(l.id));
-  const btn  = document.getElementById('lp-continue');
   if (next) {
     btn.textContent = done ? 'Продолжить' : 'Начать';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(next.id); };
@@ -805,12 +874,22 @@ async function loadProgress() {
   completedTopics = new Set(cached);
   renderProgress();
 
-  const fresh = await API.refreshUser({ force: true }).catch(() => null);
+  // Список пройденных тем и модель знаний тянем параллельно: это два
+  // разных вопроса — «что открывал» и «что помнит».
+  const [fresh, progress] = await Promise.all([
+    API.refreshUser({ force: true }).catch(() => null),
+    API.get('/api/progress').catch(() => null),
+  ]);
+
   if (fresh && Array.isArray(fresh.completed_topics)) {
     completedTopics = new Set(fresh.completed_topics);
-    renderProgress();
-    update(root);   // перерисовываем галочки на узлах
   }
+  if (progress && progress.ok && Array.isArray(progress.data.topics)) {
+    topicState = new Map(progress.data.topics.map(t => [t.topic_id, t]));
+  }
+
+  renderProgress();
+  update(root);   // перерисовываем состояния на узлах
 }
 
 function toggle(d) {
@@ -876,13 +955,19 @@ function update(source) {
       .classed('has-children', d => !!(d.children || d._children))
       .classed('expanded', d => !!d.children)
       .classed('has-lesson', d => !!lessonFor(d))
-      .classed('lesson-done', d => { const l = lessonFor(d); return !!l && isDone(l.id); })
+      .classed('lesson-learning', d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'learning'; })
+      .classed('lesson-done',     d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'mastered'; })
+      .classed('lesson-due',      d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'due'; })
       .classed('search-match', d => !!searchQuery && d.data.label.toLowerCase().includes(searchQuery));
 
+  const STATUS_ICON = {
+    mastered: '<i class="fa-solid fa-check"></i>',
+    due:      '<i class="fa-solid fa-rotate-right"></i>',
+    learning: '<i class="fa-solid fa-play"></i>',
+    new:      '<i class="fa-solid fa-play"></i>',
+  };
   nodeMerge.select('.lesson-btn')
-      .html(d => isDone(lessonFor(d).id)
-        ? '<i class="fa-solid fa-check"></i>'
-        : '<i class="fa-solid fa-play"></i>');
+      .html(d => STATUS_ICON[statusOf(lessonFor(d).id)] || STATUS_ICON.new);
 
   nodeMerge.transition().duration(380)
       .attr('transform', d => `translate(${d.x},${d.y})`)
