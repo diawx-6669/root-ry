@@ -38,6 +38,12 @@ func main() {
 	mux.HandleFunc("/api/promo", middleware.AuthMiddleware(h.RedeemPromo))
 	mux.HandleFunc("/api/game/submit", middleware.AuthMiddleware(h.GameSubmit))
 	mux.HandleFunc("/api/topic/complete", middleware.AuthMiddleware(h.TopicComplete))
+	// Модель знаний: журнал ответов, состояние тем, план повторения,
+	// тетрадь ошибок.
+	mux.HandleFunc("/api/attempt", middleware.AuthMiddleware(h.Attempt))
+	mux.HandleFunc("/api/progress", middleware.AuthMiddleware(h.Progress))
+	mux.HandleFunc("/api/review/plan", middleware.AuthMiddleware(h.ReviewPlan))
+	mux.HandleFunc("/api/mistakes", middleware.AuthMiddleware(h.Mistakes))
 	mux.HandleFunc("/api/kspoya/start", middleware.AuthMiddleware(h.KspoyaStart))
 	mux.HandleFunc("/api/kspoya/submit", middleware.AuthMiddleware(h.KspoyaSubmit))
 	mux.HandleFunc("/api/kspoya/abort", middleware.AuthMiddleware(h.KspoyaAbort))

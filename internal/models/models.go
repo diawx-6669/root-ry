@@ -211,3 +211,81 @@ type ErrorResponse struct {
 type SuccessResponse struct {
 	Message string `json:"message"`
 }
+
+// ── Модель знаний ─────────────────────────────────────────────────────────────
+
+// MistakeRef — ссылка на незакрытое задание в тетради ошибок.
+//
+// Текста задания здесь нет намеренно: он лежит в static/lessons/*.js, и
+// клиент подставляет его сам. Иначе пришлось бы держать второй источник
+// правды и следить, чтобы он не разъехался с первым.
+type MistakeRef struct {
+	ItemID     string `json:"item_id"`
+	TopicID    string `json:"topic_id"`
+	WrongCount int    `json:"wrong_count"`
+	StreakDays int    `json:"streak_days"`
+	LastWrong  string `json:"last_wrong"`
+}
+
+// TopicProgress — состояние одной темы для дерева грамматики.
+type TopicProgress struct {
+	TopicID string `json:"topic_id"`
+	// Status: new | learning | mastered | due
+	Status      string  `json:"status"`
+	Box         int     `json:"box"`
+	MaxBox      int     `json:"max_box"`
+	Strength    float64 `json:"strength"`
+	OverdueDays int     `json:"overdue_days"`
+	DueOn       string  `json:"due_on"`
+	Correct     int     `json:"correct"`
+	Total       int     `json:"total"`
+	Lapses      int     `json:"lapses"`
+}
+
+// AttemptRequest — один ответ ученика, как его присылает браузер.
+//
+// Ни правильность, ни награду клиент не сообщает: правильность приходит
+// как факт ответа, а всё остальное считает сервер.
+type AttemptRequest struct {
+	Topic   string `json:"topic"`
+	Item    string `json:"item"`
+	Source  string `json:"source"`
+	Correct bool   `json:"correct"`
+	Hints   int    `json:"hints"`
+	TimeMs  int    `json:"time_ms"`
+}
+
+// AttemptResponse — что ученик увидит после ответа.
+type AttemptResponse struct {
+	Status        string `json:"status"`
+	Box           int    `json:"box"`
+	MaxBox        int    `json:"max_box"`
+	DueOn         string `json:"due_on"`
+	TopicPromoted bool   `json:"topic_promoted"`
+	MistakeClosed bool   `json:"mistake_closed"`
+	MistakeCount  int    `json:"mistake_count"`
+}
+
+// ReviewPlanItem — тема, которую пора повторить сегодня.
+type ReviewPlanItem struct {
+	TopicID     string `json:"topic_id"`
+	Title       string `json:"title"`
+	Section     string `json:"section"`
+	Box         int    `json:"box"`
+	OverdueDays int    `json:"overdue_days"`
+	DueOn       string `json:"due_on"`
+	// XP, который ученик получит за повторение. Меньше, чем за первое
+	// прохождение, но не ноль: возвращаться должно быть выгодно.
+	XP    int `json:"xp"`
+	Coins int `json:"coins"`
+}
+
+// ReviewPlan — план занятий на сегодня.
+type ReviewPlan struct {
+	Today      string           `json:"today"`
+	Due        []ReviewPlanItem `json:"due"`
+	Mistakes   int              `json:"mistakes"`
+	Learned    int              `json:"learned"`
+	Mastered   int              `json:"mastered"`
+	TotalTopic int              `json:"total_topics"`
+}

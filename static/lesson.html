@@ -315,6 +315,7 @@ body {
 </div>
 
 <script src="api.js"></script>
+    <script src="practice.js"></script>
 <script src="lessons/index.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
@@ -348,13 +349,20 @@ const S = {
     order: [],
     saving: false,
     saved: null,           // ответ сервера о начислении
+    qStartedAt: 0,         // когда показали текущее задание
+    reviewMode: false,     // урок открыт из плана повторения
 };
 
 const $ = id => document.getElementById(id);
 
 /* ── Загрузка ──────────────────────────────────────────────────── */
 (async function boot() {
-    const id = new URLSearchParams(location.search).get('id');
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    // Повторение отличается от первого прохождения только тем, что ответы
+    // помечаются источником «review»: в исследовании важно уметь отделить
+    // изучение новой темы от возврата к старой.
+    S.reviewMode = params.get('review') === '1';
     const lesson = id ? await loadLesson(id).catch(() => null) : null;
 
     if (!lesson) {
@@ -492,10 +500,8 @@ function startPractice() {
     window.scrollTo({ top: 0 });
 }
 
-const KIND_LABEL = {
-    choice:'Выбери ответ', fill:'Вставь пропущенное', tf:'Верно или неверно',
-    multi:'Выбери все верные', match:'Сопоставь пары', order:'Расставь по порядку'
-};
+// Названия типов заданий общие с тетрадью ошибок — см. practice.js.
+const KIND_LABEL = PRACTICE_KINDS;
 
 function renderQuestion() {
     const L = S.lesson;
@@ -503,6 +509,9 @@ function renderQuestion() {
 
     S.answered = false; S.pick = null;
     S.matchLeft = null; S.matchDone = []; S.matchErrors = 0; S.order = [];
+    // Время на задание уходит в журнал ответов: по нему видно разницу
+    // между «знал» и «долго перебирал варианты».
+    S.qStartedAt = Date.now();
 
     setProgress(40 + (S.qIdx / L.practice.length) * 60);
     $('qKind').textContent = `${KIND_LABEL[q.type] || 'Задание'} · ${S.qIdx + 1} из ${L.practice.length}`;
@@ -673,19 +682,11 @@ function redrawSlots(q) {
 }
 
 /* ── Проверка ──────────────────────────────────────────────────── */
+// Проверка вынесена в practice.js: то же самое задание решается ещё и в
+// тетради ошибок, и «верно» обязано означать там ровно то же самое.
+// Состояние S уже содержит все поля, которые ждёт practiceIsCorrect.
 function isCorrect(q) {
-    switch (q.type) {
-        case 'tf':    return S.pick === q.correct;
-        case 'multi': {
-            const a = [...(S.pick || [])].sort().join(','), b = [...q.correct].sort().join(',');
-            return a === b && a !== '';
-        }
-        // Пары в итоге сходятся всегда — заданием считается решённым только
-        // то сопоставление, которое собрано без единой ошибки.
-        case 'match': return S.matchDone.length === q.pairs.length && S.matchErrors === 0;
-        case 'order': return S.order.join(',') === q.correct.join(',');
-        default:      return S.pick === q.correct;
-    }
+    return practiceIsCorrect(q, S);
 }
 
 function checkAnswer() {
@@ -693,6 +694,16 @@ function checkAnswer() {
     const q = S.lesson.practice[S.qIdx];
     const ok = isCorrect(q);
     S.answered = true;
+
+    // Ответ уходит в модель знаний до отрисовки разбора: очередь ничего не
+    // ждёт, а ученик не должен смотреть на спиннер ради статистики.
+    Attempts.record({
+        topic: S.lesson.id,
+        item: `${S.lesson.id}#${S.qIdx}`,
+        source: S.reviewMode ? 'review' : 'lesson',
+        correct: ok,
+        timeMs: S.qStartedAt ? Date.now() - S.qStartedAt : 0,
+    });
 
     markAnswers(q, ok);
 
@@ -828,9 +839,29 @@ async function saveProgress(already) {
     S.saved = r.data;
     const d = r.data;
 
-    if (d.already_done || already) {
+    // Сервер возвращает вид награды: first — первое прохождение,
+    // review — засчитанное повторение, none — тему уже награждали в этом
+    // интервале, и повторять её ради монет смысла нет.
+    if (d.reward === 'none' || (!d.reward && (d.already_done || already))) {
+        const when = d.next_reward_on ? formatDate(d.next_reward_on) : null;
         $('rewardSlot').innerHTML =
-            '<div class="reward-line">✓ Тема уже была пройдена — награда выдаётся один раз</div>';
+            '<div class="reward-line">✓ Тема свежая — повторять её пока незачем' +
+            (when ? '<br><span style="opacity:.75">Следующее повторение: ' + esc(when) + '</span>' : '') +
+            '</div>';
+        return;
+    }
+
+    if (d.reward === 'review') {
+        $('rewardSlot').innerHTML =
+            `<div class="reward-line">🔁 Повторение засчитано &nbsp;·&nbsp; ⚡ +${d.xp_earned} XP &nbsp;·&nbsp; 🪙 +${d.coins_earned}</div>` +
+            (d.next_reward_on ? `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
+                📅 Вернёмся к теме: ${esc(formatDate(d.next_reward_on))}</div>` : '');
+        const u2 = API.user();
+        if (u2) {
+            u2.xp = d.new_xp; u2.balance = d.new_balance;
+            localStorage.setItem('currentUser', JSON.stringify(u2));
+        }
+        if (d.coins_earned > 0) rewardCoins(d.coins_earned, d.new_balance);
         return;
     }
 

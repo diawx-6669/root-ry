@@ -416,24 +416,32 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, t := range user.CompletedTopics {
-		if t == topic.ID {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"already_done":    true,
-				"xp_earned":       0,
-				"coins_earned":    0,
-				"new_xp":          user.XP,
-				"new_balance":     user.Balance,
-				"completed_count": len(user.CompletedTopics),
-				"total_topics":    topics.Count(),
-			})
-			return
-		}
+	// Награду назначает интервал повторения, а не факт открытия урока.
+	// Первое прохождение оплачивается полностью, повторение просроченной
+	// темы — частично, повторение «свежей» темы не оплачивается вовсе.
+	now := timeutil.Now()
+	kind, nextReward, err := h.store.ClaimTopicReward(user.ID, topic.ID, now)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Не удалось засчитать тему")
+		return
 	}
 
-	user.CompletedTopics = append(user.CompletedTopics, topic.ID)
-	user.XP += topic.XP
-	user.Balance += topic.Coins
+	var xpEarned, coinsEarned int
+	switch kind {
+	case store.RewardFirst:
+		xpEarned, coinsEarned = topic.XP, topic.Coins
+	case store.RewardReview:
+		xpEarned, coinsEarned = topics.ReviewReward(topic)
+	}
+
+	// completed_topics остаётся источником правды для «сколько тем пройдено»:
+	// на него смотрят профиль, дерево и значок за всё дерево.
+	firstTime := !contains(user.CompletedTopics, topic.ID)
+	if firstTime {
+		user.CompletedTopics = append(user.CompletedTopics, topic.ID)
+	}
+	user.XP += xpEarned
+	user.Balance += coinsEarned
 
 	// Значок за прохождение всего дерева.
 	badgeEarned := ""
@@ -442,14 +450,21 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		badgeEarned = treeMasterBadge
 	}
 
-	h.store.UpdateUser(user)
+	if xpEarned > 0 || coinsEarned > 0 || firstTime || badgeEarned != "" {
+		h.store.UpdateUser(user)
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"xp_earned":       topic.XP,
-		"coins_earned":    topic.Coins,
+		// already_done оставлен для старых сборок фронта, которые на него
+		// смотрят. Новый признак — reward.
+		"already_done":    kind != store.RewardFirst,
+		"reward":          kind,
+		"xp_earned":       xpEarned,
+		"coins_earned":    coinsEarned,
 		"new_xp":          user.XP,
 		"new_balance":     user.Balance,
 		"badge_earned":    badgeEarned,
+		"next_reward_on":  nextReward.Format("2006-01-02"),
 		"completed_count": len(user.CompletedTopics),
 		"total_topics":    topics.Count(),
 	})

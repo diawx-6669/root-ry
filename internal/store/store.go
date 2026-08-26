@@ -34,21 +34,39 @@ func New() *Store {
 	if dsn == "" {
 		log.Fatal("DATABASE_URL env var is not set")
 	}
+	s, err := NewWithDSN(dsn)
+	if err != nil {
+		log.Fatalf("store: %v", err)
+	}
+	return s
+}
+
+// NewWithDSN открывает хранилище по явной строке подключения.
+//
+// Отдельно от New, потому что New обязан валить процесс: приложение без
+// базы бессмысленно. Тестам же нужно подключиться к своей базе и получить
+// ошибку, а не убитый процесс.
+func NewWithDSN(dsn string) (*Store, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("store: sql.Open: %v", err)
+		return nil, fmt.Errorf("sql.Open: %w", err)
 	}
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	if err := db.Ping(); err != nil {
-		log.Fatalf("store: db.Ping: %v", err)
+		db.Close()
+		return nil, fmt.Errorf("db.Ping: %w", err)
 	}
 	s := &Store{db: db}
 	s.seedPromos()
 	s.seedDemo()
-	return s
+	return s, nil
 }
+
+// Close закрывает пул соединений. Нужен тестам, которые поднимают
+// несколько хранилищ подряд.
+func (s *Store) Close() error { return s.db.Close() }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 

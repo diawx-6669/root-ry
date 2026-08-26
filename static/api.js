@@ -535,3 +535,131 @@ function rewardCoins(amount, newBalance, origin) {
     `;
     document.head.appendChild(css);
 })();
+
+/* ═══════════════════════════════════════════════════════════════════
+   Attempts — журнал ответов ученика.
+
+   Каждый ответ на каждое задание уходит на сервер: из этих записей
+   строится модель знаний (какие темы просели, что попало в тетрадь
+   ошибок, когда возвращать ученика к теме).
+
+   Отправка идёт очередью, а не напрямую из обработчика ответа, по трём
+   причинам. Во-первых, ответ не должен ждать сети: ученик нажал вариант
+   и сразу видит разбор. Во-вторых, ответы — это исследовательские
+   данные, и терять их при обрыве связи нельзя, поэтому очередь живёт в
+   localStorage и переживает перезагрузку страницы. В-третьих, ученик
+   часто закрывает вкладку сразу после последнего задания — очередь
+   дожимается на pagehide.
+   ═══════════════════════════════════════════════════════════════════ */
+const Attempts = {
+    KEY: 'attemptQueue',
+    MAX: 300,          // предел очереди: дальше теряем самые старые
+    _flushing: false,
+
+    _queue() {
+        try { return JSON.parse(localStorage.getItem(this.KEY)) || []; }
+        catch { return []; }
+    },
+
+    _save(q) {
+        try { localStorage.setItem(this.KEY, JSON.stringify(q)); } catch { /* переполнение — не беда */ }
+    },
+
+    /* Записать ответ. Ничего не ждёт и никогда не бросает исключений:
+       упавший журнал не должен ломать урок. */
+    record({ topic, item, source = 'lesson', correct, hints = 0, timeMs = 0 }) {
+        if (!topic || !item) return;
+        const q = this._queue();
+        q.push({
+            topic, item, source,
+            correct: !!correct,
+            hints: Math.max(0, hints | 0),
+            time_ms: Math.max(0, Math.min(timeMs | 0, 30 * 60 * 1000)),
+        });
+        this._save(q.slice(-this.MAX));
+        this.flush();
+    },
+
+    /* Отправить всё, что накопилось. Записи уходят по одной и удаляются
+       из очереди только после успеха: сервер может ответить ошибкой, и
+       тогда попытка повторится при следующем ответе или на следующей
+       странице. */
+    async flush() {
+        if (this._flushing || !API.token()) return;
+        this._flushing = true;
+        try {
+            let q = this._queue();
+            while (q.length) {
+                const item = q[0];
+                let res;
+                try { res = await API.post('/api/attempt', item); }
+                catch { break; }               // сети нет — оставляем очередь как есть
+
+                // 4xx означает, что запись битая: тема исчезла из реестра,
+                // формат устарел. Повторять её бессмысленно — очередь
+                // забилась бы навсегда одной и той же записью.
+                if (!res.ok && res.status >= 500) break;
+
+                q = this._queue();
+                q.shift();
+                this._save(q);
+            }
+        } finally {
+            this._flushing = false;
+        }
+    },
+};
+
+/* Дожать очередь, пока страница ещё жива. */
+window.addEventListener('pagehide', () => { Attempts.flush(); });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') Attempts.flush();
+});
+/* И на старте любой страницы — вдруг прошлая сессия оборвалась. */
+if (API.token()) setTimeout(() => Attempts.flush(), 1200);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Даты повторений.
+
+   Сервер отдаёт даты как YYYY-MM-DD. Показывать их ученику в таком
+   виде нельзя: «2026-09-14» не говорит ничего, а «через 3 дня» — всё.
+   ═══════════════════════════════════════════════════════════════════ */
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня',
+                    'июля','августа','сентября','октября','ноября','декабря'];
+
+/* Сколько дней осталось до даты. Отрицательное — просрочено. */
+function daysUntil(iso) {
+    if (!iso) return 0;
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return 0;
+    const target = new Date(y, m - 1, d);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((target - today) / 86400000);
+}
+
+/* Человеческая дата: «сегодня», «завтра», «через 3 дня», «14 сентября». */
+function formatDate(iso) {
+    if (!iso) return '';
+    const diff = daysUntil(iso);
+    if (diff === 0)  return 'сегодня';
+    if (diff === 1)  return 'завтра';
+    if (diff === 2)  return 'послезавтра';
+    if (diff === -1) return 'вчера';
+    if (diff < 0)    return `${plural(-diff, 'день', 'дня', 'дней')} назад`;
+    if (diff <= 6)   return `через ${plural(diff, 'день', 'дня', 'дней')}`;
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${d} ${MONTHS_GEN[m - 1]}`;
+}
+
+/* Русское склонение после числительного: 1 день, 2 дня, 5 дней. */
+function plural(n, one, few, many) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    let word = many;
+    if (abs < 11 || abs > 14) {
+        if (last === 1) word = one;
+        else if (last >= 2 && last <= 4) word = few;
+    }
+    return `${n} ${word}`;
+}

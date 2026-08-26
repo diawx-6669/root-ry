@@ -1,0 +1,10 @@
+# Локальная база разработки: скачанные бинарники PostgreSQL и его данные.
+devtools/localdb/.pgdata/
+
+# Скомпилированные бинарники
+*.exe
+rootry
+
+# macOS
+.DS_Store
+*.exe~
