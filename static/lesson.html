@@ -146,6 +146,84 @@ body {
 .q-text .gap.narrow { min-width:24px; }
 
 .opts { display:flex; flex-direction:column; gap:10px; }
+/* ── Задания без готовых вариантов ─────────────────────────────────
+   Узнать верный вариант из шести и написать без ошибок — разные
+   навыки. Эти задания тренируют второй, поэтому правильного ответа на
+   экране нет вообще. */
+.wr-line { font-size:19px; line-height:2.1; color:#0f2b3a; }
+.wr-in {
+    width:2.6em; text-align:center; font-family:inherit; font-size:18px; font-weight:700;
+    color:#0099cc; border:none; border-bottom:2px solid #0099cc; background:#f7fcff;
+    border-radius:5px 5px 0 0; padding:1px 2px; margin:0 2px; outline:none;
+}
+.wr-in:focus { background:#eff9ff; border-bottom-color:#0077aa; }
+.wr-in.ok  { color:#15803d; border-bottom-color:#22c55e; background:#f0fdf4; }
+.wr-in.bad { color:#b91c1c; border-bottom-color:#ef4444; background:#fef2f2; }
+
+.find-text { font-size:18px; line-height:2.05; color:#0f2b3a; }
+.find-w {
+    cursor:pointer; padding:2px 3px; border-radius:5px; border-bottom:2px dashed transparent;
+    transition:.14s;
+}
+.find-w:hover { background:#f0f9ff; border-bottom-color:#7dd3fc; }
+.find-w.sel  { background:#eff9ff; border-bottom-color:#0099cc; font-weight:700; color:#036389; }
+.find-w.ok   { background:#f0fdf4; border-bottom-color:#22c55e; color:#15803d; font-weight:700; }
+.find-w.bad  { background:#fef2f2; border-bottom-color:#ef4444; color:#b91c1c; font-weight:700; }
+.find-w.miss { background:#fffbeb; border-bottom-color:#f59e0b; color:#92400e; font-weight:700; }
+.find-note { margin-top:12px; font-size:13px; color:#8095a3; }
+
+.ex-area, .dict-area {
+    width:100%; min-height:110px; resize:vertical; font-family:inherit; font-size:16px;
+    line-height:1.6; color:#0f2b3a; border:2px solid #e3edf3; border-radius:12px;
+    padding:13px 15px; outline:none; background:#fff;
+}
+.ex-area:focus, .dict-area:focus { border-color:#0099cc; }
+.ex-area.ok, .dict-area.ok  { border-color:#22c55e; background:#f7fef9; }
+.ex-area.bad, .dict-area.bad { border-color:#ef4444; background:#fffafa; }
+.ex-hint { margin-top:9px; font-size:13px; color:#8095a3; }
+.ex-check { margin-top:14px; }
+.ex-check-title { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#8095a3; margin-bottom:7px; }
+.ex-item { display:flex; gap:9px; align-items:flex-start; font-size:14px; line-height:1.5; padding:5px 0; color:#37576b; }
+.ex-item i { margin-top:3px; font-size:12px; }
+.ex-item.hit i  { color:#22c55e; }
+.ex-item.miss i { color:#cbd7de; }
+
+.dict-play {
+    display:inline-flex; align-items:center; gap:9px; border:none; border-radius:11px;
+    background:#0099cc; color:#fff; font-family:inherit; font-size:14px; font-weight:700;
+    padding:11px 18px; cursor:pointer; margin-bottom:13px; transition:background .16s;
+}
+.dict-play:hover { background:#0077aa; }
+.dict-play:disabled { background:#c3d4dc; cursor:default; }
+.dict-diff { margin-top:12px; font-size:15px; line-height:1.8; }
+.dict-diff b { background:#fee2e2; color:#b91c1c; border-radius:3px; padding:0 2px; }
+
+/* ── Подсказки ─────────────────────────────────────────────────────
+   Три ступени: намёк, правило, разбор. Ступень ничего не отнимает —
+   она меняет статус ответа: после разбора верный ответ перестаёт
+   подтверждать знание темы. */
+.hints { margin-top:18px; }
+.hint-btn {
+    display:inline-flex; align-items:center; gap:8px; border:1.5px solid #dbe7ee;
+    background:#fff; color:#37576b; font-family:inherit; font-size:13.5px; font-weight:600;
+    border-radius:10px; padding:9px 15px; cursor:pointer; transition:.16s;
+}
+.hint-btn:hover:not(:disabled) { border-color:#0099cc; color:#036389; }
+.hint-btn:disabled { opacity:.5; cursor:default; }
+.hint-btn .lvl { font-size:11px; color:#8095a3; font-weight:700; }
+.hint-card {
+    margin-top:10px; border:1px solid #e3edf3; border-left:3px solid #0099cc;
+    border-radius:10px; padding:12px 15px; background:#fafdff; font-size:14px;
+    line-height:1.6; color:#37576b;
+}
+.hint-card.reveal { border-left-color:#f59e0b; background:#fffdf8; }
+.hint-label {
+    font-size:10.5px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+    color:#0099cc; margin-bottom:5px;
+}
+.hint-card.reveal .hint-label { color:#b26a24; }
+.hint-warn { margin-top:9px; font-size:12.5px; color:#b26a24; }
+
 .opt {
     display:flex; align-items:center; gap:12px;
     background:#fff; border:2px solid #e6eef4; border-radius:16px;
@@ -296,6 +374,14 @@ body {
             <div class="q-kind" id="qKind"></div>
             <div class="q-text" id="qText"></div>
             <div id="qBody"></div>
+            <div class="hints" id="hints">
+                <button class="hint-btn" id="hintBtn" type="button">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span id="hintBtnText">Подсказка</span>
+                    <span class="lvl" id="hintBtnLvl"></span>
+                </button>
+                <div id="hintList"></div>
+            </div>
         </div>
     </section>
 
@@ -351,6 +437,16 @@ const S = {
     saved: null,           // ответ сервера о начислении
     qStartedAt: 0,         // когда показали текущее задание
     reviewMode: false,     // урок открыт из плана повторения
+
+    // Ответы в заданиях без готовых вариантов.
+    written: [],           // буквы, вписанные в пропуски
+    found: [],             // слова, отмеченные как ошибочные
+    text: '',              // свободный ответ и диктант
+
+    // Подсказки: сколько ступеней открыто и добрался ли ученик до разбора.
+    hintLevels: [],
+    hintsOpened: 0,
+    revealed: false
 };
 
 const $ = id => document.getElementById(id);
@@ -370,6 +466,14 @@ const $ = id => document.getElementById(id);
             '<i class="fa-solid fa-triangle-exclamation"></i>Урок не найден.' +
             '<br><br><a href="tree.html" style="color:#0099cc;font-weight:700">Вернуться к дереву</a>';
         return;
+    }
+
+    // Диктант держится на встроенном в браузер синтезе речи. Если его нет
+    // (старый браузер, отключённая озвучка), задание убирается из урока:
+    // показать текст, который надо записать на слух, значит превратить
+    // диктант в списывание.
+    if (!dictationAvailable() && Array.isArray(lesson.practice)) {
+        lesson.practice = lesson.practice.filter(q => q.type !== 'dictation');
     }
 
     S.lesson = lesson;
@@ -509,6 +613,10 @@ function renderQuestion() {
 
     S.answered = false; S.pick = null;
     S.matchLeft = null; S.matchDone = []; S.matchErrors = 0; S.order = [];
+    S.written = []; S.found = []; S.text = '';
+    S.hintLevels = PracticeHints.levels(q, L);
+    S.hintsOpened = 0; S.revealed = false;
+    renderHints();
     // Время на задание уходит в журнал ответов: по нему видно разницу
     // между «знал» и «долго перебирал варианты».
     S.qStartedAt = Date.now();
@@ -519,7 +627,9 @@ function renderQuestion() {
     $('qBody').innerHTML = '';
 
     ({ choice:renderChoice, fill:renderChoice, tf:renderTF,
-       multi:renderMulti, match:renderMatch, order:renderOrder }[q.type] || renderChoice)(q);
+       multi:renderMulti, match:renderMatch, order:renderOrder,
+       write:renderWrite, find:renderFind,
+       explain:renderExplain, dictation:renderDictation }[q.type] || renderChoice)(q);
 
     hideFeedback();
     showPhase('phasePractice');
@@ -702,8 +812,14 @@ function checkAnswer() {
         item: `${S.lesson.id}#${S.qIdx}`,
         source: S.reviewMode ? 'review' : 'lesson',
         correct: ok,
+        // Сервер смотрит на уровень подсказки: ответ с открытым разбором
+        // не подтверждает знание темы, хотя и не наказывается.
+        hints: PracticeHints.report(S.hintsOpened, S.revealed),
         timeMs: S.qStartedAt ? Date.now() - S.qStartedAt : 0,
     });
+
+    // После ответа лестница закрывается: разбор ученик и так сейчас увидит.
+    $('hintBtn').disabled = true;
 
     markAnswers(q, ok);
 
@@ -732,7 +848,97 @@ function checkAnswer() {
     $('mainBtn').disabled = false;
 }
 
+
+/* Разметка ответа в заданиях без готовых вариантов. */
+function markProductive(q, ok) {
+    switch (q.type) {
+        case 'write': {
+            const want = q.answers || [];
+            document.querySelectorAll('.wr-in').forEach((el, i) => {
+                el.disabled = true;
+                const right = normalizeLetters(el.value) === normalizeLetters(want[i]);
+                el.classList.add(right ? 'ok' : 'bad');
+                // Пустое или неверное поле показывает правильную букву:
+                // ученик должен уйти с задания, зная ответ.
+                if (!right) el.value = want[i] ?? '';
+            });
+            break;
+        }
+        case 'find': {
+            const wrong = new Set((q.wrong || []).map(normalizeLetters));
+            document.querySelectorAll('.find-w').forEach(el => {
+                const word = normalizeLetters(bareWord(el.textContent));
+                const picked = el.classList.contains('sel');
+                el.classList.remove('sel');
+                el.onclick = null;
+                if (wrong.has(word)) {
+                    // Отмеченная ошибка — верно; пропущенная — подсвечена
+                    // отдельным цветом, это не то же самое, что промах.
+                    el.classList.add(picked ? 'ok' : 'miss');
+                } else if (picked) {
+                    el.classList.add('bad');
+                }
+            });
+            break;
+        }
+        case 'explain': {
+            const area = $('exArea');
+            if (area) { area.disabled = true; area.classList.add(ok ? 'ok' : 'bad'); }
+            renderExplainChecklist(q);
+            break;
+        }
+        case 'dictation': {
+            const area = $('dictArea');
+            if (area) { area.disabled = true; area.classList.add(ok ? 'ok' : 'bad'); }
+            const play = $('dictPlay');
+            if (play) play.disabled = true;
+            if (!ok) {
+                const box = document.createElement('div');
+                box.className = 'dict-diff';
+                box.innerHTML =
+                    '<div class="ex-check-title">Что записано</div>' +
+                    dictationDiff(S.text, q.answer) +
+                    '<div class="ex-check-title" style="margin-top:10px">Как правильно</div>' +
+                    esc(q.answer || '');
+                $('qBody').appendChild(box);
+            }
+            break;
+        }
+    }
+}
+
+/* Чек-лист опорных понятий: что ученик назвал, а что упустил.
+
+   Показывается после ответа, а не вместо проверки: сама проверка
+   автоматическая, а чек-лист объясняет её решение. */
+function renderExplainChecklist(q) {
+    const groups = q.keywords || [];
+    if (!groups.length) return;
+    const text = normalizeLetters(S.text || '');
+
+    const rows = groups.map((g, i) => {
+        const variants = Array.isArray(g) ? g : [g];
+        const hit = variants.some(k => text.includes(normalizeLetters(k)));
+        const label = (q.checklist && q.checklist[i]) || variants[0];
+        return `<div class="ex-item ${hit ? 'hit' : 'miss'}">
+                    <i class="fa-solid ${hit ? 'fa-circle-check' : 'fa-circle'}"></i>
+                    <span>${esc(label)}</span>
+                </div>`;
+    }).join('');
+
+    const box = document.createElement('div');
+    box.className = 'ex-check';
+    box.innerHTML = '<div class="ex-check-title">Что нужно было назвать</div>' + rows +
+        (q.sample ? `<div class="ex-hint" style="margin-top:10px">
+            <b>Образец:</b> ${esc(q.sample)}</div>` : '');
+    $('qBody').appendChild(box);
+}
+
 function markAnswers(q, ok) {
+    // Задания без готовых вариантов размечаются по-своему: показать надо
+    // не «какой вариант был верным», а что именно ученик написал не так.
+    if (PRODUCTIVE_KINDS.has(q.type)) { markProductive(q, ok); return; }
+
     if (q.type === 'match' || q.type === 'order') {
         document.querySelectorAll('.mtile, .otile').forEach(t => t.disabled = true);
         if (q.type === 'order') {
@@ -753,6 +959,198 @@ function markAnswers(q, ok) {
         b.classList.remove('sel');
     });
     if (q.type === 'fill' && !ok) fillGap(q.options[q.correct]);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Задания без готовых вариантов.
+
+   Во всех остальных типах правильный ответ уже лежит на экране, и
+   ученик тренирует узнавание. Здесь ответ надо произвести самому —
+   именно этот навык работает на диктанте и в сочинении.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Впиши буквы: каждый «_» в тексте становится полем ввода. */
+function renderWrite(q) {
+    // Предложение с пропусками лежит в text, а q — это инструкция.
+    // Если бы оно было в q, плеер печатал бы его дважды: один раз в
+    // заголовке задания, второй раз здесь с полями ввода.
+    const parts = String(q.text ?? '').split('_');
+    let html = '<div class="wr-line">';
+    parts.forEach((part, i) => {
+        html += esc(part);
+        if (i < parts.length - 1) {
+            html += `<input class="wr-in" data-i="${i}" maxlength="3" autocomplete="off"
+                       inputmode="text" aria-label="Пропуск ${i + 1}">`;
+        }
+    });
+    html += '</div>';
+    $('qBody').innerHTML = html;
+
+    const inputs = [...document.querySelectorAll('.wr-in')];
+    S.written = inputs.map(() => '');
+    inputs.forEach((el, i) => {
+        el.oninput = () => {
+            if (S.answered) return;
+            S.written[i] = el.value;
+            // Кнопка «Проверить» ждёт, пока заполнены все пропуски: иначе
+            // ученик отправит полупустой ответ и получит «неверно» за то,
+            // что просто не дописал.
+            $('mainBtn').disabled = S.written.some(v => !String(v).trim());
+            // Заполнил — прыгаем в следующее поле, как в бумажном бланке.
+            if (el.value.length >= el.maxLength && inputs[i + 1]) inputs[i + 1].focus();
+        };
+        el.onkeydown = e => {
+            if (e.key === 'Enter' && !$('mainBtn').disabled) { e.preventDefault(); checkAnswer(); }
+            if (e.key === 'Backspace' && !el.value && inputs[i - 1]) inputs[i - 1].focus();
+        };
+    });
+    if (inputs[0]) inputs[0].focus();
+}
+
+/* Найди ошибки: слова текста кликабельны, отмечаются написанные неверно. */
+function renderFind(q) {
+    const words = String(q.text ?? '').split(/(\s+)/);
+    let html = '<div class="find-text">';
+    words.forEach((w, i) => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { html += w.replace(/\n/g, '<br>'); return; }
+        html += `<span class="find-w" data-i="${i}">${esc(w)}</span>`;
+    });
+    html += '</div><div class="find-note">Отметь все слова с ошибкой. ' +
+            'Лишнее отмеченное слово тоже считается ошибкой.</div>';
+    $('qBody').innerHTML = html;
+
+    document.querySelectorAll('.find-w').forEach(el => {
+        el.onclick = () => {
+            if (S.answered) return;
+            el.classList.toggle('sel');
+            // Хранится сам текст слова без знаков препинания: в данных
+            // задания ошибочные слова заданы словами, а не индексами.
+            S.found = [...document.querySelectorAll('.find-w.sel')]
+                .map(x => bareWord(x.textContent));
+            $('mainBtn').disabled = S.found.length === 0;
+            Sound.click();
+        };
+    });
+}
+
+/* Слово без обрамляющих знаков препинания. */
+function bareWord(w) {
+    return String(w ?? '').replace(/^[^0-9A-Za-zА-Яа-яЁё-]+|[^0-9A-Za-zА-Яа-яЁё-]+$/g, '');
+}
+
+/* Объясни правило: свободный ответ, проверяется по опорным понятиям. */
+function renderExplain(q) {
+    $('qBody').innerHTML =
+        '<textarea class="ex-area" id="exArea" rows="4" ' +
+        'placeholder="Сформулируй правило своими словами..."></textarea>' +
+        '<div class="ex-hint">Не переписывай учебник — важно, чтобы ты назвал главные ' +
+        'условия. Ответ засчитывается, если основные из них в нём есть.</div>';
+    const area = $('exArea');
+    area.oninput = () => {
+        if (S.answered) return;
+        S.text = area.value;
+        // Порог в 15 символов отсекает случайное нажатие, но не мешает
+        // короткой точной формулировке.
+        $('mainBtn').disabled = area.value.trim().length < 15;
+    };
+    area.focus();
+}
+
+/* Диктант: текст читает браузер, ученик записывает. */
+function renderDictation(q) {
+    $('qBody').innerHTML =
+        '<button class="dict-play" id="dictPlay" type="button">' +
+        '<i class="fa-solid fa-volume-high"></i> Прослушать</button>' +
+        '<textarea class="dict-area" id="dictArea" rows="3" ' +
+        'placeholder="Запиши услышанное со знаками препинания..."></textarea>' +
+        '<div class="ex-hint">Слушать можно сколько угодно раз. Знаки препинания важны — ' +
+        'в диктанте они и есть предмет проверки.</div>';
+
+    $('dictPlay').onclick = () => speakDictation(q.say || q.answer);
+    const area = $('dictArea');
+    area.oninput = () => {
+        if (S.answered) return;
+        S.text = area.value;
+        $('mainBtn').disabled = area.value.trim().length < 3;
+    };
+    // Первое прочтение сразу: ученик пришёл слушать, а не нажимать.
+    speakDictation(q.say || q.answer);
+}
+
+/* Озвучка встроена в браузер — ничего скачивать и оплачивать не нужно. */
+function speakDictation(text) {
+    if (!dictationAvailable() || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = 'ru-RU';
+    // Медленнее обычного: это диктант, а не новостная лента.
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+}
+
+function dictationAvailable() {
+    return typeof window.speechSynthesis !== 'undefined'
+        && typeof window.SpeechSynthesisUtterance !== 'undefined';
+}
+
+/* Пословное сравнение для разбора диктанта: ученик должен увидеть, где
+   именно разошлось, а не просто «неверно». */
+function dictationDiff(got, want) {
+    const g = String(got ?? '').trim().split(/\s+/);
+    const w = String(want ?? '').trim().split(/\s+/);
+    const norm = v => String(v ?? '').toLowerCase().replace(/ё/g, 'е');
+    const out = [];
+    for (let i = 0; i < Math.max(g.length, w.length); i++) {
+        const a = g[i], b = w[i];
+        if (a === undefined) { out.push('<b>' + esc(b) + '</b>'); continue; }
+        out.push(b !== undefined && norm(a) === norm(b) ? esc(a) : '<b>' + esc(a) + '</b>');
+    }
+    return out.join(' ');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Подсказки.
+
+   Три ступени: намёк, правило, разбор. Ступень ничего не отнимает —
+   она меняет статус ответа: после разбора верный ответ перестаёт
+   подтверждать знание темы (см. internal/mastery.Answer).
+   ═══════════════════════════════════════════════════════════════════ */
+
+function renderHints() {
+    const box = $('hints');
+    $('hintList').innerHTML = '';
+    if (!S.hintLevels.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    updateHintButton();
+    $('hintBtn').onclick = openNextHint;
+}
+
+function updateHintButton() {
+    const btn = $('hintBtn');
+    const left = S.hintLevels.length - S.hintsOpened;
+    btn.disabled = left <= 0;
+    $('hintBtnText').textContent = S.hintsOpened === 0 ? 'Подсказка' : 'Ещё подсказка';
+    $('hintBtnLvl').textContent = left > 0 ? 'осталось ' + left : 'все открыты';
+}
+
+function openNextHint() {
+    const level = S.hintLevels[S.hintsOpened];
+    if (!level) return;
+    S.hintsOpened++;
+    if (level.reveals) S.revealed = true;
+
+    const card = document.createElement('div');
+    card.className = 'hint-card' + (level.reveals ? ' reveal' : '');
+    card.innerHTML =
+        '<div class="hint-label">' + esc(level.label) + '</div>' + esc(level.text) +
+        (level.reveals
+            ? '<div class="hint-warn"><i class="fa-solid fa-circle-info"></i> ' +
+              'Разбор открыт — этот ответ не засчитается как подтверждение темы.</div>'
+            : '');
+    $('hintList').appendChild(card);
+    updateHintButton();
+    Sound.click();
 }
 
 function nextQuestion() {
@@ -902,8 +1300,19 @@ function hideGhost() { $('ghostBtn').style.display = 'none'; }
 function showFeedback(good, why) {
     const m = $('fbMsg');
     m.className = 'fb-msg on ' + (good ? 'good' : 'bad');
-    $('fbTitle').innerHTML = good ? '✅ Верно!' : '❌ Не совсем';
-    $('fbWhy').innerHTML = why || '';
+    $('fbTitle').innerHTML = good
+        ? '<i class="fa-solid fa-circle-check"></i> Верно'
+        : '<i class="fa-solid fa-circle-xmark"></i> Не совсем';
+
+    let extra = '';
+    // Ответ с открытым разбором честно помечается: ученик должен понимать,
+    // что тема ему пока не засчитана, а не удивляться этому в дереве.
+    if (good && S.revealed) {
+        extra = '<div class="hint-warn" style="margin-top:8px">' +
+                '<i class="fa-solid fa-circle-info"></i> Ответ после разбора — ' +
+                'тема пока не засчитана. Она вернётся, и ты решишь её сам.</div>';
+    }
+    $('fbWhy').innerHTML = (why || '') + extra;
 }
 function hideFeedback() { $('fbMsg').className = 'fb-msg'; }
 </script>

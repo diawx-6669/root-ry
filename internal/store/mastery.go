@@ -18,6 +18,9 @@ type AttemptInput struct {
 	Correct bool
 	Hints   int
 	TimeMs  int
+	// Assisted — ученик открыл полный разбор до того, как ответил.
+	// Такой ответ не подтверждает знание темы: см. mastery.Answer.
+	Assisted bool
 }
 
 // AttemptOutcome — что изменилось в модели знаний после ответа.
@@ -78,7 +81,8 @@ func (s *Store) RecordAttempt(in AttemptInput, now time.Time) (AttemptOutcome, e
 	if err != nil {
 		return out, err
 	}
-	out.Topic = mastery.Apply(out.TopicWas, in.Correct, now)
+	answer := mastery.Answer{Correct: in.Correct, Assisted: in.Assisted}
+	out.Topic = mastery.ApplyAnswer(out.TopicWas, answer, now)
 	if err := saveTopicMastery(tx, in.UserID, in.TopicID, out.Topic); err != nil {
 		return out, err
 	}
@@ -87,7 +91,7 @@ func (s *Store) RecordAttempt(in AttemptInput, now time.Time) (AttemptOutcome, e
 	if err != nil {
 		return out, err
 	}
-	out.Item = mastery.Apply(out.ItemWas, in.Correct, now)
+	out.Item = mastery.ApplyAnswer(out.ItemWas, answer, now)
 	if err := saveItemState(tx, in, out.Item, now); err != nil {
 		return out, err
 	}

@@ -19,7 +19,19 @@ const PRACTICE_KINDS = {
     multi:  'Выбери все верные',
     match:  'Сопоставь пары',
     order:  'Расставь по порядку',
+    // Задания без готовых вариантов: ответ надо произвести, а не узнать.
+    write:     'Впиши буквы',
+    find:      'Найди ошибки',
+    explain:   'Объясни правило',
+    dictation: 'Диктант',
 };
+
+/* Типы, у которых правильного ответа нет на экране.
+
+   Разница принципиальная: узнать верный вариант из шести и написать без
+   ошибок — разные навыки, и второй в жизни нужнее. Плеер отмечает такие
+   задания отдельно, а исследование считает по ним динамику отдельно. */
+const PRODUCTIVE_KINDS = new Set(['write', 'find', 'explain', 'dictation']);
 
 /**
  * Проверить ответ на задание.
@@ -46,10 +58,113 @@ function practiceIsCorrect(q, a) {
                 && !a.matchErrors;
         case 'order':
             return (a.order || []).join(',') === (q.correct || []).join(',');
+
+        // ── Задания без готовых вариантов ──────────────────────────
+        case 'write': {
+            // Каждый пропуск в тексте — отдельная буква или сочетание.
+            // Засчитывается только полностью верная строка: половина
+            // вставленных букв не значит «половину знает».
+            const want = q.answers || [];
+            const got = a.written || [];
+            return want.length > 0 && got.length === want.length
+                && want.every((w, i) => normalizeLetters(got[i]) === normalizeLetters(w));
+        }
+        case 'find': {
+            // Набор отмеченных слов должен совпасть с набором ошибочных
+            // ровно: лишнее отмеченное слово — тоже ошибка, иначе выгодно
+            // отмечать всё подряд.
+            const want = uniqueSorted((q.wrong || []).map(normalizeLetters));
+            const got = uniqueSorted((a.found || []).map(normalizeLetters));
+            return want.length > 0 && want.join('|') === got.join('|');
+        }
+        case 'explain': {
+            // Свободный ответ проверяется по опорным понятиям. Каждая
+            // группа — это одна мысль и её синонимы; засчитывается, если
+            // ученик назвал хотя бы одну формулировку из группы.
+            const groups = q.keywords || [];
+            if (!groups.length) return false;
+            const text = normalizeLetters(a.text || '');
+            if (!text) return false;
+            const hits = groups.filter(g =>
+                (Array.isArray(g) ? g : [g]).some(k => text.includes(normalizeLetters(k)))
+            ).length;
+            const need = q.minHits || Math.max(1, Math.ceil(groups.length * 0.7));
+            return hits >= need;
+        }
+        case 'dictation':
+            return !!q.answer && normalizeSentence(a.text) === normalizeSentence(q.answer);
+
         default:
             return a.pick === q.correct;
     }
 }
+
+/* Нормализация для отдельных слов и букв: регистр не важен, Ё и Е
+   считаются одной буквой. Ученик часто печатает Е там, где произносит Ё,
+   и валить задание из-за раскладки клавиатуры было бы нечестно. */
+function normalizeLetters(v) {
+    return String(v ?? '').toLowerCase().replace(/ё/g, 'е').trim();
+}
+
+/* Нормализация для диктанта.
+
+   Регистр и лишние пробелы прощаются, знаки препинания — нет: в диктанте
+   они и есть предмет проверки. Разные виды кавычек и тире приводятся к
+   одному виду — это вопрос раскладки, а не грамотности. */
+function normalizeSentence(v) {
+    return String(v ?? '')
+        .toLowerCase()
+        .replace(/ё/g, 'е')
+        .replace(/[«»„“”"]/g, '"')
+        .replace(/[—–−]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function uniqueSorted(list) {
+    return [...new Set(list.filter(Boolean))].sort();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Подсказки.
+
+   Три ступени: намёк, правило, разбор. Открытая ступень не отнимает
+   награду — она меняет статус ответа: после разбора верный ответ
+   перестаёт подтверждать знание темы (см. internal/mastery.Answer).
+
+   Так подсказка остаётся честной. Если бы она просто снижала XP,
+   выгоднее всего было бы сразу открыть разбор и получить чуть меньше
+   монет, но полный прогресс.
+   ═══════════════════════════════════════════════════════════════════ */
+const PracticeHints = {
+    /**
+     * Лестница подсказок для задания.
+     * @param {object} q      задание
+     * @param {object} lesson урок целиком — из него берётся общее правило
+     * @returns {Array<{label: string, text: string, reveals: boolean}>}
+     */
+    levels(q, lesson) {
+        const out = [];
+        if (q.hint) out.push({ label: 'Намёк', text: q.hint, reveals: false });
+        const rule = q.rule || (lesson && lesson.rule);
+        if (rule) out.push({ label: 'Правило', text: rule, reveals: false });
+        // Разбор всегда последний и всегда раскрывает ответ.
+        if (q.why) out.push({ label: 'Разбор', text: q.why, reveals: true });
+        return out;
+    },
+
+    /**
+     * Что сообщить серверу в поле hints.
+     *
+     * Сервер считает ответ «подсказанным» начиная с третьей ступени, но у
+     * задания без намёка ступеней всего две, и разбор оказывается вторым.
+     * Поэтому важен не счётчик, а факт: открыт разбор или нет.
+     */
+    report(openedCount, revealed) {
+        if (revealed) return 3;
+        return Math.min(openedCount, 2);
+    },
+};
 
 /* ═══════════════════════════════════════════════════════════════════
    PracticeDrill — прорешивание списка заданий подряд.

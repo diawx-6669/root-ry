@@ -55,11 +55,35 @@ type State struct {
 	FirstDone  time.Time // дата первого прохождения темы
 }
 
-// Apply возвращает новое состояние после одного ответа.
+// Answer — что именно произошло при ответе на задание.
+type Answer struct {
+	Correct bool
+	// Assisted — ответ дан после того, как ученик открыл полный разбор.
+	//
+	// Такой ответ не наказывается: посмотреть разбор и понять — нормальный
+	// способ учиться. Но и подтверждением знания он быть не может: ученик
+	// повторил то, что прочитал секунду назад. Поэтому серия не двигается,
+	// коробка не растёт, и срок повторения остаётся прежним — тема
+	// по-прежнему за учеником.
+	//
+	// Это единственный механизм, который делает подсказки честными. Если
+	// бы подсказка просто снижала XP, выгоднее всего было бы открыть
+	// разбор и получить чуть меньше монет; здесь же прогресс по теме
+	// нужно заработать самому.
+	Assisted bool
+}
+
+// Apply возвращает новое состояние после одного самостоятельного ответа.
 //
 // today передаётся снаружи, а не берётся из time.Now(): так функция
 // остаётся чистой и тестируется на любых календарных сценариях.
 func Apply(cur State, correct bool, today time.Time) State {
+	return ApplyAnswer(cur, Answer{Correct: correct}, today)
+}
+
+// ApplyAnswer — то же самое, но с учётом того, открывал ли ученик разбор.
+func ApplyAnswer(cur State, a Answer, today time.Time) State {
+	correct := a.Correct
 	today = day(today)
 	next := cur
 	next.Total++
@@ -73,6 +97,17 @@ func Apply(cur State, correct bool, today time.Time) State {
 	if firstEncounter {
 		next.Box = 1
 		next.FirstDone = today
+	}
+
+	// Ответ с открытым разбором меняет только счётчики и дату последнего
+	// касания. Ни коробка, ни серия, ни срок повторения не двигаются:
+	// просроченная тема так и остаётся просроченной.
+	if correct && a.Assisted {
+		if firstEncounter {
+			next.DueOn = today.AddDate(0, 0, intervalFor(next.Box))
+		}
+		next.LastSeen = today
+		return next
 	}
 
 	switch {

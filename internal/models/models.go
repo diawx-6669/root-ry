@@ -262,8 +262,11 @@ type AttemptResponse struct {
 	MaxBox        int    `json:"max_box"`
 	DueOn         string `json:"due_on"`
 	TopicPromoted bool   `json:"topic_promoted"`
-	MistakeClosed bool   `json:"mistake_closed"`
-	MistakeCount  int    `json:"mistake_count"`
+	// Assisted — ответ дан с открытым разбором и знание не подтверждает.
+	// Клиент показывает это ученику: прогресс по теме нужно заработать сам.
+	Assisted      bool `json:"assisted"`
+	MistakeClosed bool `json:"mistake_closed"`
+	MistakeCount  int  `json:"mistake_count"`
 }
 
 // ReviewPlanItem — тема, которую пора повторить сегодня.

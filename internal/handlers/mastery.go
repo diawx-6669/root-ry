@@ -26,6 +26,14 @@ var allowedSources = map[string]bool{
 // клиента и уходит в базу, так что размер ограничиваем явно.
 const maxItemIDLen = 96
 
+// FullHintLevel — уровень подсказки, на котором ученику показан полный
+// разбор. Подсказки идут ступенями: 1 — намёк, 2 — правило, 3 — разбор.
+//
+// Начиная с этого уровня верный ответ перестаёт быть подтверждением
+// знания темы (см. mastery.Answer.Assisted). Первые две ступени на модель
+// знаний не влияют: намёк и правило — это помощь думать, а не ответ.
+const FullHintLevel = 3
+
 // POST /api/attempt — записать один ответ ученика.
 //
 // Это самый горячий эндпоинт продукта: он вызывается на каждое задание в
@@ -74,13 +82,14 @@ func (h *Handler) Attempt(w http.ResponseWriter, r *http.Request) {
 
 	now := timeutil.Now()
 	outcome, err := h.store.RecordAttempt(store.AttemptInput{
-		UserID:  user.ID,
-		TopicID: topic.ID,
-		ItemID:  item,
-		Source:  source,
-		Correct: req.Correct,
-		Hints:   clampInt(req.Hints, 0, 3),
-		TimeMs:  clampInt(req.TimeMs, 0, 30*60*1000),
+		UserID:   user.ID,
+		TopicID:  topic.ID,
+		ItemID:   item,
+		Source:   source,
+		Correct:  req.Correct,
+		Hints:    clampInt(req.Hints, 0, FullHintLevel),
+		TimeMs:   clampInt(req.TimeMs, 0, 30*60*1000),
+		Assisted: req.Hints >= FullHintLevel,
 	}, now)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Не удалось записать ответ")
@@ -93,6 +102,7 @@ func (h *Handler) Attempt(w http.ResponseWriter, r *http.Request) {
 		MaxBox:        mastery.MaxBox,
 		DueOn:         outcome.Topic.DueOn.Format("2006-01-02"),
 		TopicPromoted: outcome.TopicPromoted(),
+		Assisted:      req.Hints >= FullHintLevel,
 		MistakeClosed: outcome.MistakeClosed(),
 		MistakeCount:  h.store.MistakeCount(user.ID),
 	})

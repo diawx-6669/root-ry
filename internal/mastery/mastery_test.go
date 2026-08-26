@@ -252,3 +252,95 @@ func TestApplyIsPure(t *testing.T) {
 		t.Error("Apply изменила исходное состояние")
 	}
 }
+
+// TestAssistedAnswerDoesNotConfirm — ответ, данный после открытого разбора,
+// не двигает тему вперёд.
+//
+// Это то, ради чего подсказки вообще устроены так, а не через уменьшение
+// XP: иначе выгоднее всего было бы сразу открыть разбор и получить чуть
+// меньше монет, но полный прогресс.
+func TestAssistedAnswerDoesNotConfirm(t *testing.T) {
+	day1 := d(2026, time.September, 1)
+
+	// Самостоятельно набираем один засчитанный день.
+	s := Apply(State{}, true, day1)
+	s = Apply(s, true, day1.AddDate(0, 0, 1))
+	if s.StreakDays != 1 {
+		t.Fatalf("подготовка не удалась: серия %d", s.StreakDays)
+	}
+
+	before := s
+	s = ApplyAnswer(s, Answer{Correct: true, Assisted: true}, day1.AddDate(0, 0, 2))
+
+	if s.StreakDays != before.StreakDays {
+		t.Errorf("подсказанный ответ сдвинул серию: было %d, стало %d",
+			before.StreakDays, s.StreakDays)
+	}
+	if s.Box != before.Box {
+		t.Errorf("подсказанный ответ поднял коробку: было %d, стало %d", before.Box, s.Box)
+	}
+	if !day(s.DueOn).Equal(day(before.DueOn)) {
+		t.Errorf("подсказанный ответ отодвинул повторение: было %v, стало %v",
+			day(before.DueOn), day(s.DueOn))
+	}
+	// Но ответ всё равно засчитан в статистику: он был.
+	if s.Total != before.Total+1 || s.Correct != before.Correct+1 {
+		t.Errorf("подсказанный ответ не попал в счётчики: correct=%d total=%d",
+			s.Correct, s.Total)
+	}
+}
+
+// TestAssistedAnswerDoesNotPunish — открыть разбор не должно быть страшно.
+// Это нормальный способ разобраться, а не провинность.
+func TestAssistedAnswerDoesNotPunish(t *testing.T) {
+	today := d(2026, time.September, 10)
+	before := State{Box: 4, StreakDays: 1, DueOn: today.AddDate(0, 0, -2),
+		LastSeen: today.AddDate(0, 0, -18)}
+
+	s := ApplyAnswer(before, Answer{Correct: true, Assisted: true}, today)
+
+	if s.Box != before.Box {
+		t.Errorf("коробка изменилась: было %d, стало %d", before.Box, s.Box)
+	}
+	if s.Lapses != before.Lapses {
+		t.Errorf("засчитано забывание: было %d, стало %d", before.Lapses, s.Lapses)
+	}
+	// Просроченная тема остаётся просроченной: ученик её ещё не подтвердил.
+	if !s.IsDue(today) {
+		t.Error("тема перестала быть просроченной после подсказанного ответа")
+	}
+}
+
+// TestAssistedWrongAnswerStillDrops — если ученик открыл разбор и всё равно
+// ответил неверно, это обычная ошибка со всеми последствиями.
+func TestAssistedWrongAnswerStillDrops(t *testing.T) {
+	today := d(2026, time.September, 10)
+	before := State{Box: 4, StreakDays: 1, LastSeen: today.AddDate(0, 0, -10)}
+
+	s := ApplyAnswer(before, Answer{Correct: false, Assisted: true}, today)
+
+	if s.Box != 1 {
+		t.Errorf("после ошибки коробка %d, ожидалась 1", s.Box)
+	}
+	if s.Lapses != 1 {
+		t.Errorf("забывание не засчиталось: %d", s.Lapses)
+	}
+}
+
+// TestAssistedFirstEncounterStartsTopic — первое знакомство с темой через
+// подсказку всё равно должно завести тему, иначе она не появится ни в
+// дереве, ни в плане повторения.
+func TestAssistedFirstEncounterStartsTopic(t *testing.T) {
+	today := d(2026, time.September, 1)
+	s := ApplyAnswer(State{}, Answer{Correct: true, Assisted: true}, today)
+
+	if s.Box != 1 {
+		t.Errorf("тема не завелась: коробка %d", s.Box)
+	}
+	if s.DueOn.IsZero() {
+		t.Error("не назначена дата повторения")
+	}
+	if !s.IsDue(today.AddDate(0, 0, 3)) {
+		t.Error("тема не всплыла в плане через три дня")
+	}
+}
