@@ -314,7 +314,11 @@ function startGame() {
     renderWord();
 }
 
+// Когда показали задание — время на решение уходит в журнал ответов.
+let itemShownAt = 0;
+
 function renderWord() {
+    itemShownAt = Date.now();
     if (currentIdx >= WORDS.length) { endGame(); return; }
     currentWord = WORDS[currentIdx];
     selectedMorphemes = [];
@@ -399,6 +403,11 @@ function checkWord() {
 
     rb.className = 'rule-banner show';
     rb.innerHTML = `<i class="fa-solid fa-lightbulb"></i>${currentWord.explain || ''}`;
+
+    // Ответ уходит в модель знаний наравне с ответами в уроке.
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer('vocabulary', currentWord.word, morphemeMatch || assembled === correct, itemShownAt ? Date.now() - itemShownAt : 0);
+    }
 
     if (morphemeMatch) {
         fb.className = 'feedback-banner correct';

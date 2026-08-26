@@ -233,11 +233,23 @@ func (s *Store) TopicMasteryMap(userID int64) (map[string]mastery.State, error) 
 	return out, rows.Err()
 }
 
+// GameItemMark — метка задания, пришедшего из игры.
+//
+// Идентификаторы заданий устроены как «тема#номер» для уроков и
+// «тема#g-игра-ключ» для игр (см. recordGameAnswer в static/api.js).
+const GameItemMark = "#g-"
+
 // OpenMistakes — незакрытые задания для тетради ошибок, самые свежие первыми.
 //
 // Возвращаются только идентификаторы: текст задания и разбор живут в
 // static/lessons/*.js, и дублировать их в базе значило бы завести второй
 // источник правды, который рано или поздно разъедется с первым.
+//
+// Задания из игр в тетрадь не попадают. Не потому, что ошибка в игре менее
+// важна — тему она роняет так же, и в план повторения та вернётся, — а
+// потому, что открыть одно задание игры отдельно нельзя: оно живёт внутри
+// своей механики. Показывать в тетради строку, которую невозможно
+// прорешать, значит обещать то, чего нет.
 func (s *Store) OpenMistakes(userID int64, limit int) ([]models.MistakeRef, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 200
@@ -246,8 +258,9 @@ func (s *Store) OpenMistakes(userID int64, limit int) ([]models.MistakeRef, erro
 		SELECT item_id, topic_id, wrong_count, streak_days, last_wrong
 		FROM item_state
 		WHERE user_id=$1 AND resolved=FALSE AND wrong_count > 0
+		  AND position($3 in item_id) = 0
 		ORDER BY last_wrong DESC NULLS LAST, item_id
-		LIMIT $2`, userID, limit)
+		LIMIT $2`, userID, limit, GameItemMark)
 	if err != nil {
 		return nil, fmt.Errorf("OpenMistakes: %w", err)
 	}
@@ -276,7 +289,8 @@ func (s *Store) MistakeCount(userID int64) int {
 	var n int
 	err := s.db.QueryRow(`
 		SELECT COUNT(*) FROM item_state
-		WHERE user_id=$1 AND resolved=FALSE AND wrong_count > 0`, userID).Scan(&n)
+		WHERE user_id=$1 AND resolved=FALSE AND wrong_count > 0
+		  AND position($2 in item_id) = 0`, userID, GameItemMark).Scan(&n)
 	if err != nil {
 		return 0
 	}

@@ -360,6 +360,15 @@ function spawnSentence() {
                 e.stopPropagation();
                 if (stripCuts[currentI]) return;
                 stripCuts[currentI] = true;
+
+                // Ответ уходит в модель знаний наравне с ответами в уроке.
+                // Ключ задания — само предложение: одна и та же фраза в
+                // разных заходах должна считаться одним заданием.
+                if (typeof recordGameAnswer === 'function') {
+                    recordGameAnswer('spelling', words.join(' '),
+                        requiredCuts.has(currentI), 0);
+                }
+
                 if (requiredCuts.has(currentI)) {
                     zone.classList.add('correct-cut');
                     score += 10 * (combo > 2 ? 2 : 1);

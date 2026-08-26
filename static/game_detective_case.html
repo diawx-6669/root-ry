@@ -244,6 +244,8 @@ const CASES = [
 ];
 
 let score = 0, currentIdx = 0, correctCount = 0, answered = false;
+// Когда показали задание — время на размышление уходит в журнал ответов.
+let qShownAt = 0;
 
 function startGame() {
     hideOverlay('startOverlay'); hideOverlay('endOverlay'); hideOverlay('surrenderOverlay');
@@ -254,6 +256,7 @@ function startGame() {
 function renderQuestion() {
     if (currentIdx >= CASES.length) { endGame(); return; }
     answered = false;
+    qShownAt = Date.now();
     const q = CASES[currentIdx];
 
     document.getElementById('scoreDisplay').textContent = score;
@@ -291,6 +294,13 @@ function answer(idx, btn) {
     const blank = document.getElementById('blankEl');
 
     document.querySelectorAll('.opt-btn').forEach(b => b.onclick = null);
+    // Ответ уходит в модель знаний наравне с ответами в уроке: ошибка в
+    // игре так же роняет тему в первую коробку и вернёт к ней завтра.
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer('detective', q.task || currentIdx, isCorrect,
+            typeof qShownAt !== 'undefined' && qShownAt ? Date.now() - qShownAt : 0);
+    }
+
 
     if (isCorrect) {
         btn.classList.add('correct');

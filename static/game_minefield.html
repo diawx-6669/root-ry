@@ -407,13 +407,29 @@ function renderStep() {
 
         platformRow.style.opacity = '1';
         platformRow.style.transform = 'translateY(0)';
+        stepShownAt = Date.now();
     }, 200);
 }
+
+// Когда показали текущую пару слов — нужно для журнала ответов.
+let stepShownAt = 0;
 
 function handleTileClick(tile, isCorrect) {
     if (isAnimating) return;
     isAnimating = true;
     const rule = (LEVELS[currentLevel].rules && LEVELS[currentLevel].rules[currentStep]) || '';
+
+    // Ответ уходит в модель знаний. У каждого уровня своя тема: ученик
+    // может уверенно знать Н/НН и не знать ПРЕ/ПРИ, и валить это в одну
+    // тему значило бы врать в статистике.
+    if (typeof recordGameAnswer === 'function') {
+        const level = LEVELS[currentLevel];
+        const pair = level.steps[currentStep] || [];
+        const word = (pair.find(x => x.correct) || {}).word || currentStep;
+        recordGameAnswer('grammar', word, isCorrect,
+            stepShownAt ? Date.now() - stepShownAt : 0,
+            MINEFIELD_LEVEL_TOPIC[level.topic]);
+    }
 
     if (isCorrect) {
         tile.classList.add('correct-step');

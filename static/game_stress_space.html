@@ -252,6 +252,8 @@ const WORDS = [
 ];
 
 let score = 0, correct = 0, total = 0, combo = 0, shield = 0;
+// Когда показали слово — время на размышление уходит в журнал ответов.
+let wordShownAt = 0;
 let currentIdx = 0, gameActive = false;
 let currentAsteroid = null;
 
@@ -283,6 +285,7 @@ function spawnNext() {
     const w = WORDS[currentIdx];
     currentIdx++;
     total++;
+    wordShownAt = Date.now();
 
     document.getElementById('qDisplay').textContent = `${currentIdx}/${WORDS.length}`;
 
@@ -368,7 +371,14 @@ function handleMiss(asteroid, w) {
 function handleShot(btn, isCorrect, asteroid, w) {
     if (!gameActive || asteroid.dataset.answered === "true") return;
     asteroid.dataset.answered = "true";
-    
+
+    // Ответ уходит в модель знаний наравне с ответами в уроке: ошибка в
+    // игре так же роняет тему в первую коробку и вернёт к ней завтра.
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer('stress', w.word, isCorrect,
+            wordShownAt ? Date.now() - wordShownAt : 0);
+    }
+
     fireLaser(btn);
 
     const wordLabel = w.word.charAt(0) + w.word.slice(1).toLowerCase();

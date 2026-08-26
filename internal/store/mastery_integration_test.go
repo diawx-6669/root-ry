@@ -295,3 +295,44 @@ func mustRecord(t *testing.T, s *Store, in AttemptInput, at time.Time) AttemptOu
 	}
 	return out
 }
+
+// TestGameMistakesStayOutOfNotebook — ошибка в игре роняет тему, но в
+// тетрадь ошибок не попадает: отдельное задание игры нельзя открыть,
+// значит и показывать его как «прорешать» нечестно.
+func TestGameMistakesStayOutOfNotebook(t *testing.T) {
+	s := testStore(t)
+	uid := testUser(t, s)
+	today := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+
+	mustRecord(t, s, AttemptInput{
+		UserID: uid, TopicID: "orf-n-nn", ItemID: "orf-n-nn#g-grammar-derevyannyj",
+		Source: "game", Correct: false,
+	}, today)
+	mustRecord(t, s, AttemptInput{
+		UserID: uid, TopicID: "orf-n-nn", ItemID: "orf-n-nn#2",
+		Source: "lesson", Correct: false,
+	}, today)
+
+	open, err := s.OpenMistakes(uid, 50)
+	if err != nil {
+		t.Fatalf("OpenMistakes: %v", err)
+	}
+	if len(open) != 1 {
+		t.Fatalf("в тетради %d записей, ожидалась одна (только из урока): %+v", len(open), open)
+	}
+	if open[0].ItemID != "orf-n-nn#2" {
+		t.Errorf("в тетради оказалось %q, ожидалось задание урока", open[0].ItemID)
+	}
+	if n := s.MistakeCount(uid); n != 1 {
+		t.Errorf("счётчик тетради %d, ожидался 1", n)
+	}
+
+	// Но тема всё равно упала и вернётся в план повторения.
+	states, err := s.TopicMasteryMap(uid)
+	if err != nil {
+		t.Fatalf("TopicMasteryMap: %v", err)
+	}
+	if st := states["orf-n-nn"]; st.Box != 1 || st.Total != 2 {
+		t.Errorf("ошибка в игре не отразилась на теме: %+v", st)
+	}
+}
