@@ -209,6 +209,18 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	diagnosis := kspoya.Diagnose(outcome.ByTopic, known)
 
+	// Первая попытка участника эксперимента — это предтест. Записывается
+	// автоматически: если бы замер надо было ставить руками, половина
+	// предтестов не появилась бы вовсе. Посттест ставится отдельно, когда
+	// эксперимент закончен, — иначе вторая попытка на второй день
+	// объявила бы себя итогом.
+	if group, _ := h.store.StudyGroupOf(user.ID); group != "" {
+		if phase := h.store.MeasurementPhase(user.ID); phase != "" {
+			_, _ = h.store.SaveMeasurement(user.ID, phase, session.ID,
+				outcome.Correct, outcome.Total, outcome.Level)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"diagnosis":    diagnosis,
 		"correct":      outcome.Correct,

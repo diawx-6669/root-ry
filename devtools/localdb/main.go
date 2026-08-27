@@ -48,6 +48,7 @@ var dsn = fmt.Sprintf("postgres://%s:%s@localhost:%d/%s?sslmode=disable",
 
 func main() {
 	query := flag.String("q", "", "выполнить SQL на уже поднятой базе и выйти")
+	migrate := flag.Bool("migrate", false, "накатить миграции на уже поднятую базу и выйти")
 	reset := flag.Bool("reset", false, "снести данные и накатить схему заново")
 	flag.Parse()
 
@@ -61,6 +62,16 @@ func main() {
 	root, err := repoRoot()
 	if err != nil {
 		log.Fatalf("не найден корень репозитория: %v", err)
+	}
+
+	// Накатить новые миграции на уже работающую базу, не перезапуская её.
+	// Иначе каждая новая миграция требовала бы остановки сервера, а на
+	// проде — и подавно: там база чужая и поднимать её нечем.
+	if *migrate {
+		if err := applyMigrations(root); err != nil {
+			log.Fatalf("миграции не накатились: %v", err)
+		}
+		return
 	}
 
 	cache := dataDir(root)

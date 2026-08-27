@@ -55,6 +55,18 @@ func main() {
 	mux.HandleFunc("/api/case/open", middleware.AuthMiddleware(h.CaseOpen))
 	mux.HandleFunc("/api/profile/nickname", middleware.AuthMiddleware(h.UpdateNickname))
 	mux.HandleFunc("/api/daily/claim", middleware.AuthMiddleware(h.DailyClaim))
+	// Классы и кабинет учителя.
+	mux.HandleFunc("/api/class/create", middleware.AuthMiddleware(h.ClassCreate))
+	mux.HandleFunc("/api/class/join", middleware.AuthMiddleware(h.ClassJoin))
+	mux.HandleFunc("/api/class/my", middleware.AuthMiddleware(h.ClassMy))
+	mux.HandleFunc("/api/class/heatmap", middleware.AuthMiddleware(h.ClassHeatmap))
+	mux.HandleFunc("/api/class/export", middleware.AuthMiddleware(h.ClassExport))
+	mux.HandleFunc("/api/admin/teacher", middleware.AdminMiddleware(h.AdminSetTeacher))
+	// Исследовательский контур: сводка, выгрузка, распределение по группам.
+	mux.HandleFunc("/api/admin/research/summary", middleware.AdminMiddleware(h.ResearchSummary))
+	mux.HandleFunc("/api/admin/research/export", middleware.AdminMiddleware(h.ResearchExport))
+	mux.HandleFunc("/api/admin/research/group", middleware.AdminMiddleware(h.ResearchSetGroup))
+	mux.HandleFunc("/api/research/consent", middleware.AuthMiddleware(h.ResearchConsent))
 	mux.HandleFunc("/api/admin/users", middleware.AdminMiddleware(h.AdminUsers))
 	mux.HandleFunc("/api/admin/stats", middleware.AdminMiddleware(h.AdminStats))
 	mux.Handle("/", http.FileServer(http.Dir("./static")))

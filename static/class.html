@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootRy | Класс</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           Кабинет класса.
+
+           Главный экран учителя — тепловая карта. Красная полоса
+           поперёк означает, что тему провалил весь класс, и это
+           разговор для урока; полоса вдоль — отстал один ученик, и
+           это разговор с ним. Карта устроена так, чтобы обе полосы
+           были видны с одного взгляда.
+           ═══════════════════════════════════════════════════════════ */
+        .cl {
+            --ink:        #0a2836;
+            --ink-2:      #55707f;
+            --ink-3:      #8ba0ac;
+            --line:       #e4ecf1;
+            --line-2:     #cfdde5;
+            --accent:     #0099cc;
+            --accent-ink: #036389;
+            --accent-bg:  #eaf7fc;
+            --due:        #b26a24;
+            --due-bg:     #fdf4ea;
+            --ok:         #1e7a5b;
+            --learn:      #2b6cb0;
+            font-variant-numeric: tabular-nums;
+            padding-bottom: 24px;
+        }
+
+        .cl-hero {
+            background: linear-gradient(155deg, #0a2f40 0%, #073243 55%, #05485f 100%);
+            border-radius: 20px; padding: 28px 32px; color: #fff;
+            position: relative; overflow: hidden;
+        }
+        .cl-hero::after {
+            content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent 70%);
+        }
+        .cl-eyebrow {
+            font-size: 11px; font-weight: 700; letter-spacing: .16em;
+            text-transform: uppercase; color: #6fc6e6; margin: 0 0 10px;
+        }
+        .cl-hero h1 { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: #fff; }
+        .cl-hero p { margin: 0; font-size: 14.5px; line-height: 1.6; color: #b8d2dd; max-width: 64ch; }
+
+        .cl-sec { margin-top: 30px; }
+        .cl-sec h2 { margin: 0 0 5px; font-size: 18px; font-weight: 700; color: var(--ink); }
+        .cl-sub { margin: 0 0 16px; color: var(--ink-3); font-size: 13.5px; line-height: 1.6; max-width: 72ch; }
+
+        .cl-cards { display: flex; flex-direction: column; gap: 9px; }
+        .cl-card {
+            display: flex; align-items: center; gap: 16px; background: #fff;
+            border: 1px solid var(--line); border-left: 3px solid var(--line-2);
+            border-radius: 12px; padding: 15px 20px; cursor: pointer;
+            transition: border-color .16s, box-shadow .16s;
+        }
+        .cl-card:hover { border-left-color: var(--accent); box-shadow: 0 6px 20px rgba(10,40,54,.07); }
+        .cl-card.on { border-left-color: var(--accent); background: #fbfeff; }
+        .cl-card-main { flex: 1; min-width: 0; }
+        .cl-card-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+        .cl-card-sub { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+        .cl-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 15px; font-weight: 700; letter-spacing: .16em;
+            color: var(--accent-ink); background: var(--accent-bg);
+            border-radius: 8px; padding: 6px 12px; white-space: nowrap;
+        }
+
+        .cl-form { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 14px; }
+        .cl-in {
+            flex: 1; min-width: 200px; font-family: inherit; font-size: 14.5px;
+            border: 1px solid var(--line-2); border-radius: 10px;
+            padding: 11px 14px; color: var(--ink); outline: none;
+        }
+        .cl-in:focus { border-color: var(--accent); }
+        .cl-btn {
+            border: none; border-radius: 10px; background: var(--accent); color: #fff;
+            font-family: inherit; font-size: 14.5px; font-weight: 700;
+            padding: 11px 20px; cursor: pointer; transition: background .16s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .cl-btn:hover:not(:disabled) { background: var(--accent-ink); }
+        .cl-btn:disabled { background: #c3d4dc; cursor: default; }
+        .cl-btn.ghost { background: #fff; color: var(--accent-ink); border: 1px solid var(--line-2); }
+        .cl-btn.ghost:hover { background: var(--accent-bg); }
+
+        .cl-msg { margin-top: 10px; font-size: 13.5px; }
+        .cl-msg.err { color: #b0392b; }
+        .cl-msg.ok { color: var(--ok); }
+
+        /* ── Сводка по ученикам ─────────────────────────────────── */
+        .cl-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+        table.cl-table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+        .cl-table th {
+            text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+            color: var(--ink-3); font-weight: 700; padding: 12px 14px;
+            border-bottom: 1px solid var(--line); white-space: nowrap;
+        }
+        .cl-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); }
+        .cl-table tr:last-child td { border-bottom: none; }
+        .cl-table td.num, .cl-table th.num { text-align: right; white-space: nowrap; }
+        /* Первая колонка забирает всю свободную ширину, числовые
+           сжимаются по содержимому. Иначе на широком экране числа
+           расползаются по метру друг от друга и таблицу не прочесть. */
+        .cl-table th:first-child, .cl-table td:first-child { width: 100%; }
+        .cl-table td.warn { color: var(--due); font-weight: 700; }
+
+        /* ── Тепловая карта ─────────────────────────────────────── */
+        .heat-wrap { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+        table.heat { border-collapse: separate; border-spacing: 0; font-size: 12px; }
+        .heat th.topic {
+            position: sticky; left: 0; z-index: 2; background: #fff;
+            text-align: left; font-weight: 600; color: var(--ink);
+            padding: 6px 12px; border-bottom: 1px solid var(--line);
+            border-right: 1px solid var(--line); white-space: nowrap;
+            max-width: 230px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .heat th.who {
+            position: sticky; top: 0; z-index: 3; background: #fff;
+            padding: 8px 4px; border-bottom: 1px solid var(--line);
+            font-size: 10.5px; color: var(--ink-3); font-weight: 700;
+            writing-mode: vertical-rl; text-orientation: mixed;
+            height: 96px; white-space: nowrap;
+        }
+        .heat th.corner {
+            position: sticky; top: 0; left: 0; z-index: 4; background: #fff;
+            border-bottom: 1px solid var(--line); border-right: 1px solid var(--line);
+        }
+        .heat tr.section td, .heat tr.section th {
+            background: #f4f8fa; font-size: 10.5px; letter-spacing: .09em;
+            text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+            padding: 7px 12px;
+        }
+        .heat td.cell {
+            width: 22px; min-width: 22px; height: 22px; padding: 0;
+            border-bottom: 1px solid #f2f6f8; border-right: 1px solid #f2f6f8;
+        }
+        .heat td.cell i { display: block; width: 100%; height: 100%; }
+        .c-new      { background: #f4f7f9; }
+        .c-learning { background: #b8d4ee; }
+        .c-mastered { background: #78c2a4; }
+        .c-due      { background: #e6a862; }
+
+        .heat-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 12.5px; color: var(--ink-2); }
+        .heat-legend span { display: inline-flex; align-items: center; gap: 7px; }
+        .heat-legend b { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+
+        .cl-empty {
+            background: #fff; border: 1px dashed var(--line-2); border-radius: 12px;
+            padding: 30px 26px; text-align: center;
+        }
+        .cl-empty > i { font-size: 21px; color: var(--line-2); margin-bottom: 12px; display: block; }
+        .cl-empty-title { font-size: 15px; font-weight: 700; color: var(--ink-2); }
+        .cl-empty-note { font-size: 13.5px; color: var(--ink-3); line-height: 1.6; margin-top: 6px; max-width: 50ch; margin-inline: auto; }
+
+        .cl-loading { padding: 24px 0; color: var(--ink-3); font-size: 14.5px; }
+
+        @media (max-width: 640px) {
+            .cl-hero { padding: 22px 20px; }
+            .heat th.topic { max-width: 130px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="global-header">
+        <div class="header-left"><div class="brand"><i class="fa-solid fa-graduation-cap"></i><span>RootRy</span></div></div>
+        <div class="header-center">
+            <div class="user-info">
+                <img src="" alt="Аватар" id="headerAvatar" class="avatar">
+                <span id="headerUsername" class="username">Загрузка...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="balance-box"><i class="fa-solid fa-coins"></i><span id="userBalance">0</span> <small>монет</small></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="app-window">
+            <div class="cl" id="content">
+                <div class="cl-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Загружаю классы...</div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-tabbar">
+        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="class.html" class="tab-item active"><i class="fa-solid fa-chalkboard-user"></i><span>Класс</span></a>
+        <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
+        <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
+    </nav>
+
+    <script src="api.js"></script>
+    <script>
+/* ═══════════════════════════════════════════════════════════════════
+   Кабинет класса.
+
+   Одна страница на обе роли. Учитель видит свои классы и тепловую
+   карту, ученик — класс, в котором состоит, и поле для кода. Роль
+   определяет сервер; страница не решает этого сама, потому что
+   учитель вполне может быть и учеником другого класса.
+   ═══════════════════════════════════════════════════════════════════ */
+
+if (!requireAuth()) throw new Error('redirect');
+
+const $ = id => document.getElementById(id);
+const STATE = { my: null, heat: null, openId: null };
+
+const STATUS_CLASS = {
+    new: 'c-new', learning: 'c-learning', mastered: 'c-mastered', due: 'c-due',
+};
+const STATUS_TITLE = {
+    new: 'не открывал', learning: 'изучает', mastered: 'освоено', due: 'пора повторить',
+};
+
+(async function boot() {
+    initHeader();
+    const res = await API.get('/api/class/my');
+    if (!res.ok) {
+        $('content').innerHTML = errorBox('Не получилось загрузить классы');
+        return;
+    }
+    STATE.my = res.data;
+    render();
+})();
+
+function errorBox(text) {
+    return `<div class="cl-empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="cl-empty-title">${esc(text)}</div>
+        <div class="cl-empty-note">Обнови страницу — данные никуда не делись.</div>
+    </div>`;
+}
+
+function render() {
+    const my = STATE.my;
+    const teaching = my.teaching || [];
+    const member = my.member || [];
+
+    $('content').innerHTML =
+        renderHero(my, teaching, member) +
+        (my.is_teacher ? renderTeaching(teaching) : '') +
+        renderMembership(member) +
+        '<div id="heatSlot"></div>';
+
+    bind();
+    if (my.is_teacher && teaching.length && !STATE.openId) openClass(teaching[0].id);
+    else if (STATE.openId) openClass(STATE.openId);
+}
+
+function renderHero(my, teaching, member) {
+    const teacher = my.is_teacher;
+    return `
+    <div class="cl-hero">
+        <p class="cl-eyebrow">${teacher ? 'Кабинет учителя' : 'Мой класс'}</p>
+        <h1>${teacher ? 'Класс' : (member.length ? esc(member[0].name) : 'Ты пока не в классе')}</h1>
+        <p>${teacher
+            ? 'Тепловая карта показывает, что происходит с темами у всего класса сразу. Полоса поперёк — тему провалили все, это разговор для урока. Полоса вдоль — отстал один ученик.'
+            : 'Учитель видит, какие темы у тебя просели, и может собрать по ним урок. Оценок здесь нет — только состояние тем.'}</p>
+    </div>`;
+}
+
+function renderTeaching(teaching) {
+    const cards = teaching.map(c => `
+        <div class="cl-card${STATE.openId === c.id ? ' on' : ''}" data-id="${c.id}">
+            <div class="cl-card-main">
+                <div class="cl-card-title">${esc(c.name)}</div>
+                <div class="cl-card-sub">${esc(plural(c.students || 0, 'ученик', 'ученика', 'учеников'))}</div>
+            </div>
+            <div class="cl-code">${esc(c.code)}</div>
+        </div>`).join('');
+
+    return `
+    <div class="cl-sec">
+        <h2>Мои классы</h2>
+        <p class="cl-sub">Код класса ученик вводит один раз. В нём нет нуля, буквы О, единицы и I —
+           код диктуют вслух, и похожие символы путают.</p>
+        ${teaching.length ? `<div class="cl-cards">${cards}</div>` : `
+        <div class="cl-empty">
+            <i class="fa-solid fa-chalkboard"></i>
+            <div class="cl-empty-title">Классов пока нет</div>
+            <div class="cl-empty-note">Создай первый — и раздай код ученикам.</div>
+        </div>`}
+        <div class="cl-form">
+            <input class="cl-in" id="newClassName" placeholder="Название класса, например «9 Б»" maxlength="60">
+            <button class="cl-btn" id="createBtn"><i class="fa-solid fa-plus"></i> Создать класс</button>
+        </div>
+        <div class="cl-msg" id="createMsg"></div>
+    </div>`;
+}
+
+function renderMembership(member) {
+    const rows = member.map(c => `
+        <div class="cl-card">
+            <div class="cl-card-main">
+                <div class="cl-card-title">${esc(c.name)}</div>
+                <div class="cl-card-sub">учитель: ${esc(c.teacher_name || '—')}</div>
+            </div>
+            <div class="cl-code">${esc(c.code)}</div>
+        </div>`).join('');
+
+    return `
+    <div class="cl-sec">
+        <h2>Я учусь</h2>
+        <p class="cl-sub">Вступив в класс, ты делишься с учителем состоянием тем — какие идут, какие просели.
+           Ни ответы, ни переписка, ни баланс монет ему не видны.</p>
+        ${member.length ? `<div class="cl-cards">${rows}</div>` : `
+        <div class="cl-empty">
+            <i class="fa-solid fa-user-plus"></i>
+            <div class="cl-empty-title">Ты пока не в классе</div>
+            <div class="cl-empty-note">Введи код, который дал учитель.</div>
+        </div>`}
+        <div class="cl-form">
+            <input class="cl-in" id="joinCode" placeholder="Код класса" maxlength="12"
+                   style="text-transform:uppercase;letter-spacing:.16em">
+            <button class="cl-btn ghost" id="joinBtn"><i class="fa-solid fa-right-to-bracket"></i> Вступить</button>
+        </div>
+        <div class="cl-msg" id="joinMsg"></div>
+    </div>`;
+}
+
+function bind() {
+    const create = $('createBtn');
+    if (create) create.onclick = createClass;
+    const join = $('joinBtn');
+    if (join) join.onclick = joinClass;
+    document.querySelectorAll('.cl-card[data-id]').forEach(el => {
+        el.onclick = () => openClass(+el.dataset.id);
+    });
+}
+
+async function createClass() {
+    const name = $('newClassName').value.trim();
+    const msg = $('createMsg');
+    msg.className = 'cl-msg';
+    msg.textContent = '';
+    if (name.length < 2) { msg.className = 'cl-msg err'; msg.textContent = 'Название слишком короткое'; return; }
+
+    $('createBtn').disabled = true;
+    const res = await API.post('/api/class/create', { name });
+    $('createBtn').disabled = false;
+    if (!res.ok) {
+        msg.className = 'cl-msg err';
+        msg.textContent = res.data?.error || 'Не удалось создать класс';
+        return;
+    }
+    STATE.openId = res.data.id;
+    const my = await API.get('/api/class/my');
+    if (my.ok) { STATE.my = my.data; render(); }
+}
+
+async function joinClass() {
+    const code = $('joinCode').value.trim().toUpperCase();
+    const msg = $('joinMsg');
+    msg.className = 'cl-msg';
+    msg.textContent = '';
+    if (code.length < 4) { msg.className = 'cl-msg err'; msg.textContent = 'Код слишком короткий'; return; }
+
+    $('joinBtn').disabled = true;
+    const res = await API.post('/api/class/join', { code });
+    $('joinBtn').disabled = false;
+    if (!res.ok) {
+        msg.className = 'cl-msg err';
+        msg.textContent = res.data?.error || 'Не удалось вступить';
+        return;
+    }
+    const my = await API.get('/api/class/my');
+    if (my.ok) { STATE.my = my.data; render(); }
+}
+
+/* ── Тепловая карта ────────────────────────────────────────────── */
+
+async function openClass(id) {
+    STATE.openId = id;
+    document.querySelectorAll('.cl-card[data-id]').forEach(el => {
+        el.classList.toggle('on', +el.dataset.id === id);
+    });
+
+    const slot = $('heatSlot');
+    slot.innerHTML = '<div class="cl-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Собираю карту...</div>';
+
+    const res = await API.get('/api/class/heatmap?id=' + encodeURIComponent(id));
+    if (!res.ok) { slot.innerHTML = errorBox('Не получилось загрузить карту класса'); return; }
+    STATE.heat = res.data;
+    renderHeat();
+}
+
+function renderHeat() {
+    const d = STATE.heat;
+    const students = d.students || [];
+
+    if (!students.length) {
+        $('heatSlot').innerHTML = `
+        <div class="cl-sec">
+            <h2>Тепловая карта</h2>
+            <div class="cl-empty">
+                <i class="fa-solid fa-users"></i>
+                <div class="cl-empty-title">В классе пока никого</div>
+                <div class="cl-empty-note">Раздай код <b>${esc(d.class.code)}</b> — карта появится,
+                    как только ученики начнут заниматься.</div>
+            </div>
+        </div>`;
+        return;
+    }
+
+    $('heatSlot').innerHTML =
+        renderStudentTable(students) +
+        renderHeatTable(d, students);
+}
+
+function renderStudentTable(students) {
+    const rows = students.map(s => `
+        <tr>
+            <td>${esc(s.nickname || s.username)}</td>
+            <td class="num">${s.started}</td>
+            <td class="num">${s.mastered}</td>
+            <td class="num${s.due ? ' warn' : ''}">${s.due}</td>
+            <td class="num${s.mistakes ? ' warn' : ''}">${s.mistakes}</td>
+            <td class="num">${s.xp}</td>
+        </tr>`).join('');
+
+    return `
+    <div class="cl-sec">
+        <h2>Ученики</h2>
+        <p class="cl-sub">Оценок нет намеренно. Есть состояние тем: сколько начато, сколько держится,
+           сколько просрочено и сколько заданий висит в тетради ошибок.</p>
+        <div class="cl-table-wrap">
+            <table class="cl-table">
+                <thead><tr>
+                    <th>Ученик</th><th class="num">Начато</th><th class="num">Освоено</th>
+                    <th class="num">Просрочено</th><th class="num">Ошибок</th><th class="num">XP</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <div class="cl-form">
+            <button class="cl-btn ghost" id="exportBtn">
+                <i class="fa-solid fa-file-csv"></i> Выгрузить CSV
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderHeatTable(d, students) {
+    const cells = d.cells || {};
+    const topicsList = d.topics || [];
+
+    // Строки только по темам, которых кто-то в классе касался. Семьдесят
+    // четыре пустые строки не сообщают ничего, кроме того, что учебный
+    // год только начался.
+    const touched = topicsList.filter(t => cells[t.id]);
+    if (!touched.length) {
+        return `<div class="cl-sec"><h2>Тепловая карта</h2>
+            <div class="cl-empty">
+                <i class="fa-solid fa-table-cells"></i>
+                <div class="cl-empty-title">Занятий ещё не было</div>
+                <div class="cl-empty-note">Карта заполнится, как только ученики откроют первые темы.</div>
+            </div></div>`;
+    }
+
+    const head = students.map(s =>
+        `<th class="who" title="${esc(s.nickname || s.username)}">${esc(s.nickname || s.username)}</th>`).join('');
+
+    let body = '', section = '';
+    for (const t of touched) {
+        if (t.section !== section) {
+            section = t.section;
+            body += `<tr class="section"><th class="topic">${esc(section)}</th>` +
+                    `<td colspan="${students.length}"></td></tr>`;
+        }
+        const row = students.map(s => {
+            const st = (cells[t.id] || {})[String(s.id)] || 'new';
+            return `<td class="cell"><i class="${STATUS_CLASS[st] || 'c-new'}"
+                title="${esc((s.nickname || s.username) + ' · ' + t.title + ' · ' + (STATUS_TITLE[st] || st))}"></i></td>`;
+        }).join('');
+        body += `<tr><th class="topic" title="${esc(t.title)}">${esc(t.title)}</th>${row}</tr>`;
+    }
+
+    return `
+    <div class="cl-sec">
+        <h2>Тепловая карта</h2>
+        <p class="cl-sub">Строка — тема, столбец — ученик. Оранжевая полоса поперёк означает,
+           что тему пора повторить всему классу: это материал для урока, а не для
+           индивидуальной работы.</p>
+        <div class="heat-wrap">
+            <table class="heat">
+                <thead><tr><th class="corner"></th>${head}</tr></thead>
+                <tbody>${body}</tbody>
+            </table>
+        </div>
+        <div class="heat-legend">
+            <span><b class="c-new"></b> не открывал</span>
+            <span><b class="c-learning"></b> изучает</span>
+            <span><b class="c-mastered"></b> освоено</span>
+            <span><b class="c-due"></b> пора повторить</span>
+        </div>
+    </div>`;
+}
+
+/* Выгрузка идёт через fetch с токеном: обычная ссылка не несёт
+   заголовок Authorization, и сервер ответил бы 401. */
+document.addEventListener('click', async e => {
+    const btn = e.target.closest('#exportBtn');
+    if (!btn || !STATE.openId) return;
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/class/export?id=' + encodeURIComponent(STATE.openId),
+            { headers: { Authorization: 'Bearer ' + API.token() } });
+        if (!res.ok) throw new Error('export failed');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rootry-class-' + STATE.openId + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch {
+        alert('Не удалось выгрузить файл');
+    } finally {
+        btn.disabled = false;
+    }
+});
+    </script>
+</body>
+</html>

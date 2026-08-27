@@ -292,3 +292,39 @@ type ReviewPlan struct {
 	Mastered   int              `json:"mastered"`
 	TotalTopic int              `json:"total_topics"`
 }
+
+// ── Классы и учитель ──────────────────────────────────────────────────────────
+
+// Class — учебная группа.
+type Class struct {
+	ID        int64     `json:"id"`
+	Code      string    `json:"code"`
+	Name      string    `json:"name"`
+	TeacherID int64     `json:"teacher_id"`
+	CreatedAt time.Time `json:"created_at"`
+	// Students заполняется в списке учителя, TeacherName — в списке ученика.
+	Students    int    `json:"students,omitempty"`
+	TeacherName string `json:"teacher_name,omitempty"`
+}
+
+// ClassStudent — строка ученика в тепловой карте класса.
+type ClassStudent struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	XP       int    `json:"xp"`
+	Started  int    `json:"started"`  // тем начато
+	Mastered int    `json:"mastered"` // тем освоено
+	Due      int    `json:"due"`      // тем просрочено
+	Mistakes int    `json:"mistakes"` // заданий в тетради ошибок
+}
+
+// ClassHeatmap — состояние тем у всех учеников класса.
+//
+// Cells устроен как «тема → ученик → состояние», а не плоским списком:
+// карта рисуется строками по темам, и такая форма отдаётся клиенту
+// готовой к отрисовке.
+type ClassHeatmap struct {
+	Students []ClassStudent               `json:"students"`
+	Cells    map[string]map[string]string `json:"cells"`
+}
