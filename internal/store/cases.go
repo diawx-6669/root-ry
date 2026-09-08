@@ -30,20 +30,25 @@ var BadgeCaseChances = map[string]float64{
 }
 
 // AvatarPool — аватарки по редкости.
+// Идентификаторы обязаны совпадать с ALL_AVATARS в static/api.js и с
+// файлами static/img/avatars/<id>.svg: выпавшую аватарку, которой нет в
+// каталоге, страница нарисовать не сможет.
 var AvatarPool = map[string][]string{
-	"common":    {"🐱", "🐶", "🦊", "🐼", "🐨", "🦁", "🐯", "🐻", "🐸"},
-	"rare":      {"🦄", "🐉", "🦋", "🦚", "🦜", "🦩", "🐬"},
-	"epic":      {"🧙", "🧛", "🧜", "🧝", "🦸"},
-	"legendary": {"👑", "🌟", "💫"},
-	"mythic":    {"🌈"},
+	"common":    {"cat", "dog", "fox", "panda", "koala", "lion", "tiger", "bear", "frog"},
+	"rare":      {"unicorn", "dragon", "butterfly", "peacock", "parrot", "flamingo", "dolphin"},
+	"epic":      {"wizard", "vampire", "mermaid", "elf", "hero"},
+	"legendary": {"crown", "star", "comet"},
+	"mythic":    {"rainbow"},
 }
 
 // BadgePool — значки по редкости.
+// Идентификаторы обязаны совпадать с ALL_BADGES в static/api.js и с
+// файлами static/img/badges/<id>.svg.
 var BadgePool = map[string][]string{
-	"common":    {"📚", "✏️", "📝", "🎒"},
-	"rare":      {"⭐", "🔥", "💡"},
-	"epic":      {"🏆", "💎"},
-	"legendary": {"👑"},
+	"common":    {"book", "pencil", "notepad", "backpack"},
+	"rare":      {"star", "fire", "bulb"},
+	"epic":      {"trophy", "diamond"},
+	"legendary": {"crown"},
 }
 
 // caseRand — источник случайности для розыгрышей.

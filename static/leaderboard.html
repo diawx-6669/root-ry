@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Топы</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
@@ -161,16 +162,17 @@
     </main>
 
     <nav class="bottom-tabbar">
-        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
         <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item active"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js"></script>
     <script>
     initHeader();
@@ -281,32 +283,49 @@
         if (!sorted.length) {
             headerRow.style.display = 'none';
             container.innerHTML = currentTab === 'kspoya'
-                ? '<div class="loading-row">КСПОЯ ещё никто не сдавал — станьте первым! 🎓</div>'
-                : '<div class="loading-row">Список пуст — станьте первым! 🏆</div>';
+                ? '<div class="loading-row">КСПОЯ ещё никто не сдавал — станьте первым</div>'
+                : '<div class="loading-row">Список пуст — станьте первым</div>';
             return;
         }
 
+        // Единица измерения активной вкладки: подпись и иконка.
+        const TAB_UNIT = {
+            balance: { icon: 'coin',   color: '#f0b429', word: 'монет' },
+            streak:  { icon: 'fire',   color: '#ef5b3c', word: 'дней' },
+            badges:  { icon: 'medal',  color: '#f0b429', word: 'значков' },
+            overall: { icon: 'target', color: '#0099cc', word: 'сумма мест' },
+            xp:      { icon: 'bolt',   color: '#0099cc', word: 'XP' },
+        };
+
+        const tabNumber = (e) => {
+            if (currentTab === 'balance') return e.balance;
+            if (currentTab === 'streak') return e.streak;
+            if (currentTab === 'badges') return e.badges_count;
+            if (currentTab === 'overall') return e.overall_sum;
+            return e.xp;
+        };
+
         // Значение активной вкладки без разметки — для чипа на пьедестале.
+        // Иконку сюда не подставить (это textContent), поэтому пишем словом.
         const plainVal = (e) => {
-            if (currentTab === 'balance') return e.balance + ' 💰';
-            if (currentTab === 'streak') return e.streak + ' 🔥';
-            if (currentTab === 'badges') return e.badges_count + ' 🏅';
-            if (currentTab === 'kspoya') return e.kspoya_level ? `${e.kspoya_score} · ${e.kspoya_level}` : '—';
-            if (currentTab === 'overall') return e.overall_sum + ' 🎯';
-            return e.xp + ' ⚡';
+            if (currentTab === 'kspoya') {
+                return e.kspoya_level ? `${e.kspoya_score} · ${e.kspoya_level}` : '—';
+            }
+            const unit = TAB_UNIT[currentTab] || TAB_UNIT.xp;
+            return tabNumber(e) + ' ' + unit.word;
         };
 
         const getVal = (e) => {
-            if (currentTab === 'balance') return `<span class="lb-stat">${e.balance} 💰</span>`;
-            if (currentTab === 'streak') return `<span class="lb-stat streak">${e.streak} 🔥</span>`;
-            if (currentTab === 'badges') return `<span class="lb-stat">${e.badges_count} 🏅</span>`;
             if (currentTab === 'kspoya') {
                 return e.kspoya_level
                     ? `<span class="lb-stat">${e.kspoya_score} · ${e.kspoya_level}</span>`
                     : '<span class="lb-stat">—</span>';
             }
-            if (currentTab === 'overall') return `<span class="lb-stat">${e.overall_sum} 🎯</span>`;
-            return `<span class="lb-stat xp">${e.xp} ⚡</span>`;
+            const unit = TAB_UNIT[currentTab] || TAB_UNIT.xp;
+            const cls = currentTab === 'streak' ? 'lb-stat streak'
+                      : currentTab === 'xp' ? 'lb-stat xp' : 'lb-stat';
+            return `<span class="${cls}" title="${unit.word}">${tabNumber(e)} `
+                 + svgIcon(unit.icon, { size: 14, color: unit.color }) + '</span>';
         };
 
         // Первая тройка выносится на пьедестал, таблица начинается с 4-го места.
@@ -333,7 +352,7 @@
             if (idx === 0) {
                 const crown = document.createElement('div');
                 crown.className = 'pod-crown';
-                crown.textContent = '👑';
+                crown.innerHTML = svgIcon('crown', { size: 26, color: '#f0b429' });
                 avatarWrap.appendChild(crown);
             }
 

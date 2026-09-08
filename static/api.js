@@ -81,63 +81,155 @@ const API = {
 };
 
 // ── Аватарки ────────────────────────────────────────────────────────
-// Каталог общий для профиля и шапки: иначе выбранная аватарка
-// показывалась бы в одном месте и не показывалась в другом.
+//
+// Каталог общий для профиля, шапки, рейтинга и магазина: иначе выбранная
+// аватарка показывалась бы в одном месте и не показывалась в другом.
+//
+// Аватарка опознаётся коротким идентификатором (cat, dragon, rainbow), а
+// рисуется файлом img/avatars/<id>.svg из этой же папки. Раньше
+// идентификатором был эмодзи, а картинка грузилась с api.dicebear.com:
+// без интернета вместо аватарок появлялись значки битых картинок, а
+// запасной вариант рисовал эмодзи системным шрифтом — на каждом
+// устройстве по-своему. Теперь ни сети, ни эмодзи-шрифта не требуется.
 const ALL_AVATARS = {
     // Порядок и состав обязаны совпадать с AvatarPool в internal/store/cases.go:
     // выпавшую с сервера аватарку, которой нет в этом каталоге, страница
-    // нарисовать не сможет и подставит робота-заглушку. Так пропала коала.
+    // нарисовать не сможет. Так когда-то пропала коала.
     common: [
-        { emoji:'🐱', label:'Кот',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4' },
-        { emoji:'🐶', label:'Пёс',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc' },
-        { emoji:'🦊', label:'Лис',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede' },
-        { emoji:'🐼', label:'Панда',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0' },
-        { emoji:'🐨', label:'Коала',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=koala&backgroundColor=d9f99d' },
-        { emoji:'🐻', label:'Медведь', img:'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc' },
-        { emoji:'🐸', label:'Лягушка', img:'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0' },
-        { emoji:'🦁', label:'Лев',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=lion&backgroundColor=fde68a' },
-        { emoji:'🐯', label:'Тигр',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=tiger&backgroundColor=fed7aa' },
+        { id:'cat',     label:'Кот' },
+        { id:'dog',     label:'Пёс' },
+        { id:'fox',     label:'Лис' },
+        { id:'panda',   label:'Панда' },
+        { id:'koala',   label:'Коала' },
+        { id:'bear',    label:'Медведь' },
+        { id:'frog',    label:'Лягушка' },
+        { id:'lion',    label:'Лев' },
+        { id:'tiger',   label:'Тигр' },
     ],
     rare: [
-        { emoji:'🦄', label:'Единорог', img:'https://api.dicebear.com/7.x/bottts/svg?seed=unicorn&backgroundColor=bfdbfe' },
-        { emoji:'🐉', label:'Дракон',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=dragon&backgroundColor=93c5fd' },
-        { emoji:'🦋', label:'Бабочка',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=butterfly&backgroundColor=c4b5fd' },
-        { emoji:'🦚', label:'Павлин',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=peacock&backgroundColor=a5f3fc' },
-        { emoji:'🦜', label:'Попугай',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=parrot&backgroundColor=bbf7d0' },
-        { emoji:'🦩', label:'Фламинго', img:'https://api.dicebear.com/7.x/bottts/svg?seed=flamingo&backgroundColor=fecdd3' },
-        { emoji:'🐬', label:'Дельфин',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=dolphin&backgroundColor=bae6fd' },
+        { id:'unicorn',   label:'Единорог' },
+        { id:'dragon',    label:'Дракон' },
+        { id:'butterfly', label:'Бабочка' },
+        { id:'peacock',   label:'Павлин' },
+        { id:'parrot',    label:'Попугай' },
+        { id:'flamingo',  label:'Фламинго' },
+        { id:'dolphin',   label:'Дельфин' },
     ],
     epic: [
-        { emoji:'🧙', label:'Маг',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=wizard&backgroundColor=ddd6fe' },
-        { emoji:'🧛', label:'Вампир', img:'https://api.dicebear.com/7.x/bottts/svg?seed=vampire&backgroundColor=fecdd3' },
-        { emoji:'🦸', label:'Герой',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=hero&backgroundColor=d9f99d' },
-        { emoji:'🧝', label:'Эльф',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=elf&backgroundColor=a7f3d0' },
-        { emoji:'🧜', label:'Русалка',img:'https://api.dicebear.com/7.x/bottts/svg?seed=mermaid&backgroundColor=7dd3fc' },
+        { id:'wizard',  label:'Маг' },
+        { id:'vampire', label:'Вампир' },
+        { id:'hero',    label:'Герой' },
+        { id:'elf',     label:'Эльф' },
+        { id:'mermaid', label:'Русалка' },
     ],
     legendary: [
-        { emoji:'👑', label:'Корона', img:'https://api.dicebear.com/7.x/bottts/svg?seed=crown&backgroundColor=fef08a' },
-        { emoji:'🌟', label:'Звезда', img:'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=fde68a' },
-        { emoji:'💫', label:'Комета', img:'https://api.dicebear.com/7.x/bottts/svg?seed=comet&backgroundColor=fef9c3' },
+        { id:'crown', label:'Корона' },
+        { id:'star',  label:'Звезда' },
+        { id:'comet', label:'Комета' },
     ],
     mythic: [
-        { emoji:'🌈', label:'Радуга', img:'https://api.dicebear.com/7.x/bottts/svg?seed=rainbow&backgroundColor=fbcfe8' },
+        { id:'rainbow', label:'Радуга' },
     ],
 };
 const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
 const RARITY_ORDER = ['common','rare','epic','legendary','mythic'];
 
-// Картинка активной аватарки пользователя.
-// Если аватарка не выбрана или неизвестна — рисуем робота по логину.
-function avatarSrc(user) {
-    const found = user && findAvatarData(user.active_avatar);
-    if (found) return found.img;
-    const seed = (user && user.username) || "guest";
-    return 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(seed);
+// ── Значки ──────────────────────────────────────────────────────────
+//
+// Значки из кейсов, значок за пройденное дерево и знаки уровня КСПОЯ —
+// один каталог: раньше список значков был скопирован в profile.html и в
+// shop.html, а награды КСПОЯ не были описаны нигде, и в профиле уровень
+// показывался пустым квадратом.
+const ALL_BADGES = [
+    { id:'book',     label:'Книга',      rarity:'common' },
+    { id:'pencil',   label:'Карандаш',   rarity:'common' },
+    { id:'notepad',  label:'Блокнот',    rarity:'common' },
+    { id:'backpack', label:'Рюкзак',     rarity:'common' },
+    { id:'star',     label:'Звезда',     rarity:'rare' },
+    { id:'fire',     label:'Огонь',      rarity:'rare' },
+    { id:'bulb',     label:'Лампочка',   rarity:'rare' },
+    { id:'trophy',   label:'Кубок',      rarity:'epic' },
+    { id:'diamond',  label:'Алмаз',      rarity:'epic' },
+    { id:'crown',    label:'Корона',     rarity:'legendary' },
+    // Не выпадает из кейсов: значок выдаётся за пройденное целиком дерево
+    // грамматики. Редкость 'special' держит его вне пулов магазина —
+    // они собираются по RARITY_ORDER.
+    { id:'tree',     label:'Всё дерево', rarity:'special' },
+];
+
+// Знаки уровня КСПОЯ. Состав обязан совпадать с Rewards в
+// internal/kspoya/scoring.go.
+const RANK_BADGES = [
+    { id:'rank_a1', label:'A1' },
+    { id:'rank_a2', label:'A2' },
+    { id:'rank_b1', label:'B1' },
+    { id:'rank_b2', label:'B2' },
+    { id:'rank_c1', label:'C1' },
+    { id:'rank_c2', label:'C2' },
+];
+
+// ── Старые эмодзи-идентификаторы ────────────────────────────────────
+//
+// У аккаунтов, заведённых до перехода на SVG, в базе лежат эмодзи.
+// Сервер приводит их к новым идентификаторам при чтении пользователя
+// (internal/store/legacy.go), но ответы могли закешироваться в
+// localStorage, поэтому те же соответствия продублированы на клиенте.
+const LEGACY_AVATAR_IDS = {
+    '🐱':'cat', '🐶':'dog', '🦊':'fox', '🐼':'panda', '🐨':'koala', '🐻':'bear',
+    '🐸':'frog', '🦁':'lion', '🐯':'tiger', '🦄':'unicorn', '🐉':'dragon',
+    '🦋':'butterfly', '🦚':'peacock', '🦜':'parrot', '🦩':'flamingo', '🐬':'dolphin',
+    '🧙':'wizard', '🧛':'vampire', '🦸':'hero', '🧝':'elf', '🧜':'mermaid',
+    '👑':'crown', '🌟':'star', '💫':'comet', '🌈':'rainbow',
+};
+const LEGACY_BADGE_IDS = {
+    '📚':'book', '✏️':'pencil', '✏':'pencil', '📝':'notepad', '🎒':'backpack',
+    '⭐':'star', '🔥':'fire', '💡':'bulb', '🏆':'trophy', '💎':'diamond',
+    '👑':'crown', '🌳':'tree',
+    '🔰':'rank_a1', '📗':'rank_a2', '📘':'rank_b1', '🏅':'rank_b2',
+    '🔮':'rank_c1', '🦉':'rank_c2',
+    // До миграции 006 знаком C2 была радуга. Среди аватарок «🌈» —
+    // мифическая радуга, среди значков — уровень: списки разные,
+    // потому что и колонки разные.
+    '🌈':'rank_c2',
+};
+
+function avatarId(v)  { return LEGACY_AVATAR_IDS[v] || v || ''; }
+function badgeId(v)   { return LEGACY_BADGE_IDS[v] || v || ''; }
+
+/** Путь к картинке аватарки. */
+function avatarImg(id) { return 'img/avatars/' + avatarId(id) + '.svg'; }
+
+/** Путь к картинке значка: обычного или знака уровня. */
+function badgeImg(id) {
+    const key = badgeId(id);
+    return (key.indexOf('rank_') === 0 ? 'img/ranks/' : 'img/badges/') + key + '.svg';
 }
 
-function findAvatarData(emoji) {
+/** Описание значка по идентификатору — для подписей и подсказок. */
+function badgeData(id) {
+    const key = badgeId(id);
+    return ALL_BADGES.find(b => b.id === key)
+        || RANK_BADGES.find(b => b.id === key)
+        || null;
+}
+
+/** Человекочитаемое название значка. */
+function badgeLabel(id) {
+    const d = badgeData(id);
+    return d ? d.label : badgeId(id);
+}
+
+// Картинка активной аватарки пользователя. Аватарка не выбрана или
+// незнакомая — показываем кота: он есть у всех с первого дня.
+function avatarSrc(user) {
+    const found = user && findAvatarData(user.active_avatar);
+    return avatarImg(found ? found.id : 'cat');
+}
+
+function findAvatarData(id) {
+    const key = avatarId(id);
     for (const rarity of RARITY_ORDER) {
-        const found = (ALL_AVATARS[rarity] || []).find(a => a.emoji === emoji);
+        const found = (ALL_AVATARS[rarity] || []).find(a => a.id === key);
         if (found) return found;
     }
     return null;
@@ -227,7 +319,7 @@ function addSoundToggle() {
 
     const btn = document.createElement('button');
     btn.className = 'sound-toggle';
-    btn.textContent = Sound.muted ? '🔇' : '🔊';
+    btn.innerHTML = svgIcon(Sound.muted ? 'soundOff' : 'soundOn', { size: 18 });
     btn.title = Sound.muted ? 'Включить звук' : 'Выключить звук';
     btn.onclick = () => Sound.toggle();
     right.appendChild(btn);
@@ -284,7 +376,14 @@ function showRewardNotification(lines) {
         'pointer-events:none',
     ].join(';');
 
-    notif.innerHTML = lines.map(l => `<div style="margin:3px 0">${l}</div>`).join('');
+    // Строка — либо текст, либо { icon, text }: иконка рисуется вектором,
+    // текст экранируется, потому что в нём бывает название значка.
+    notif.innerHTML = lines.map(l => {
+        if (!l) return '<div style="height:6px"></div>';
+        if (typeof l === 'string') return `<div style="margin:3px 0">${esc(l)}</div>`;
+        return '<div style="margin:3px 0;display:flex;align-items:center;gap:7px">'
+            + svgIcon(l.icon, { size: 16 }) + '<span>' + esc(l.text) + '</span></div>';
+    }).join('');
     document.body.appendChild(notif);
 
     requestAnimationFrame(() => {
@@ -337,19 +436,21 @@ async function submitGameResult(gameType, score) {
             if (isWin) {
                 const lines = [];
                 if (firstWin) {
-                    lines.push(`🪙 +50 монет — первая победа в этой игре!`);
+                    lines.push({ icon:'coin', text:'+50 монет — первая победа в этой игре!' });
                 } else {
-                    lines.push('✅ Игра пройдена');
-                    lines.push('💡 50 монет уже получены ранее за эту игру');
+                    lines.push({ icon:'check', text:'Игра пройдена' });
+                    lines.push({ icon:'bulb',  text:'50 монет уже получены ранее за эту игру' });
                 }
-                if (xp > 0) lines.push(`⚡ +${xp} XP`);
+                if (xp > 0) lines.push({ icon:'bolt', text:`+${xp} XP` });
                 if (questBonus) {
                     lines.push('');
-                    lines.push(`🎯 Дейлик выполнен! +50 монет`);
+                    lines.push({ icon:'target', text:'Дейлик выполнен! +50 монет' });
                 } else if (firstWin && gamesWon < 5) {
-                    lines.push(`📊 Побед в разных играх: ${gamesWon}/5`);
+                    lines.push({ icon:'chart', text:`Побед в разных играх: ${gamesWon}/5` });
                 }
-                if (r.data.badge_earned) lines.push(`🏅 Новый значок: ${r.data.badge_earned}`);
+                if (r.data.badge_earned) {
+                    lines.push({ icon:'medal', text:'Новый значок: ' + badgeLabel(r.data.badge_earned) });
+                }
                 if (lines.length) showRewardNotification(lines);
                 if (firstWin) Sound.win();
             }
@@ -383,7 +484,7 @@ const Sound = {
         localStorage.setItem('soundMuted', this.muted ? '1' : '0');
         if (!this.muted) this.click();
         document.querySelectorAll('.sound-toggle').forEach(b => {
-            b.textContent = this.muted ? '🔇' : '🔊';
+            b.innerHTML = svgIcon(this.muted ? 'soundOff' : 'soundOn', { size: 18 });
             b.title = this.muted ? 'Включить звук' : 'Выключить звук';
         });
         return this.muted;
@@ -477,7 +578,7 @@ function flyCoins(origin, count) {
     for (let i = 0; i < n; i++) {
         const coin = document.createElement('div');
         coin.className = 'flying-coin';
-        coin.textContent = '🪙';
+        coin.innerHTML = svgIcon('coin', { size: 22, color: '#f0b429' });
         coin.style.left = (from.left + from.width / 2) + 'px';
         coin.style.top = (from.top + from.height / 2) + 'px';
         document.body.appendChild(coin);

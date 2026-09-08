@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootRy | ИИ-ассистент</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           ИИ-ассистент — разговорная практика.
+
+           Экран разделён надвое: слева разговор, справа разбор ошибок.
+           Так сделано намеренно. Если вплетать исправления в реплики,
+           получится не разговор, а проверка тетради: ученик перестаёт
+           писать свободно и начинает бояться каждой фразы. Здесь ошибки
+           копятся отдельной колонкой, и к ним возвращаются, когда сами
+           захотят.
+           ═══════════════════════════════════════════════════════════ */
+        .as {
+            --ink:#0a2836; --ink-2:#55707f; --ink-3:#8ba0ac;
+            --line:#e4ecf1; --line-2:#cfdde5;
+            --accent:#0099cc; --accent-ink:#036389; --accent-bg:#eaf7fc;
+            --warn:#b26a24; --warn-bg:#fdf4ea;
+            --ok:#1e7a5b; --ok-bg:#e8f4ef;
+        }
+
+        /* ── Шапка экрана ─────────────────────────────────────────── */
+        .as-hero {
+            background:linear-gradient(155deg,#0a2f40 0%,#073243 55%,#05485f 100%);
+            border-radius:20px; padding:26px 30px; color:#fff;
+            position:relative; overflow:hidden;
+        }
+        .as-hero::after {
+            content:''; position:absolute; inset:0 0 auto 0; height:3px;
+            background:linear-gradient(90deg,var(--accent),transparent 70%);
+        }
+        .as-eyebrow {
+            font-size:11px; font-weight:700; letter-spacing:.16em;
+            text-transform:uppercase; color:#6fc6e6; margin:0 0 9px;
+        }
+        .as-hero h1 { margin:0 0 8px; font-size:25px; font-weight:700; color:#fff; }
+        .as-hero p { margin:0; font-size:14px; line-height:1.6; color:#b8d2dd; max-width:64ch; }
+
+        /* ── Настройки разговора ──────────────────────────────────── */
+        .as-controls {
+            display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+            margin-top:20px;
+        }
+        .as-field { display:flex; align-items:center; gap:8px; }
+        .as-field label {
+            font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+            color:var(--ink-3); font-weight:700;
+        }
+        .as-select {
+            height:38px; border-radius:11px; border:1px solid var(--line-2);
+            background:#fff; padding:0 12px; font-family:'Montserrat',sans-serif;
+            font-size:13px; font-weight:600; color:var(--ink); cursor:pointer;
+        }
+        .as-select:focus { outline:none; border-color:var(--accent); }
+        .as-reset {
+            margin-left:auto; height:38px; padding:0 16px; border-radius:11px;
+            border:1px solid var(--line-2); background:#fff; cursor:pointer;
+            font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600;
+            color:var(--ink-2); display:inline-flex; align-items:center; gap:7px;
+        }
+        .as-reset:hover { border-color:var(--accent); color:var(--accent-ink); }
+
+        /* ── Раскладка ────────────────────────────────────────────── */
+        .as-grid {
+            display:grid; grid-template-columns:minmax(0,1fr) 330px;
+            gap:18px; margin-top:20px; align-items:start;
+        }
+
+        /* ── Разговор ─────────────────────────────────────────────── */
+        .as-chat {
+            background:#fff; border:1px solid var(--line); border-radius:16px;
+            display:flex; flex-direction:column; height:min(64vh,620px);
+        }
+        .as-log { flex:1; overflow-y:auto; padding:22px 24px; scroll-behavior:smooth; }
+        .as-msg { display:flex; gap:11px; margin-bottom:16px; }
+        .as-msg.me { flex-direction:row-reverse; }
+        .as-face {
+            width:32px; height:32px; border-radius:50%; flex:none;
+            display:flex; align-items:center; justify-content:center;
+            background:var(--accent-bg); color:var(--accent-ink); overflow:hidden;
+        }
+        .as-face img { width:100%; height:100%; object-fit:cover; }
+        .as-bubble {
+            max-width:75%; padding:12px 16px; border-radius:14px;
+            font-size:14.5px; line-height:1.6; color:var(--ink);
+            background:#f4f8fb; border:1px solid var(--line);
+            white-space:pre-wrap; word-wrap:break-word;
+        }
+        .as-msg.me .as-bubble {
+            background:var(--accent-bg); border-color:#bfe4f2; color:var(--accent-ink);
+        }
+        .as-bubble.is-error { background:#fbeeeb; border-color:#eecbc3; color:#8c3c2a; }
+        .as-flag {
+            display:inline-flex; align-items:center; gap:5px; margin-top:9px;
+            font-size:11.5px; font-weight:700; color:var(--warn);
+            background:var(--warn-bg); border-radius:999px; padding:3px 10px;
+            border:none; cursor:pointer; font-family:'Montserrat',sans-serif;
+        }
+        .as-flag.is-clean { color:var(--ok); background:var(--ok-bg); cursor:default; }
+        .as-note {
+            margin-top:9px; font-size:12.5px; line-height:1.55; color:var(--ink-3);
+            border-left:2px solid var(--line-2); padding-left:10px;
+        }
+
+        .as-typing { display:flex; gap:4px; padding:4px 2px; }
+        .as-typing span {
+            width:6px; height:6px; border-radius:50%; background:var(--line-2);
+            animation:asBlink 1.1s infinite;
+        }
+        .as-typing span:nth-child(2) { animation-delay:.16s; }
+        .as-typing span:nth-child(3) { animation-delay:.32s; }
+        @keyframes asBlink { 0%,60%,100%{opacity:.3} 30%{opacity:1} }
+
+        /* ── Поле ввода ───────────────────────────────────────────── */
+        .as-form { border-top:1px solid var(--line); padding:14px 16px; }
+        .as-input-row { display:flex; gap:10px; align-items:flex-end; }
+        .as-input {
+            flex:1; min-height:44px; max-height:150px; resize:none;
+            border:1px solid var(--line-2); border-radius:12px; padding:12px 14px;
+            font-family:'Montserrat',sans-serif; font-size:14.5px; line-height:1.5;
+            color:var(--ink); outline:none;
+        }
+        .as-input:focus { border-color:var(--accent); }
+        .as-send {
+            width:44px; height:44px; flex:none; border:none; border-radius:12px;
+            background:var(--accent); color:#fff; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            transition:background .16s;
+        }
+        .as-send:hover:not(:disabled) { background:var(--accent-ink); }
+        .as-send:disabled { background:#c3d4dc; cursor:default; }
+        .as-hint {
+            margin:8px 2px 0; font-size:11.5px; color:var(--ink-3);
+            display:flex; justify-content:space-between; gap:12px;
+        }
+        .as-hint .over { color:#c2553f; font-weight:700; }
+
+        /* ── Стартовые реплики ────────────────────────────────────── */
+        .as-starters { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+        .as-starter {
+            border:1px solid var(--line-2); background:#fff; border-radius:999px;
+            padding:8px 14px; font-family:'Montserrat',sans-serif; font-size:13px;
+            color:var(--ink-2); cursor:pointer; transition:.14s;
+        }
+        .as-starter:hover { border-color:var(--accent); color:var(--accent-ink); background:#fafdff; }
+
+        /* ── Тетрадь разбора ──────────────────────────────────────── */
+        .as-side {
+            background:#fff; border:1px solid var(--line); border-radius:16px;
+            padding:20px 20px 8px; position:sticky; top:16px;
+            max-height:min(64vh,620px); overflow-y:auto;
+        }
+        .as-side h2 {
+            margin:0 0 3px; font-size:16px; font-weight:700; color:var(--ink);
+            display:flex; align-items:center; gap:8px;
+        }
+        .as-side-sub { margin:0 0 16px; font-size:12.5px; line-height:1.55; color:var(--ink-3); }
+        .as-fix {
+            border:1px solid var(--line); border-left:3px solid var(--warn);
+            border-radius:11px; padding:12px 14px; margin-bottom:9px;
+        }
+        .as-fix-kind {
+            font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+            font-weight:700; color:var(--warn); margin-bottom:6px;
+        }
+        .as-fix-pair { font-size:14px; line-height:1.55; }
+        .as-fix-wrong { color:#9c4b36; text-decoration:line-through; }
+        .as-fix-right { color:var(--ok); font-weight:700; }
+        .as-fix-why { margin-top:6px; font-size:12.5px; line-height:1.55; color:var(--ink-2); }
+        .as-side-empty { color:var(--ink-3); font-size:13px; line-height:1.6; padding-bottom:14px; }
+        .as-side-count {
+            font-size:12px; font-weight:700; color:var(--warn);
+            background:var(--warn-bg); border-radius:999px; padding:2px 9px;
+        }
+
+        @media (max-width:900px) {
+            .as-grid { grid-template-columns:minmax(0,1fr); }
+            .as-side { position:static; max-height:none; }
+            .as-chat { height:min(58vh,520px); }
+        }
+        @media (max-width:640px) {
+            .as-hero { padding:22px 20px; }
+            .as-log { padding:18px 16px; }
+            .as-bubble { max-width:85%; }
+            .as-reset { margin-left:0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .as-log { scroll-behavior:auto; }
+            .as-typing span { animation:none; }
+        }
+    </style>
+</head>
+<body>
+    <header class="global-header">
+        <div class="header-left"><div class="brand"><i class="fa-solid fa-graduation-cap"></i><span>RootRy</span></div></div>
+        <div class="header-center">
+            <div class="user-info">
+                <img src="" alt="Аватар" id="headerAvatar" class="avatar">
+                <span id="headerUsername" class="username">Загрузка...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="balance-box"><i class="fa-solid fa-coins"></i><span id="userBalance">0</span> <small>монет</small></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="app-window">
+            <div class="as">
+                <div class="as-hero">
+                    <p class="as-eyebrow">Разговорная практика</p>
+                    <h1>ИИ-ассистент</h1>
+                    <p>Пиши по-русски о чём хочешь. Ассистент отвечает как собеседник,
+                       а всё, что написано не по норме, разбирает справа: что было,
+                       как правильно и почему. Ошибаться здесь можно и нужно —
+                       именно на своих ошибках язык и ставится.</p>
+                </div>
+
+                <div class="as-controls">
+                    <div class="as-field">
+                        <label for="asLevel">Сложность речи</label>
+                        <select class="as-select" id="asLevel">
+                            <option value="beginner">Простая</option>
+                            <option value="normal" selected>Обычная</option>
+                            <option value="advanced">Сложная</option>
+                        </select>
+                    </div>
+                    <div class="as-field">
+                        <label for="asTopic">Тема</label>
+                        <select class="as-select" id="asTopic">
+                            <option value="">Свободная</option>
+                            <option value="школа и учёба">Школа и учёба</option>
+                            <option value="друзья и общение">Друзья и общение</option>
+                            <option value="путешествия и города">Путешествия и города</option>
+                            <option value="книги, кино и музыка">Книги, кино и музыка</option>
+                            <option value="спорт и здоровье">Спорт и здоровье</option>
+                            <option value="будущая профессия">Будущая профессия</option>
+                            <option value="собеседование и деловая речь">Деловая речь</option>
+                        </select>
+                    </div>
+                    <button class="as-reset" id="asReset" type="button">
+                        <i class="fa-solid fa-rotate-left"></i> Начать заново
+                    </button>
+                </div>
+
+                <div class="as-grid">
+                    <div class="as-chat">
+                        <div class="as-log" id="asLog"></div>
+                        <div class="as-form">
+                            <div class="as-input-row">
+                                <textarea class="as-input" id="asInput" rows="1"
+                                          placeholder="Напиши что-нибудь по-русски…"
+                                          maxlength="1200"></textarea>
+                                <button class="as-send" id="asSend" type="button"
+                                        title="Отправить" aria-label="Отправить"></button>
+                            </div>
+                            <div class="as-hint">
+                                <span>Enter — отправить, Shift+Enter — новая строка</span>
+                                <span id="asCount">0 / 1200</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="as-side">
+                        <h2 id="asFixHead">Разбор ошибок</h2>
+                        <p class="as-side-sub">Сюда попадает всё, что стоит поправить
+                           в твоих сообщениях. Список копится за разговор.</p>
+                        <div id="asFixList"></div>
+                    </aside>
+                </div>
+
+                <div class="as-starters" id="asStarters"></div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-tabbar">
+        <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item active"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
+        <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
+        <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
+        <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
+        <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
+    </nav>
+
+    <script src="icons.js"></script>
+    <script src="api.js"></script>
+    <script>
+/* ═══════════════════════════════════════════════════════════════════
+   ИИ-ассистент: разговорная практика русского языка.
+
+   Разговор живёт в браузере, а не в базе. Причина не в лени: переписка
+   ученика — самый личный текст на платформе, и держать её на сервере
+   ради удобства «продолжить с телефона» — плохой размен. В модель
+   уходит только хвост разговора, ключ модели лежит на сервере, страница
+   его не видит.
+   ═══════════════════════════════════════════════════════════════════ */
+
+if (!requireAuth()) throw new Error('redirect');
+
+initHeader();
+
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = 'assistantChat';
+const MAX_LEN = 1200;
+
+const STARTERS = [
+    'Привет! Расскажи, чем ты можешь помочь.',
+    'Давай поговорим о том, как прошёл мой день.',
+    'Задай мне вопрос, на который надо ответить развёрнуто.',
+    'Проверь моё сообщение и объясни ошибки.',
+];
+
+// Состояние разговора. mistakes копятся за всю сессию: тетрадь разбора
+// должна помнить и то, что было в начале, иначе она обнуляется каждым
+// удачным сообщением и ученик решает, что ошибок и не было.
+const S = {
+    turns: [],       // { role, text, mistakes, note }
+    mistakes: [],
+    busy: false,
+};
+
+/* ── Хранение разговора ─────────────────────────────────────────── */
+
+function save() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            turns: S.turns.slice(-40),
+            mistakes: S.mistakes.slice(-60),
+            level: $('asLevel').value,
+            topic: $('asTopic').value,
+        }));
+    } catch (e) { /* приватный режим или переполненное хранилище — не беда */ }
+}
+
+function restore() {
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { data = null; }
+    if (!data) return false;
+
+    S.turns = Array.isArray(data.turns) ? data.turns : [];
+    S.mistakes = Array.isArray(data.mistakes) ? data.mistakes : [];
+    if (data.level) $('asLevel').value = data.level;
+    if (data.topic !== undefined) $('asTopic').value = data.topic;
+    return S.turns.length > 0;
+}
+
+/* ── Отрисовка разговора ────────────────────────────────────────── */
+
+function avatarForMe() {
+    const u = API.user();
+    return avatarSrc(u || {});
+}
+
+function renderLog() {
+    const log = $('asLog');
+    log.innerHTML = S.turns.map((t, i) => renderTurn(t, i)).join('');
+    log.querySelectorAll('[data-jump]').forEach(btn => {
+        btn.onclick = () => {
+            const el = document.querySelector(`[data-fix-turn="${btn.dataset.jump}"]`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+    });
+    log.scrollTop = log.scrollHeight;
+}
+
+function renderTurn(t, i) {
+    const mine = t.role === 'user';
+    const face = mine
+        ? `<img src="${esc(avatarForMe())}" alt="">`
+        : svgIcon('robot', { size: 19 });
+
+    // Под своим сообщением показываем итог разбора: сколько нашлось
+    // ошибок или что их нет. Сами исправления — в колонке справа.
+    let footer = '';
+    if (mine && t.checked) {
+        const n = (t.mistakes || []).length;
+        footer = n
+            ? `<button class="as-flag" data-jump="${i}">${svgIcon('warn', { size: 12 })} `
+              + `${esc(plural(n, 'ошибка', 'ошибки', 'ошибок'))} — посмотреть разбор</button>`
+            : `<span class="as-flag is-clean">${svgIcon('check', { size: 12 })} без ошибок</span>`;
+    }
+    if (!mine && t.note) {
+        footer = `<div class="as-note">${esc(t.note)}</div>`;
+    }
+
+    return `
+    <div class="as-msg${mine ? ' me' : ''}">
+        <div class="as-face">${face}</div>
+        <div class="as-bubble${t.error ? ' is-error' : ''}">${esc(t.text)}${footer}</div>
+    </div>`;
+}
+
+function showTyping() {
+    const log = $('asLog');
+    const div = document.createElement('div');
+    div.className = 'as-msg';
+    div.id = 'asTyping';
+    div.innerHTML = `<div class="as-face">${svgIcon('robot', { size: 19 })}</div>
+        <div class="as-bubble"><div class="as-typing"><span></span><span></span><span></span></div></div>`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+}
+
+function hideTyping() {
+    const t = $('asTyping');
+    if (t) t.remove();
+}
+
+/* ── Тетрадь разбора ────────────────────────────────────────────── */
+
+function renderFixes() {
+    const head = $('asFixHead');
+    head.innerHTML = 'Разбор ошибок' + (S.mistakes.length
+        ? ` <span class="as-side-count">${S.mistakes.length}</span>` : '');
+
+    const list = $('asFixList');
+    if (!S.mistakes.length) {
+        list.innerHTML = `<div class="as-side-empty">Пока пусто. Напиши первое
+            сообщение — если в нём будет что поправить, это появится здесь.</div>`;
+        return;
+    }
+
+    list.innerHTML = S.mistakes.map(m => `
+        <div class="as-fix" data-fix-turn="${m.turn}">
+            ${m.kind ? `<div class="as-fix-kind">${esc(m.kind)}</div>` : ''}
+            <div class="as-fix-pair">
+                <span class="as-fix-wrong">${esc(m.wrong)}</span>
+                &nbsp;→&nbsp;
+                <span class="as-fix-right">${esc(m.right)}</span>
+            </div>
+            ${m.why ? `<div class="as-fix-why">${esc(m.why)}</div>` : ''}
+        </div>`).reverse().join('');
+}
+
+/* ── Отправка ───────────────────────────────────────────────────── */
+
+async function send(text) {
+    text = String(text || '').trim();
+    if (!text || S.busy) return;
+    if (text.length > MAX_LEN) {
+        showToast('Сообщение слишком длинное — разбей его на части', 'error');
+        return;
+    }
+
+    S.busy = true;
+    setSending(true);
+
+    S.turns.push({ role: 'user', text, checked: false, mistakes: [] });
+    const myIndex = S.turns.length - 1;
+    renderLog();
+    showTyping();
+
+    const r = await API.post('/api/assistant/chat', {
+        // В модель уходит только хвост разговора: длинная история дорожает
+        // с каждым сообщением, а старые ошибки разбирались бы заново.
+        messages: S.turns.slice(-16).map(t => ({ role: t.role, text: t.text })),
+        level: $('asLevel').value,
+        topic: $('asTopic').value,
+    });
+
+    hideTyping();
+    S.busy = false;
+    setSending(false);
+
+    if (!r.ok) {
+        const msg = (r.data && r.data.error) || 'Ассистент сейчас не отвечает.';
+        S.turns.push({ role: 'assistant', text: msg, error: true });
+        renderLog();
+        save();
+        return;
+    }
+
+    const data = r.data || {};
+    const found = Array.isArray(data.mistakes) ? data.mistakes : [];
+
+    S.turns[myIndex].checked = true;
+    S.turns[myIndex].mistakes = found;
+    S.turns.push({ role: 'assistant', text: data.reply || '', note: data.note || '' });
+
+    found.forEach(m => {
+        if (!m || !m.wrong || !m.right) return;
+        S.mistakes.push({
+            wrong: m.wrong, right: m.right, why: m.why || '',
+            kind: m.kind || '', turn: myIndex,
+        });
+    });
+
+    renderLog();
+    renderFixes();
+    save();
+}
+
+function setSending(on) {
+    $('asSend').disabled = on;
+    $('asInput').disabled = on;
+    if (!on) $('asInput').focus();
+}
+
+/* ── Ввод ───────────────────────────────────────────────────────── */
+
+function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+function updateCount() {
+    const n = $('asInput').value.length;
+    const el = $('asCount');
+    el.textContent = `${n} / ${MAX_LEN}`;
+    el.className = n > MAX_LEN * 0.9 ? 'over' : '';
+}
+
+function renderStarters() {
+    $('asStarters').innerHTML = STARTERS
+        .map(s => `<button class="as-starter" type="button">${esc(s)}</button>`).join('');
+    $('asStarters').querySelectorAll('.as-starter').forEach((b, i) => {
+        b.onclick = () => send(STARTERS[i]);
+    });
+}
+
+function greet() {
+    S.turns.push({
+        role: 'assistant',
+        text: 'Привет! Я твой собеседник по русскому языку. Напиши мне что угодно — '
+            + 'как прошёл день, что читаешь, о чём споришь с друзьями. Я отвечу и '
+            + 'разберу всё, что стоит поправить.',
+    });
+}
+
+function reset() {
+    S.turns = [];
+    S.mistakes = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* не важно */ }
+    greet();
+    renderLog();
+    renderFixes();
+    save();
+}
+
+/* ── Запуск ─────────────────────────────────────────────────────── */
+
+$('asSend').innerHTML = svgIcon('send', { size: 18 });
+
+$('asInput').addEventListener('input', function () {
+    autoGrow(this);
+    updateCount();
+});
+
+$('asInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const el = $('asInput');
+        const text = el.value;
+        el.value = '';
+        autoGrow(el);
+        updateCount();
+        send(text);
+    }
+});
+
+$('asSend').onclick = () => {
+    const el = $('asInput');
+    const text = el.value;
+    el.value = '';
+    autoGrow(el);
+    updateCount();
+    send(text);
+};
+
+$('asReset').onclick = reset;
+// Сложность и тему сохраняем сразу: иначе выбор слетал бы при
+// перезагрузке страницы, а разговор продолжался бы в другом режиме.
+$('asLevel').onchange = save;
+$('asTopic').onchange = save;
+
+if (!restore()) greet();
+renderLog();
+renderFixes();
+renderStarters();
+updateCount();
+    </script>
+</body>
+</html>

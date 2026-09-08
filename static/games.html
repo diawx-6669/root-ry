@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Мини-игры</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
@@ -339,16 +340,17 @@
     </div>
 
     <nav class="bottom-tabbar">
-        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
         <a href="games.html" class="tab-item active"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js"></script>
     <script>
     // Fallback if api.js not loaded
@@ -361,7 +363,7 @@
             id: 'comma_ninja',
             title: '«Запятая-ниндзя»',
             icon: 'fa-solid fa-user-ninja',
-            image: 'img/game_comma_ninja.png',
+            image: 'img/game_comma_ninja.svg',
             desc: 'Свайпом разруби предложение в правильных местах! Аркада по пунктуации в стиле Fruit Ninja.',
             fullDesc: 'На экране снизу вверх вылетают длинные предложения с причастными оборотами, вводными словами и однородными членами. Свайпни по предложению ровно там, где должна стоять запятая, двоеточие или тире. Ошибёшься — потеряешь жизнь!',
             rules: [
@@ -378,7 +380,7 @@
             id: 'word_alchemist',
             title: '«Алхимик слов»',
             icon: 'fa-solid fa-flask-vial',
-            image: 'img/game_word_alchemist.png',
+            image: 'img/game_word_alchemist.svg',
             desc: 'Собирай слова из падающих морфем! Головоломка в стиле Тетриса про словообразование.',
             fullDesc: 'В твоём распоряжении падающие блоки с приставками, корнями, суффиксами и окончаниями. Комбинируй их так, чтобы получались реальные русские слова. На старших уровнях нужно собирать слова по заданным схемам!',
             rules: [
@@ -395,7 +397,7 @@
             id: 'stress_space',
             title: '«Ударный космос»',
             icon: 'fa-solid fa-rocket',
-            image: 'img/game_stress_space.png',
+            image: 'img/game_stress_space.svg',
             desc: 'Уничтожай астероиды-слова! Стреляй лазером точно в ударную гласную.',
             fullDesc: 'Управляй космическим кораблём — на тебя летят астероиды с трудными словами (ЖАЛЮЗИ, КАТАЛОГ, ЗВОНИТ, ТВОРОГ). Все гласные подсвечены. Выстрели лазером ровно в ту, на которую падает правильное ударение. Серия правильных ударений даёт защитный щит!',
             rules: [
@@ -412,7 +414,7 @@
             id: 'detective_case',
             title: '«Детектив Падеж»',
             icon: 'fa-solid fa-magnifying-glass',
-            image: 'img/game_detective_case.png',
+            image: 'img/game_detective_case.svg',
             desc: 'Детективный квест! Вставь слова в правильном падеже, чтобы раскрыть дело.',
             fullDesc: 'Ты — детектив. Чтобы получить показания свидетеля или открыть кодовый замок, нужно вставить в текст слова в правильном падеже, числе или роде. Например: «с пятьюстами шестьюдесятью тремя рублями». Ошибка пускает тебя по ложному следу!',
             rules: [
@@ -429,7 +431,7 @@
             id: 'minefield',
             title: '«Минное поле»',
             icon: 'fa-solid fa-bomb',
-            image: 'img/game_minefield.png',
+            image: 'img/game_minefield.svg',
             desc: 'Перейди пропасть по плитам с правильными словами. Ошибёшься — упадёшь в лаву!',
             fullDesc: 'Перед тобой пропасть. На каждой плите — слово (Н/НН, чередующиеся корни, ЖИ-ШИ и другие правила). Наступать можно только на плиты с правильным написанием — плиты с ошибками проваливаются в лаву. Чем дальше — тем сложнее!',
             rules: [
@@ -446,7 +448,7 @@
             id: 'paronym_duel',
             title: '«Дуэль паронимов»',
             icon: 'fa-solid fa-scale-balanced',
-            image: 'img/game_paronym_duel.png',
+            image: 'img/game_paronym_duel.svg',
             desc: 'Выбери слово, которое подходит по смыслу! Дуэль похожих по звучанию, но разных по значению слов.',
             fullDesc: 'Паронимы — слова, похожие по звучанию, но разные по значению: «одеть» и «надеть», «эффектный» и «эффективный». В каждом раунде — предложение с пропуском и два похожих слова. Выбери верное по смыслу. После ответа — объяснение, чем слова отличаются.',
             rules: [
@@ -463,7 +465,7 @@
             id: 'sentence_builder',
             title: '«Строитель предложений»',
             icon: 'fa-solid fa-puzzle-piece',
-            image: 'img/game_sentence_builder.png',
+            image: 'img/game_sentence_builder.svg',
             desc: 'Собери слова в правильном порядке! Учись строить предложения без речевых ошибок.',
             fullDesc: 'Слова в предложении перепутаны местами. Собери их в правильном порядке так, чтобы причастные и деепричастные обороты стояли на своих местах — это одна из самых частых ошибок на экзамене. После каждого ответа — объяснение правила порядка слов.',
             rules: [

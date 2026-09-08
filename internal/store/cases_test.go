@@ -107,7 +107,7 @@ func TestZeroChanceNeverDrops(t *testing.T) {
 // и корректно отмечать дубликат.
 func TestRollCaseReturnsConsistentItem(t *testing.T) {
 	for i := 0; i < 2000; i++ {
-		item, rarity, dup := RollCase("epic", []string{"🐱"}, nil, false)
+		item, rarity, dup := RollCase("epic", []string{"cat"}, nil, false)
 
 		pool := AvatarPool[rarity]
 		found := false
@@ -119,7 +119,7 @@ func TestRollCaseReturnsConsistentItem(t *testing.T) {
 		if !found {
 			t.Fatalf("предмет %q не принадлежит редкости %q", item, rarity)
 		}
-		if want := item == "🐱"; dup != want {
+		if want := item == "cat"; dup != want {
 			t.Fatalf("предмет %q: дубликат=%v, ожидалось %v", item, dup, want)
 		}
 	}
@@ -128,7 +128,7 @@ func TestRollCaseReturnsConsistentItem(t *testing.T) {
 // Значковый кейс тянет из пула значков, а не аватарок.
 func TestBadgeCaseUsesBadgePool(t *testing.T) {
 	for i := 0; i < 2000; i++ {
-		item, rarity, _ := RollCase("badge", nil, []string{"📚"}, true)
+		item, rarity, _ := RollCase("badge", nil, []string{"book"}, true)
 		if rarity == "mythic" {
 			t.Fatal("у значков нет мифической редкости")
 		}

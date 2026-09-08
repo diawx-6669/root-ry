@@ -201,6 +201,9 @@ func (s *Store) KspoyaLeaderboard(limit int) []models.KspoyaLeaderEntry {
 			log.Printf("KspoyaLeaderboard scan: %v", err)
 			continue
 		}
+		// Как и в общем рейтинге: запрос идёт мимо GetUser, поэтому
+		// старые эмодзи-аватарки переводим в идентификаторы здесь.
+		e.ActiveAvatar = NormalizeAvatar(e.ActiveAvatar)
 		e.Rank = rank
 		rank++
 		out = append(out, e)

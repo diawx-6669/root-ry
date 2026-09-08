@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Тесты КСПОЯ</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
@@ -109,10 +110,8 @@
             gap: 10px;
         }
 
-        .level-item .badge-icon {
-            font-size: 26px;
-            flex-shrink: 0;
-        }
+        .level-item .badge-icon { flex-shrink: 0; line-height: 0; }
+        .level-item .badge-icon img { width: 30px; height: 30px; display: block; }
 
         .level-item .level-text {
             font-size: 11px;
@@ -761,7 +760,7 @@
 
         .side-avatar { width: 30px; height: 30px; border-radius: 50%; background: #eef4f7; }
         .side-rank { font-size: 13px; font-weight: 800; color: #8ba0ab; text-align: center; }
-        .side-rank.top { font-size: 16px; }
+        .side-rank.top { line-height: 0; }
 
         .side-name {
             font-size: 12.5px;
@@ -827,7 +826,8 @@
         .best-btn:hover { background: var(--lv, #0099cc); color: #fff; }
 
         .best-left { display: flex; align-items: center; gap: 9px; }
-        .best-emoji { font-size: 22px; line-height: 1; }
+        .best-emoji { line-height: 0; }
+        .best-emoji img { width: 30px; height: 30px; display: block; }
         .best-caption { font-size: 11px; font-weight: 600; opacity: 0.75; }
         .best-level { font-size: 13.5px; font-weight: 700; }
 
@@ -927,11 +927,11 @@
 
         .hero-badge {
             position: relative;
-            font-size: 82px;
-            line-height: 1;
+            line-height: 0;
             animation: badgePop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
             filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.28));
         }
+        .hero-badge img { width: 96px; height: 96px; display: block; }
 
         .hero-level {
             position: relative;
@@ -1039,7 +1039,8 @@
             animation: riseIn 0.4s ease both;
         }
 
-        .history-emoji { font-size: 26px; line-height: 1; }
+        .history-emoji { line-height: 0; }
+        .history-emoji img { width: 32px; height: 32px; display: block; }
         .history-main { flex: 1 1 auto; min-width: 0; }
 
         .history-level {
@@ -1437,42 +1438,42 @@
 
                     <div class="levels-grid">
                         <div class="level-item li-a1 lv-a1" data-level="A1">
-                            <div class="badge-icon">🔰</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_a1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">A1 — Начальный</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-a2 lv-a2" data-level="A2">
-                            <div class="badge-icon">📗</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_a2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">A2 — Элементарный</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-b1 lv-b1" data-level="B1">
-                            <div class="badge-icon">📘</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_b1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">B1 — Средний</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-b2 lv-b2" data-level="B2">
-                            <div class="badge-icon">🏅</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_b2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">B2 — Выше среднего</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-c1 lv-c1" data-level="C1">
-                            <div class="badge-icon">🔮</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_c1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">C1 — Продвинутый</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-c2 lv-c2" data-level="C2">
-                            <div class="badge-icon">🌈</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_c2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">C2 — Мастерство</div>
                                 <div class="level-score">—</div>
@@ -1492,7 +1493,7 @@
                     <!-- Лучший результат: открывает аналитику лучшей попытки -->
                     <button class="best-btn" id="bestBtn" onclick="openBest()" style="display:none;">
                         <span class="best-left">
-                            <span class="best-emoji" id="bestEmoji">📘</span>
+                            <span class="best-emoji"><img id="bestEmoji" src="img/ranks/rank_b1.svg" alt=""></span>
                             <span>
                                 <span class="best-caption">Лучший результат</span><br>
                                 <span class="best-level" id="bestLevel"></span>
@@ -1504,6 +1505,17 @@
                             <i class="fa-solid fa-chart-simple"></i>
                         </span>
                     </button>
+
+                    <!-- История попыток. Стили .history-* лежали в файле с
+                         самого начала, а разметки и загрузки не было: сервер
+                         отдавал /api/kspoya/history, но ученик видел только
+                         лучший результат и не мог открыть разбор остальных. -->
+                    <div class="history-wrap" id="historyWrap" style="display:none;">
+                        <div class="history-title">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Прошлые попытки
+                        </div>
+                        <div id="historyList"></div>
+                    </div>
                 </div>
 
                 <!-- Топ КСПОЯ -->
@@ -1557,16 +1569,17 @@
     </main>
 
     <nav class="bottom-tabbar">
-        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
         <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item active"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item active"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js"></script>
     <script>
         initHeader();
@@ -1577,14 +1590,24 @@
         //  правильные ответы приходят только вместе с результатом.
         // ══════════════════════════════════════════════════════════════
 
+        // Знак уровня — картинка img/ranks/rank_<уровень>.svg. Раньше это
+        // был эмодзи, причём здесь у C2 стояла радуга, а сервер выдавал
+        // сову: один и тот же уровень выглядел по-разному на странице
+        // теста и в профиле.
         const LEVELS = {
-            C2: { label: 'C2 — Мастерство', emoji: '🌈' },
-            C1: { label: 'C1 — Продвинутый', emoji: '🔮' },
-            B2: { label: 'B2 — Выше среднего', emoji: '🏅' },
-            B1: { label: 'B1 — Средний', emoji: '📘' },
-            A2: { label: 'A2 — Элементарный', emoji: '📗' },
-            A1: { label: 'A1 — Начальный', emoji: '🔰' },
+            C2: { label: 'C2 — Мастерство',     badge: 'rank_c2' },
+            C1: { label: 'C1 — Продвинутый',    badge: 'rank_c1' },
+            B2: { label: 'B2 — Выше среднего',  badge: 'rank_b2' },
+            B1: { label: 'B1 — Средний',        badge: 'rank_b1' },
+            A2: { label: 'A2 — Элементарный',   badge: 'rank_a2' },
+            A1: { label: 'A1 — Начальный',      badge: 'rank_a1' },
         };
+
+        // Картинка знака уровня: сервер присылает идентификатор в
+        // level_badge, но у старых попыток там мог остаться эмодзи —
+        // badgeImg() из api.js понимает оба варианта.
+        const levelBadgeSrc = (badge, level) =>
+            badgeImg(badge || (LEVELS[level] || LEVELS.A1).badge);
         const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
         // Класс с цветом уровня: им красится всё — значок, полосы, кнопки.
@@ -1625,6 +1648,7 @@
             bestAttempt = r.data.best || null;
             applyBest();
             applyBanState(r.data);
+            loadHistory();
         }
         loadStatus();
 
@@ -1640,7 +1664,8 @@
             btn.style.display = 'grid';
             btn.className = 'best-btn ' + levelClass(bestAttempt.level);
 
-            document.getElementById('bestEmoji').textContent = bestAttempt.level_badge || meta.emoji;
+            document.getElementById('bestEmoji').src =
+                levelBadgeSrc(bestAttempt.level_badge, bestAttempt.level);
             document.getElementById('bestLevel').textContent = bestAttempt.level_label || meta.label;
             document.getElementById('bestMiddle').textContent = 'открыть разбор';
             document.getElementById('bestScore').textContent =
@@ -1691,6 +1716,81 @@
             return `${m} мин`;
         }
 
+        // ── История попыток ──
+        //
+        // Показываем всё, кроме лучшей попытки: она уже висит отдельной
+        // кнопкой выше, и дублировать её строкой значило бы предлагать
+        // ученику два одинаковых входа в один и тот же разбор.
+        async function loadHistory() {
+            const wrap = document.getElementById('historyWrap');
+            const list = document.getElementById('historyList');
+            if (!wrap || !list) return;
+
+            const r = await API.get('/api/kspoya/history');
+            if (!r.ok) { wrap.style.display = 'none'; return; }
+
+            const bestId = bestAttempt ? bestAttempt.attempt_id : null;
+            const rows = (r.data.attempts || []).filter(a => a.id !== bestId);
+            if (!rows.length) { wrap.style.display = 'none'; return; }
+
+            list.innerHTML = '';
+            rows.forEach((a, i) => list.appendChild(historyRow(a, i)));
+            wrap.style.display = 'block';
+        }
+
+        function historyRow(a, idx) {
+            const meta = LEVELS[a.level] || LEVELS.A1;
+
+            const row = document.createElement('div');
+            row.className = 'history-item ' + levelClass(a.level);
+            row.style.animationDelay = (idx * 0.05) + 's';
+
+            const emoji = document.createElement('div');
+            emoji.className = 'history-emoji';
+            const emojiImg = document.createElement('img');
+            emojiImg.src = levelBadgeSrc(a.level_badge, a.level);
+            emojiImg.alt = '';
+            emoji.appendChild(emojiImg);
+
+            const main = document.createElement('div');
+            main.className = 'history-main';
+
+            const lvl = document.createElement('div');
+            lvl.className = 'history-level';
+            lvl.textContent = a.level_label || meta.label;
+
+            const sub = document.createElement('div');
+            sub.className = 'history-meta';
+            sub.textContent = `${a.correct}/${a.total} верно · ${formatAttemptDate(a.finished_at)}`;
+
+            main.appendChild(lvl);
+            main.appendChild(sub);
+
+            row.appendChild(emoji);
+            row.appendChild(main);
+
+            // Разбор есть не у всех попыток: у старых записей ответы не
+            // сохранялись, и кнопка привела бы в пустой экран.
+            if (a.has_review) {
+                const btn = document.createElement('button');
+                btn.className = 'history-btn';
+                btn.textContent = 'Разбор';
+                btn.onclick = () => openAnalysis(a.id, btn);
+                row.appendChild(btn);
+            }
+            return row;
+        }
+
+        // Дата попытки по-русски и в часовом поясе ученика.
+        function formatAttemptDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d)) return '';
+            return d.toLocaleString('ru-RU', {
+                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
         // ── Топ КСПОЯ в боковой панели ──
         async function loadTop() {
             const box = document.getElementById('kspoyaTop');
@@ -1710,19 +1810,24 @@
             }
 
             const me = API.user();
-            const medals = ['🥇', '🥈', '🥉'];
+            const MEDAL_COLORS = ['#f0b429', '#b6c2cc', '#c8874a'];
 
             entries.forEach((e, i) => {
-                const meta = LEVELS[e.level] || LEVELS.A1;
-
                 const row = document.createElement('div');
                 row.className = 'side-row ' + levelClass(e.level) +
                     (me && e.username === me.username ? ' is-me' : '');
                 row.style.animationDelay = (i * 0.05) + 's';
 
+                // Первую тройку помечаем медалью нужного металла, дальше —
+                // обычным номером места.
                 const rank = document.createElement('div');
                 rank.className = 'side-rank' + (i < 3 ? ' top' : '');
-                rank.textContent = i < 3 ? medals[i] : String(e.rank);
+                if (i < 3) {
+                    rank.innerHTML = svgIcon('medal', { size: 18, color: MEDAL_COLORS[i] });
+                    rank.title = e.rank + ' место';
+                } else {
+                    rank.textContent = String(e.rank);
+                }
 
                 const face = document.createElement('img');
                 face.className = 'side-avatar';
@@ -1735,7 +1840,7 @@
                 name.textContent = e.nickname || e.username;
                 const sub = document.createElement('div');
                 sub.className = 'side-sub';
-                sub.textContent = `${e.level_badge || meta.emoji} ${e.level}`;
+                sub.textContent = e.level;
                 main.appendChild(name);
                 main.appendChild(sub);
 
@@ -1888,7 +1993,7 @@
 
             document.getElementById('prevBtn').disabled = currentQ === 0;
             const next = document.getElementById('nextBtn');
-            next.textContent = currentQ < total - 1 ? 'Следующий вопрос →' : 'Завершить тест ✓';
+            next.textContent = currentQ < total - 1 ? 'Следующий вопрос' : 'Завершить тест';
         }
 
         // Ответ можно менять и возвращаться назад: во время теста
@@ -2139,7 +2244,10 @@
 
             const badge = document.createElement('div');
             badge.className = 'hero-badge';
-            badge.textContent = data.level_badge || meta.emoji;
+            const badgeImgEl = document.createElement('img');
+            badgeImgEl.src = levelBadgeSrc(data.level_badge, data.level);
+            badgeImgEl.alt = '';
+            badge.appendChild(badgeImgEl);
             hero.appendChild(badge);
 
             const label = document.createElement('div');
@@ -2451,8 +2559,8 @@
             const mark = document.createElement('span');
             mark.className = 'rv-mark';
             mark.textContent = item.is_correct
-                ? '✓ верно'
-                : (item.user_answer === -1 ? '— без ответа' : '✕ ошибка');
+                ? 'верно'
+                : (item.user_answer === -1 ? 'без ответа' : 'ошибка');
 
             top.appendChild(num);
             top.appendChild(topic);

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Урок</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
 <style>
@@ -34,10 +35,11 @@ body {
     background:linear-gradient(90deg,#0099cc,#22c55e);
     border-radius:10px; transition:width .35s cubic-bezier(.4,0,.2,1);
 }
-.lt-hearts { display:flex; gap:4px; font-size:17px; flex-shrink:0; }
+.lt-hearts { display:flex; gap:4px; flex-shrink:0; line-height:0; }
 .lt-hearts .heart.lost { opacity:.22; filter:grayscale(1); }
 .lt-combo {
     flex-shrink:0; font-weight:800; font-size:13px; color:#f59e0b;
+    display:flex; align-items:center; gap:4px; justify-content:flex-end;
     opacity:0; transform:scale(.8); transition:.25s; min-width:34px; text-align:right;
 }
 .lt-combo.on { opacity:1; transform:scale(1); }
@@ -55,7 +57,11 @@ body {
 
 /* ═════ ЗАСТАВКА ═════ */
 .hero { text-align:center; padding:34px 22px; }
-.hero .icon { font-size:56px; line-height:1; margin-bottom:12px; }
+.hero .icon {
+    width:56px; height:56px; margin:0 auto 12px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    background:#eaf7fc; color:#036389; font-size:24px; font-weight:800;
+}
 .hero .sect {
     display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em;
     color:#0099cc; background:#e0f2fe; border-radius:20px; padding:5px 13px; margin-bottom:12px;
@@ -108,7 +114,7 @@ body {
 
 .trap { display:flex; gap:12px; padding:13px 0; border-top:1px solid #f1f5f9; }
 .trap:first-of-type { border-top:none; padding-top:4px; }
-.trap .ic { flex-shrink:0; font-size:18px; }
+.trap .ic { flex-shrink:0; line-height:0; }
 .trap .q { font-weight:800; color:#023e50; font-size:14px; margin-bottom:4px; }
 .trap .a { font-size:14px; color:#546e7a; line-height:1.6; }
 .trap .a b { color:#023e50; }
@@ -120,7 +126,11 @@ body {
     font-family:inherit;
 }
 .link-row:hover { background:#eef7fc; border-color:#7dd3fc; transform:translateX(3px); }
-.link-row .li { font-size:20px; flex-shrink:0; }
+.link-row .li {
+    flex-shrink:0; width:26px; height:26px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:#eaf7fc; color:#036389; font-size:12px; font-weight:800;
+}
 .link-row .lt { flex:1; }
 .link-row .ln { font-weight:800; color:#023e50; font-size:14px; }
 .link-row .lw { font-size:12.5px; color:#8095a3; margin-top:2px; line-height:1.45; }
@@ -316,7 +326,7 @@ body {
 
 /* ═════ РЕЗУЛЬТАТ ═════ */
 .result { text-align:center; padding:30px 22px; }
-.result .big { font-size:62px; line-height:1; margin-bottom:10px; }
+.result .big { line-height:0; margin-bottom:14px; }
 .result h2 { font-size:25px; color:#023e50; margin-bottom:8px; }
 .result .sub { font-size:15px; color:#546e7a; line-height:1.6; margin-bottom:22px; }
 .res-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px; }
@@ -357,7 +367,7 @@ body {
     <!-- ЗАСТАВКА -->
     <section class="phase" id="phaseIntro">
         <div class="card hero">
-            <div class="icon" id="hIcon">📘</div>
+            <div class="icon" id="hIcon"></div>
             <div class="sect" id="hSect"></div>
             <h1 id="hTitle"></h1>
             <p class="intro" id="hIntro"></p>
@@ -400,7 +410,8 @@ body {
     </div>
 </div>
 
-<script src="api.js"></script>
+<script src="icons.js"></script>
+    <script src="api.js"></script>
     <script src="practice.js"></script>
 <script src="lessons/index.js"></script>
 <script>
@@ -496,17 +507,20 @@ $('closeBtn').onclick = () => {
 function renderIntro() {
     S.phase = 'intro';
     const L = S.lesson;
-    $('hIcon').textContent = L.icon || '📘';
+    // Номер раздела вместо эмодзи: у каждой из 74 тем была своя картинка
+    // из шрифта операционной системы, и одна и та же тема выглядела
+    // по-разному на разных компьютерах.
+    $('hIcon').textContent = sectionNo(L.section);
     $('hSect').textContent = L.section;
     $('hTitle').textContent = L.title;
     $('hIntro').textContent = L.intro;
 
     const done = (API.user()?.completed_topics || []).includes(L.id);
     $('hMeta').innerHTML =
-        `<span class="chip">📖 ${L.steps.length} блока теории</span>` +
-        `<span class="chip">✍️ ${L.practice.length} заданий</span>` +
-        (done ? '<span class="chip done">✓ Уже пройдено</span>'
-              : `<span class="chip">⚡ +${L.xp} XP</span>`);
+        `<span class="chip">${svgIcon('book', { size: 13 })} ${L.steps.length} блока теории</span>` +
+        `<span class="chip">${svgIcon('pen', { size: 13 })} ${L.practice.length} заданий</span>` +
+        (done ? `<span class="chip done">${svgIcon('check', { size: 13 })} Уже пройдено</span>`
+              : `<span class="chip">${svgIcon('bolt', { size: 13 })} +${L.xp} XP</span>`);
 
     showPhase('phaseIntro');
     setProgress(0);
@@ -555,7 +569,7 @@ function renderTheory() {
             <div class="card">
                 ${L.traps.map(t => `
                     <div class="trap">
-                        <div class="ic">⚠️</div>
+                        <div class="ic">${svgIcon('warn', { size: 17, color: '#d97706' })}</div>
                         <div><div class="q">${esc(t.q)}</div><div class="a">${t.a}</div></div>
                     </div>`).join('')}
             </div>` : ''}
@@ -576,12 +590,18 @@ function renderTable(st) {
     return `<div class="tbl-scroll"><table class="tbl">${head}<tbody>${body}</tbody></table></div>`;
 }
 
+// Номер раздела из его названия: «3. ОРФОГРАФИЯ» → «3».
+function sectionNo(section) {
+    const m = /^\s*(\d+)/.exec(String(section || ''));
+    return m ? m[1] : '·';
+}
+
 function renderLinks(links) {
     return links.map(l => {
         const meta = LESSON_BY_ID[l.id];
         if (!meta) return '';
         return `<button class="link-row" data-goto="${esc(meta.id)}">
-            <span class="li">${meta.icon}</span>
+            <span class="li">${sectionNo(meta.section)}</span>
             <span class="lt"><span class="ln">${esc(meta.title)}</span><span class="lw">${esc(l.why)}</span></span>
             <span class="lc"><i class="fa-solid fa-chevron-right"></i></span>
         </button>`;
@@ -677,8 +697,8 @@ function renderChoice(q) {
 
 function renderTF(q) {
     $('qBody').innerHTML = `<div class="opts grid2">
-        <button class="opt" data-i="1"><span>✓ Верно</span></button>
-        <button class="opt" data-i="0"><span>✕ Неверно</span></button>
+        <button class="opt" data-i="1"><span>Верно</span></button>
+        <button class="opt" data-i="0"><span>Неверно</span></button>
     </div>`;
     document.querySelectorAll('.opt').forEach(b => {
         b.onclick = () => {
@@ -1166,12 +1186,13 @@ function loseHeart() {
 }
 function renderHearts() {
     $('hearts').innerHTML = Array.from({ length: MAX_HEARTS },
-        (_, i) => `<span class="heart${i < S.hearts ? '' : ' lost'}">❤️</span>`).join('');
+        (_, i) => `<span class="heart${i < S.hearts ? '' : ' lost'}">`
+            + svgIcon('heart', { size: 16, color: '#e11d48' }) + '</span>').join('');
 }
 function showCombo() {
     const el = $('combo');
     if (S.streak < 2) { hideCombo(); return; }
-    el.textContent = '🔥' + S.streak;
+    el.innerHTML = svgIcon('fire', { size: 15, color: '#ef5b3c' }) + ' ' + S.streak;
     el.classList.add('on');
 }
 function hideCombo() { $('combo').classList.remove('on'); }
@@ -1192,7 +1213,9 @@ async function finish() {
 
     $('resultBody').innerHTML = `
         <div class="card result">
-            <div class="big">${passed ? '🎉' : '💪'}</div>
+            <div class="big">${passed
+                ? svgIcon('trophy', { size: 56, color: '#f0b429' })
+                : svgIcon('refresh', { size: 56, color: '#0099cc' })}</div>
             <h2>${passed ? 'Тема пройдена!' : 'Почти получилось'}</h2>
             <p class="sub">${passed
                 ? 'Ты разобрался с темой «' + esc(L.title) + '».'
@@ -1200,7 +1223,7 @@ async function finish() {
             <div class="res-grid">
                 <div class="res-box"><div class="v">${S.correct}/${total}</div><div class="l">ВЕРНО</div></div>
                 <div class="res-box"><div class="v">${percent}%</div><div class="l">ТОЧНОСТЬ</div></div>
-                <div class="res-box"><div class="v">🔥${S.bestStreak}</div><div class="l">СЕРИЯ</div></div>
+                <div class="res-box"><div class="v">${S.bestStreak}</div><div class="l">СЕРИЯ ПОДРЯД</div></div>
             </div>
             <div id="rewardSlot"></div>
         </div>
@@ -1264,10 +1287,14 @@ async function saveProgress(already) {
     }
 
     $('rewardSlot').innerHTML =
-        `<div class="reward-line">⚡ +${d.xp_earned} XP &nbsp;·&nbsp; 🪙 +${d.coins_earned} монет</div>` +
-        (d.badge_earned ? `<div class="reward-line">🏅 Новый значок: ${esc(d.badge_earned)}</div>` : '') +
+        `<div class="reward-line">${svgIcon('bolt', { size: 14 })} +${d.xp_earned} XP`
+            + ` &nbsp;·&nbsp; ${svgIcon('coin', { size: 14, color: '#f0b429' })} +${d.coins_earned} монет</div>` +
+        (d.badge_earned
+            ? `<div class="reward-line">${svgIcon('medal', { size: 14, color: '#f0b429' })}`
+              + ` Новый значок: ${esc(badgeLabel(d.badge_earned))}</div>`
+            : '') +
         `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
-            🌳 Дерево: ${d.completed_count} из ${d.total_topics} тем</div>`;
+            ${svgIcon('tree', { size: 14 })} Дерево: ${d.completed_count} из ${d.total_topics} тем</div>`;
 
     const u = API.user();
     if (u) {

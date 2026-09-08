@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Профиль</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
@@ -55,9 +56,11 @@
 
         .badges-strip { display:flex; gap:10px; flex-wrap:nowrap; overflow:hidden; min-height:50px; align-items:center; }
         .badge-chip {
-            background:#f0f4f8; border-radius:12px; padding:8px 14px; font-size:22px;
-            border:2px solid transparent; cursor:default; transition:0.2s; flex-shrink:0;
+            background:#f0f4f8; border-radius:12px; padding:7px 12px;
+            border:2px solid transparent; cursor:default; transition:0.2s;
+            flex-shrink:0; line-height:0;
         }
+        .badge-chip img { width:30px; height:30px; display:block; }
         .badge-chip:hover { border-color:#0099cc; transform:scale(1.1); }
         .badge-chip.locked { filter:grayscale(1); opacity:0.45; position:relative; cursor:default; }
         .no-badges { font-size:14px; color:#8e9fae; }
@@ -89,9 +92,10 @@
         .badge-item.owned { border-color:#e0f2fe; cursor:pointer; }
         .badge-item.owned:hover { border-color:#0099cc; background:#f0f9ff; }
         .badge-item.locked-item { opacity:0.4; position:relative; }
-        .badge-item .b-emoji { font-size:28px; }
+        .badge-item .b-emoji { line-height:0; }
+        .badge-item .b-emoji img { width:40px; height:40px; display:block; }
         .badge-item .b-label { font-size:10px; font-weight:700; color:#023e50; text-align:center; }
-        .badge-item .b-lock { font-size:14px; }
+        .badge-item .b-lock { color:#8e9fae; line-height:0; }
         .lock-overlay { position:absolute; top:6px; right:6px; font-size:12px; }
 
         /* ===== АВАТАР ПИКЕР МОДАЛ ===== */
@@ -147,6 +151,185 @@
         }
         .admin-goto-btn:hover { background:linear-gradient(90deg,#0099cc,#023e50); box-shadow:0 8px 28px rgba(0,153,204,0.3); transform:translateY(-1px); }
         .admin-goto-btn i { font-size:18px; }
+
+        /* ===== СОГЛАСИЕ НА УЧАСТИЕ В ИССЛЕДОВАНИИ ===== */
+        .consent-box {
+            margin-top:18px; padding:16px 18px;
+            background:#f4f9fc; border:1.5px solid #d8e7ef; border-radius:16px;
+        }
+        .consent-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:#023e50; }
+        .consent-text { font-size:12.5px; color:#6b8494; line-height:1.55; margin:8px 0 12px; }
+        .consent-row { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+        .consent-row input { width:18px; height:18px; accent-color:#0099cc; cursor:pointer; }
+        .consent-row span { font-size:13px; font-weight:600; color:#023e50; }
+        .consent-state { font-size:12px; margin-top:8px; min-height:16px; }
+        .consent-state.on  { color:#0e8f6f; }
+        .consent-state.off { color:#8ba0ab; }
+
+        /* ═══ Повторение и работа над ошибками ═══════════════════════
+           Раньше это была отдельная вкладка «Сегодня». Она отвечала на
+           вопрос «чем заняться прямо сейчас», но ради одного списка
+           держала целый экран в нижней панели. Теперь план живёт рядом
+           с остальной статистикой ученика — там, куда он и так заходит
+           смотреть свой прогресс. */
+        .rv { --ink:#0a2836; --ink-3:#8ba0ac; --line:#e4ecf1; --line-2:#cfdde5;
+              --accent:#0099cc; --accent-ink:#036389; --accent-bg:#eaf7fc;
+              --due:#b26a24; --due-bg:#fdf4ea;
+              font-variant-numeric:tabular-nums; }
+        .rv-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+                    gap:1px; background:#e4ecf1; border-radius:14px;
+                    overflow:hidden; margin-bottom:22px; }
+        .rv-stat { background:#f7fbfd; padding:13px 15px; }
+        .rv-stat .v { font-size:21px; font-weight:700; color:var(--ink); line-height:1.1; }
+        .rv-stat .v small { font-size:13px; font-weight:600; color:var(--ink-3); }
+        .rv-stat.is-due .v { color:var(--due); }
+        .rv-stat .l { font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+                      color:var(--ink-3); margin-top:5px; }
+
+        .rv-sec { margin-top:24px; }
+        .rv-sec-head { display:flex; align-items:center; gap:9px; margin-bottom:4px; }
+        .rv-sec-head h3 { margin:0; font-size:16px; font-weight:700; color:var(--ink); }
+        .rv-count { font-size:12px; font-weight:700; color:var(--due);
+                    background:var(--due-bg); border-radius:999px; padding:2px 9px; }
+        .rv-sub { margin:0 0 14px; color:var(--ink-3); font-size:13px; line-height:1.55; }
+
+        .rv-list { display:flex; flex-direction:column; gap:8px; }
+        .rv-card { display:flex; align-items:center; gap:14px; background:#fff;
+                   border:1px solid var(--line); border-left:3px solid var(--line-2);
+                   border-radius:12px; padding:13px 17px; text-decoration:none;
+                   color:inherit; transition:border-color .16s, box-shadow .16s; }
+        .rv-card:hover { border-left-color:var(--accent);
+                         box-shadow:0 6px 18px rgba(10,40,54,.07); }
+        .rv-card.is-late, .rv-card.is-late:hover { border-left-color:var(--due); }
+        .rv-card-main { flex:1; min-width:0; }
+        .rv-title { font-size:14.5px; font-weight:700; color:var(--ink); }
+        .rv-sect { font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+                   color:var(--ink-3); margin-top:3px; }
+        .rv-boxes { display:flex; gap:3px; margin-top:7px; }
+        .rv-boxes span { width:16px; height:4px; border-radius:2px; background:#e4ecf1; }
+        .rv-boxes span.on { background:var(--accent); }
+        .rv-meta { text-align:right; flex:none; }
+        .rv-when { font-size:12.5px; font-weight:700; color:var(--accent-ink); white-space:nowrap; }
+        .rv-when.is-late { color:var(--due); }
+        .rv-reward { font-size:11.5px; color:var(--ink-3); margin-top:4px;
+                     white-space:nowrap; display:flex; gap:8px; justify-content:flex-end; }
+
+        .rv-panel { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+        .rv-row { display:flex; align-items:center; gap:12px; padding:12px 17px;
+                  border-bottom:1px solid var(--line); }
+        .rv-row:last-of-type { border-bottom:none; }
+        .rv-row-main { flex:1; min-width:0; }
+        .rv-q { font-size:13.5px; color:var(--ink); overflow:hidden;
+                text-overflow:ellipsis; white-space:nowrap; }
+        .rv-src { font-size:11px; color:var(--ink-3); margin-top:3px; }
+        .rv-tag { font-size:11px; font-weight:700; color:var(--due);
+                  background:var(--due-bg); border-radius:999px; padding:2px 9px; flex:none; }
+        .rv-more { padding:10px 17px; font-size:12.5px; color:var(--ink-3);
+                   border-top:1px solid var(--line); }
+        .rv-action { padding:14px 17px; border-top:1px solid var(--line); background:#f7fbfd; }
+        .rv-btn { display:inline-flex; align-items:center; gap:9px;
+                  background:linear-gradient(90deg,#023e50,#0099cc); color:#fff;
+                  border:none; border-radius:13px; padding:12px 22px; font-size:13.5px;
+                  font-weight:700; font-family:'Montserrat',sans-serif; cursor:pointer;
+                  transition:.2s; }
+        .rv-btn:hover:not(:disabled) { box-shadow:0 6px 18px rgba(0,153,204,.28); }
+        .rv-btn:disabled { opacity:.5; cursor:default; }
+
+        .rv-empty { border:1px dashed var(--line-2); border-radius:14px;
+                    padding:24px 20px; text-align:center; color:var(--ink-3); }
+        .rv-empty-title { font-size:14px; font-weight:700; color:var(--ink); margin:8px 0 4px; }
+        .rv-empty-note { font-size:12.5px; line-height:1.55; max-width:46ch;
+                         margin-inline:auto; }
+
+        /* Разметку тренажёра рисует practice.js — стили к ней приехали
+           сюда вместе с разбором ошибок со вкладки «Сегодня». */
+        .rv { --surface:#fff; --ok:#1e7a5b; --ok-bg:#e8f4ef; }
+/* ── Тренажёр (разметка из practice.js) ─────────────────── */
+        .pd-wrap {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 14px; padding: 26px 28px;
+        }
+        .pd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+        .pd-kind {
+            font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--accent-ink); font-weight: 700;
+        }
+        .pd-count { font-size: 12px; color: var(--ink-3); }
+        .pd-topic {
+            font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+            color: var(--ink-3); margin: 3px 0 14px;
+        }
+        .pd-q { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.45; margin-bottom: 18px; }
+        .pd-gap { color: var(--accent); letter-spacing: 2px; }
+        .pd-body { display: flex; flex-direction: column; gap: 8px; }
+        .pd-opt {
+            width: 100%; text-align: left; padding: 13px 16px; border-radius: 10px;
+            border: 1px solid var(--line-2); background: #fff; font-family: inherit;
+            font-size: 14.5px; color: var(--ink); cursor: pointer; transition: .14s;
+        }
+        .pd-opt:hover:not(:disabled) { border-color: var(--accent); background: #fafdff; }
+        .pd-opt.sel { border-color: var(--accent); background: var(--accent-bg); box-shadow: inset 3px 0 0 var(--accent); }
+        .pd-opt.ok  { border-color: var(--ok); background: var(--ok-bg); box-shadow: inset 3px 0 0 var(--ok); }
+        .pd-opt.bad { border-color: #c2553f; background: #fbeeeb; box-shadow: inset 3px 0 0 #c2553f; }
+        .pd-opt:disabled { cursor: default; }
+
+        .pd-match { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pd-col { display: flex; flex-direction: column; gap: 8px; }
+        .pd-pool, .pd-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+        .pd-slots { min-height: 42px; margin-bottom: 10px; }
+        .pd-tile {
+            padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line-2);
+            background: #fff; font-family: inherit; font-size: 14px; color: var(--ink);
+            cursor: pointer; transition: .14s;
+        }
+        .pd-tile:hover:not(:disabled) { border-color: var(--accent); }
+        .pd-tile.sel  { border-color: var(--accent); background: var(--accent-bg); }
+        .pd-tile.done { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); cursor: default; }
+        .pd-tile.used { opacity: .35; cursor: default; }
+        .pd-tile.miss { border-color: #c2553f; background: #fbeeeb; }
+        .pd-slot {
+            padding: 10px 14px; border-radius: 9px; background: var(--accent-bg);
+            border: 1px solid #bfe4f2; font-size: 14px; color: var(--ink);
+        }
+        .pd-slot.ok  { border-color: var(--ok); background: var(--ok-bg); }
+        .pd-slot.bad { border-color: #c2553f; background: #fbeeeb; }
+
+        .pd-feedback {
+            margin-top: 18px; padding: 15px 17px; border-radius: 10px;
+            font-size: 14px; line-height: 1.6; border: 1px solid;
+        }
+        .pd-feedback.good { background: var(--ok-bg); border-color: #bfded1; color: #175c45; }
+        .pd-feedback.bad  { background: #fbeeeb; border-color: #eecbc3; color: #8c3c2a; }
+        .pd-verdict {
+            font-weight: 700; margin-bottom: 5px; font-size: 12px;
+            letter-spacing: .09em; text-transform: uppercase;
+        }
+        .pd-verdict i { margin-right: 6px; }
+        .pd-why { opacity: .95; }
+        .pd-btn {
+            width: 100%; margin-top: 18px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-family: inherit;
+            font-size: 14.5px; font-weight: 700; padding: 13px; cursor: pointer;
+            transition: background .16s;
+        }
+        .pd-btn:hover:not(:disabled) { background: var(--accent-ink); }
+        .pd-btn:disabled { background: #c3d4dc; cursor: default; }
+
+        .pd-done { text-align: center; padding: 26px 12px; }
+        .pd-done > i { font-size: 26px; color: var(--ok); margin-bottom: 14px; display: block; }
+        .pd-done-title { font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.01em; }
+        .pd-done-score { font-size: 14px; color: var(--accent-ink); font-weight: 700; margin-top: 7px; }
+        .pd-done-note {
+            font-size: 13px; color: var(--ink-3); margin-top: 14px; line-height: 1.6;
+            max-width: 48ch; margin-inline: auto;
+        }
+
+        @media (max-width:640px) {
+            .rv-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .rv-row-when { display:none; }
+            .pd-wrap { padding:20px 18px; }
+            .pd-match { grid-template-columns:1fr; }
+        }
     </style>
 </head>
 <body>
@@ -166,8 +349,9 @@
     <!-- МОДАЛ: ВСЕ ЗНАЧКИ -->
     <div class="modal-overlay" id="badgesModal">
         <div class="modal-box">
-            <button class="modal-close" onclick="closeBadgesModal()">✕</button>
-            <div class="modal-title">🏅 Все значки</div>
+            <button class="modal-close" onclick="closeBadgesModal()" aria-label="Закрыть">
+                <i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-award"></i> Все значки</div>
             <div class="modal-sub" id="badgesModalSub">Твои значки и ещё не открытые</div>
             <div class="all-badges-grid" id="allBadgesGrid"></div>
         </div>
@@ -176,8 +360,9 @@
     <!-- МОДАЛ: ВЫБОР АВАТАРКИ -->
     <div class="modal-overlay" id="avatarModal">
         <div class="avatar-modal-box">
-            <button class="modal-close" onclick="closeAvatarModal()">✕</button>
-            <div class="modal-title">🎨 Выбери аватарку</div>
+            <button class="modal-close" onclick="closeAvatarModal()" aria-label="Закрыть">
+                <i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-palette"></i> Выбери аватарку</div>
             <div class="modal-sub">Нажми на аватарку чтобы сменить. Серые — ещё не открыты.</div>
             <div id="avatarPickerGrid"></div>
         </div>
@@ -187,39 +372,39 @@
         <section class="app-window">
             <h1>Личный кабинет</h1>
             <div id="profileContent"><div style="color:#8e9fae;font-size:15px;padding:20px 0"><i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...</div></div>
+
+            <div class="profile-card rv" id="reviewCard" hidden>
+                <div class="section-title" style="margin-bottom:16px">
+                    <span id="rvHead">Повторение и работа над ошибками</span>
+                </div>
+                <div id="reviewContent"></div>
+                <div id="drillSlot"></div>
+            </div>
         </section>
     </main>
 
     <nav class="bottom-tabbar">
-        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
         <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item active"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js"></script>
+    <script src="practice.js"></script>
+    <script src="lessons/index.js"></script>
     <script>
     initHeader();
     let userData = null;
 
-    // Все возможные значки (те что в BADGE_POOL на shop.html)
-    const ALL_BADGES = [
-        { emoji:'📚', label:'Книга',    rarity:'common' },
-        { emoji:'✏️',  label:'Карандаш', rarity:'common' },
-        { emoji:'📝', label:'Блокнот',  rarity:'common' },
-        { emoji:'🎒', label:'Рюкзак',   rarity:'common' },
-        { emoji:'⭐', label:'Звезда',   rarity:'rare' },
-        { emoji:'🔥', label:'Огонь',    rarity:'rare' },
-        { emoji:'💡', label:'Лампочка', rarity:'rare' },
-        { emoji:'🏆', label:'Кубок',    rarity:'epic' },
-        { emoji:'💎', label:'Алмаз',    rarity:'epic' },
-        { emoji:'🎓', label:'Диплом',   rarity:'legendary' },
-        { emoji:'👑', label:'Корона',   rarity:'legendary' },
-    ];
+    // Каталоги значков и аватарок лежат в api.js: они нужны и профилю,
+    // и магазину, и рейтингу. Раньше список значков был скопирован сюда
+    // и в shop.html, и два списка успели разойтись.
 
 
     // Лучший результат КСПОЯ: балл и уровень в скобках, например «23 (B1)».
@@ -264,7 +449,7 @@
                 <div class="profile-info">
                     <h2>${esc(u.nickname || u.username)}</h2>
                     <div class="uname">@${esc(u.username)}</div>
-                    <div class="streak">🔥 Серия: ${u.streak || 0} ${declDays(u.streak)}</div>
+                    <div class="streak">${svgIcon('fire', { size: 15, color: '#ef5b3c' })} Серия: ${u.streak || 0} ${declDays(u.streak)}</div>
                 </div>
             </div>
 
@@ -283,12 +468,12 @@
             <!-- ЗНАЧКИ: 5 штук + кнопка -->
             <div style="margin-bottom:20px">
                 <div class="section-title">
-                    <span>🏅 Мои значки <span style="color:#8e9fae;font-size:13px">(${myBadges.length})</span></span>
+                    <span>${svgIcon('medal', { size: 16, color: '#f0b429' })} Мои значки <span style="color:#8e9fae;font-size:13px">(${myBadges.length})</span></span>
                     <button class="see-all-btn" onclick="openBadgesModal()"><i class="fa-solid fa-grid-2" style="font-size:11px"></i> Посмотреть все</button>
                 </div>
                 <div class="badges-strip">
                     ${topBadges.length
-                        ? topBadges.map(b=>`<div class="badge-chip" title="${b}">${b}</div>`).join('')
+                        ? topBadges.map(b=>`<div class="badge-chip" title="${esc(badgeLabel(b))}"><img src="${esc(badgeImg(b))}" alt="${esc(badgeLabel(b))}"></div>`).join('')
                         : '<span class="no-badges">Пока нет значков. Играй!</span>'
                     }
                 </div>
@@ -296,11 +481,31 @@
 
             <!-- НИКНЕЙМ -->
             <div style="margin-bottom:18px">
-                <div class="section-title" style="margin-bottom:8px"><span>✏️ Изменить никнейм</span></div>
+                <div class="section-title" style="margin-bottom:8px"><span><i class="fa-solid fa-pen"></i> Изменить никнейм</span></div>
                 <div class="edit-row">
                     <input class="edit-input" id="newNick" placeholder="Новый никнейм..." value="${esc(u.nickname||'')}">
                     <button class="save-btn" onclick="saveNickname()">Сохранить</button>
                 </div>
+            </div>
+
+            <!-- Согласие на участие в исследовании.
+                 Эндпоинт /api/research/consent был готов, а спросить согласие
+                 было негде: без него ученик не попадает в выгрузку ни при
+                 какой группе, то есть эксперимент собрать было нельзя. -->
+            <div class="consent-box">
+                <div class="consent-head"><i class="fa-solid fa-flask"></i> Участие в исследовании</div>
+                <div class="consent-text">
+                    RootRy — школьный научный проект. Чтобы проверить, помогают ли
+                    интервальные повторения, нужны обезличенные данные: сколько тем
+                    начато и освоено, сколько ответов дано, результаты теста КСПОЯ.
+                    Ни имени, ни логина, ни переписки в выгрузке нет — только номер
+                    участника. Отозвать согласие можно в любой момент, здесь же.
+                </div>
+                <label class="consent-row">
+                    <input type="checkbox" id="consentBox" onchange="saveConsent(this.checked)">
+                    <span>Согласен(а) на использование обезличенных данных</span>
+                </label>
+                <div class="consent-state" id="consentState"></div>
             </div>
 
             <button class="logout-btn" onclick="API.logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из аккаунта</button>
@@ -312,6 +517,11 @@
             const fill = document.getElementById('xpFill');
             if (fill) fill.style.width = xpPct + '%';
         }, 100);
+
+        // Карточка перерисовывается целиком, поэтому галочку согласия
+        // расставляем каждый раз заново — иначе она сбрасывалась бы в
+        // «не согласен» при любом обновлении профиля.
+        applyConsent(u);
     }
 
     function declDays(n) {
@@ -325,18 +535,23 @@
     /* ===== ЗНАЧКИ МОДАЛ ===== */
     function openBadgesModal() {
         if (!userData) return;
-        const myBadges = new Set(userData.badges || []);
+        const myBadges = new Set((userData.badges || []).map(badgeId));
         const grid = document.getElementById('allBadgesGrid');
-        document.getElementById('badgesModalSub').textContent = `У тебя ${myBadges.size} из ${ALL_BADGES.length} значков`;
+        document.getElementById('badgesModalSub').textContent =
+            `У тебя ${myBadges.size} из ${ALL_BADGES.length + RANK_BADGES.length} значков`;
         grid.innerHTML = '';
-        ALL_BADGES.forEach(b => {
-            const owned = myBadges.has(b.emoji);
+        // Знаки уровня КСПОЯ показываем вместе с обычными значками: их
+        // тоже можно получить и увидеть в профиле, а раньше каталог о них
+        // не знал и уровень выпадал из списка.
+        const catalog = ALL_BADGES.concat(RANK_BADGES);
+        catalog.forEach(b => {
+            const owned = myBadges.has(b.id);
             const div = document.createElement('div');
             div.className = 'badge-item' + (owned ? ' owned' : ' locked-item');
             div.innerHTML = `
-                <div class="b-emoji">${b.emoji}</div>
-                <div class="b-label">${b.label}</div>
-                ${!owned ? '<div class="b-lock">🔒</div>' : ''}
+                <div class="b-emoji"><img src="${esc(badgeImg(b.id))}" alt=""></div>
+                <div class="b-label">${esc(b.label)}</div>
+                ${!owned ? '<div class="b-lock">' + svgIcon('lock', { size: 15 }) + '</div>' : ''}
             `;
             grid.appendChild(div);
         });
@@ -347,8 +562,8 @@
     /* ===== АВАТАР ПИКЕР ===== */
     function openAvatarModal() {
         if (!userData) return;
-        const myAvatars = new Set(userData.avatars || []);
-        const activeAv = userData.active_avatar || '🐱';
+        const myAvatars = new Set((userData.avatars || []).map(avatarId));
+        const activeAv = avatarId(userData.active_avatar) || 'cat';
         const container = document.getElementById('avatarPickerGrid');
         container.innerHTML = '';
 
@@ -363,15 +578,16 @@
             const grid = document.createElement('div');
             grid.className = 'avatar-grid';
             items.forEach(av => {
-                const owned = myAvatars.has(av.emoji);
-                const isActive = av.emoji === activeAv;
+                const owned = myAvatars.has(av.id);
+                const isActive = av.id === activeAv;
                 const div = document.createElement('div');
                 div.className = 'avatar-option' + (isActive ? ' selected' : '') + (!owned ? ' locked-av' : '');
                 div.innerHTML = `
-                    <img src="${av.img}" alt="${av.label}">
-                    <div class="av-label">${av.label}</div>
+                    <img src="${esc(avatarImg(av.id))}" alt="${esc(av.label)}">
+                    <div class="av-label">${esc(av.label)}</div>
                     <div class="av-rarity rar-${rarity}">${RARITY_LABELS[rarity]}</div>
-                    ${!owned ? '<div style="font-size:18px;margin-top:2px">🔒</div>' : ''}
+                    ${!owned ? '<div style="margin-top:4px;color:#8e9fae">'
+                        + svgIcon('lock', { size: 15 }) + '</div>' : ''}
                 `;
                 if (owned) {
                     div.onclick = () => selectAvatar(av);
@@ -389,7 +605,7 @@
 
         // Выбор сохраняется на сервере: раньше он жил только в localStorage
         // и слетал при первом же обновлении данных с сервера.
-        const r = await API.put('/api/profile/avatar', { avatar: av.emoji });
+        const r = await API.put('/api/profile/avatar', { avatar: av.id });
         if (!r.ok) {
             showToast((r.data && r.data.error) || 'Не удалось сменить аватарку', 'error');
             return;
@@ -399,9 +615,9 @@
         localStorage.setItem('currentUser', JSON.stringify(r.data));
 
         const img = document.getElementById('profileAvatarImg');
-        if (img) img.src = av.img;
+        if (img) img.src = avatarImg(av.id);
         const hav = document.getElementById('headerAvatar');
-        if (hav) hav.src = av.img;
+        if (hav) hav.src = avatarImg(av.id);
 
         closeAvatarModal();
         showToast(`Аватарка «${av.label}» выбрана!`, 'success');
@@ -415,17 +631,305 @@
             userData = r.data;
             localStorage.setItem('currentUser', JSON.stringify(r.data));
             document.getElementById('headerUsername').textContent = r.data.nickname;
-            showToast('Никнейм обновлён ✓', 'success');
+            showToast('Никнейм обновлён', 'success');
         } else {
             showToast(r.data.error || 'Ошибка', 'error');
         }
+    }
+
+    // ── Согласие на участие в исследовании ──
+    //
+    // Состояние приходит вместе с профилем (поле research_consent), поэтому
+    // отдельного GET не нужно: галочка расставляется там же, где рисуется
+    // карточка.
+    function applyConsent(u) {
+        const box = document.getElementById('consentBox');
+        if (!box) return;
+        box.checked = !!(u && u.research_consent);
+        showConsentState(box.checked);
+    }
+
+    function showConsentState(on) {
+        const el = document.getElementById('consentState');
+        if (!el) return;
+        el.className = 'consent-state ' + (on ? 'on' : 'off');
+        el.textContent = on
+            ? 'Спасибо — твои обезличенные данные учитываются в исследовании.'
+            : 'Согласие не дано: данные в исследование не попадают.';
+    }
+
+    async function saveConsent(on) {
+        const box = document.getElementById('consentBox');
+        const r = await API.post('/api/research/consent', { agree: !!on });
+        if (!r.ok) {
+            // Возвращаем галочку в прежнее положение: иначе она показывала бы
+            // состояние, которого на сервере нет.
+            if (box) box.checked = !on;
+            showToast((r.data && r.data.error) || 'Не удалось сохранить', 'error');
+            return;
+        }
+        if (userData) userData.research_consent = !!on;
+        showConsentState(!!on);
+        showToast(on ? 'Согласие сохранено' : 'Согласие отозвано', 'success');
     }
 
     // Закрытие моделей по клику вне
     document.getElementById('badgesModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBadgesModal(); });
     document.getElementById('avatarModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAvatarModal(); });
 
+
+    /* ═══ Повторение и работа над ошибками ═══════════════════════════
+       Порядок задаёт модель знаний: сначала темы, которые начинают
+       забываться, потом собственные ошибки. Новые темы — в дереве.
+
+       Раздел переехал сюда со вкладки «Сегодня»: отдельный экран ради
+       двух списков занимал место в нижней панели, а заходили на него
+       ровно за тем же, за чем заходят в профиль — посмотреть, как идут
+       дела. Данные те же: /api/review/plan и /api/mistakes.
+       ═══════════════════════════════════════════════════════════════ */
+
+    const REVIEW = { plan: null, mistakes: null, drillItems: null };
+
+    async function loadReview() {
+        const [planRes, mistRes] = await Promise.all([
+            API.get('/api/review/plan'),
+            API.get('/api/mistakes'),
+        ]);
+
+        const card = document.getElementById('reviewCard');
+        card.hidden = false;
+
+        if (!planRes.ok || !mistRes.ok) {
+            document.getElementById('reviewContent').innerHTML = `
+                <div class="rv-empty">
+                    ${svgIcon('warn', { size: 26, color: '#b26a24' })}
+                    <div class="rv-empty-title">Не получилось загрузить план</div>
+                    <div class="rv-empty-note">Обнови страницу — данные никуда не делись.</div>
+                </div>`;
+            return;
+        }
+
+        REVIEW.plan = planRes.data;
+        REVIEW.mistakes = mistRes.data;
+        // Тексты заданий подтягиваем сразу: список ошибок без них выглядит
+        // как «Ударение, Ударение, Ударение» и ничего ученику не сообщает.
+        REVIEW.drillItems = await collectDrillItems(REVIEW.mistakes.items || []);
+        renderReview();
+    }
+
+    function renderReview() {
+        const p = REVIEW.plan;
+        const due = p.due || [];
+        const items = REVIEW.mistakes.items || [];
+
+        document.getElementById('reviewContent').innerHTML =
+            renderReviewStats(p, due, items) +
+            renderDueSection(due, p) +
+            renderMistakeSection(items, REVIEW.mistakes);
+
+        const btn = document.getElementById('drillBtn');
+        if (btn) btn.onclick = startDrill;
+    }
+
+    function renderReviewStats(p, due, mistakes) {
+        return `
+        <div class="rv-stats">
+            <div class="rv-stat${due.length ? ' is-due' : ''}">
+                <div class="v">${due.length}</div><div class="l">к повторению</div></div>
+            <div class="rv-stat">
+                <div class="v">${mistakes.length}</div><div class="l">в тетради ошибок</div></div>
+            <div class="rv-stat">
+                <div class="v">${p.mastered || 0}</div><div class="l">освоено тем</div></div>
+            <div class="rv-stat">
+                <div class="v">${p.learned || 0}<small> / ${p.total_topics || 0}</small></div>
+                <div class="l">начато тем</div></div>
+        </div>`;
+    }
+
+    function renderDueSection(due, p) {
+        const head = `
+        <div class="rv-sec">
+            <div class="rv-sec-head">
+                <h3>Пора повторить</h3>
+                ${due.length ? `<span class="rv-count">${due.length}</span>` : ''}
+            </div>
+            <p class="rv-sub">Тема возвращается по расширяющемуся интервалу: через день,
+               три, неделю, две с половиной, пять. Чем дольше она держится в памяти,
+               тем реже показывается.</p>`;
+
+        if (!due.length) {
+            return head + `
+            <div class="rv-empty">
+                ${svgIcon('check', { size: 26, color: '#1e7a5b' })}
+                <div class="rv-empty-title">Ни одна тема не просрочена</div>
+                <div class="rv-empty-note">${p.learned
+                    ? 'Всё, что ты проходил, пока держится. Возвращаться рано.'
+                    : 'Открой первую тему в дереве — она появится здесь через день.'}</div>
+            </div></div>`;
+        }
+
+        const cards = due.map(t => {
+            const late = t.overdue_days > 0;
+            return `
+            <a class="rv-card${late ? ' is-late' : ''}"
+               href="lesson.html?id=${encodeURIComponent(t.topic_id)}&review=1">
+                <div class="rv-card-main">
+                    <div class="rv-title">${esc(t.title)}</div>
+                    <div class="rv-sect">${esc(t.section)}</div>
+                    <div class="rv-boxes">${
+                        Array.from({ length: 5 }, (_, i) =>
+                            `<span class="${i < t.box ? 'on' : ''}"></span>`).join('')
+                    }</div>
+                </div>
+                <div class="rv-meta">
+                    <div class="rv-when${late ? ' is-late' : ''}">${
+                        late ? 'просрочено ' + esc(plural(t.overdue_days, 'день', 'дня', 'дней'))
+                             : 'срок сегодня'
+                    }</div>
+                    <div class="rv-reward">
+                        <span>${svgIcon('bolt', { size: 12 })} ${t.xp} XP</span>
+                        <span>${svgIcon('coin', { size: 12 })} ${t.coins}</span>
+                    </div>
+                </div>
+            </a>`;
+        }).join('');
+
+        return head + `<div class="rv-list">${cards}</div></div>`;
+    }
+
+    function renderMistakeSection(items, m) {
+        const days = m.days_to_resolve || 2;
+        const head = `
+        <div class="rv-sec">
+            <div class="rv-sec-head">
+                <h3>Работа над ошибками</h3>
+                ${items.length ? `<span class="rv-count">${items.length}</span>` : ''}
+            </div>
+            <p class="rv-sub">Задание уходит отсюда после
+               ${esc(plural(days, 'верного ответа', 'верных ответов', 'верных ответов'))}
+               в разные дни. Ответ сразу после разбора не считается: это память
+               о только что прочитанном, а не знание.</p>`;
+
+        if (!items.length) {
+            return head + `
+            <div class="rv-empty">
+                ${svgIcon('notepad', { size: 26, color: '#8ba0ac' })}
+                <div class="rv-empty-title">Тетрадь пуста</div>
+                <div class="rv-empty-note">Ошибки будут попадать сюда сами — и сами
+                    уходить, когда разберёшься.</div>
+            </div></div>`;
+        }
+
+        const byItem = new Map((REVIEW.drillItems || []).map(d => [d.itemId, d]));
+
+        const rows = items.slice(0, 12).map(it => {
+            const drill = byItem.get(it.item_id);
+            const meta = (typeof LESSON_BY_ID !== 'undefined' && LESSON_BY_ID[it.topic_id]) || null;
+            const question = drill ? drill.q.q.replace(/_{2,}/g, '…')
+                                   : (meta ? meta.title : it.topic_id);
+            return `
+            <div class="rv-row">
+                <div class="rv-row-main">
+                    <div class="rv-q">${esc(question)}</div>
+                    <div class="rv-src">${esc(meta ? meta.title : it.topic_id)}</div>
+                </div>
+                <span class="rv-tag">${esc(plural(it.wrong_count, 'ошибка', 'ошибки', 'ошибок'))}</span>
+                <div class="rv-row-when rv-src">${esc(formatDate(it.last_wrong))}</div>
+            </div>`;
+        }).join('');
+
+        const more = items.length > 12
+            ? `<div class="rv-more">и ещё ${items.length - 12} в тетради</div>` : '';
+        const ready = (REVIEW.drillItems || []).length;
+
+        return head + `
+        <div class="rv-panel" id="mistakePanel">
+            ${rows}${more}
+            <div class="rv-action">
+                <button class="rv-btn" id="drillBtn"${ready ? '' : ' disabled'}>
+                    ${svgIcon('pen', { size: 15 })}
+                    ${ready
+                        ? 'Разобрать ' + esc(plural(Math.min(ready, 10), 'задание', 'задания', 'заданий'))
+                        : 'Задания не загрузились — обнови страницу'}
+                </button>
+            </div>
+        </div></div>`;
+    }
+
+    /**
+     * Собрать задания для тренажёра.
+     *
+     * Сервер присылает только идентификаторы: текст задания и разбор лежат
+     * в static/lessons/*.js. Так у текста заданий остаётся один источник
+     * правды — иначе база и файлы уроков рано или поздно разошлись бы.
+     */
+    async function collectDrillItems(refs) {
+        const out = [];
+        for (const ref of refs) {
+            const hash = ref.item_id.lastIndexOf('#');
+            if (hash < 0) continue;
+            const qIdx = Number(ref.item_id.slice(hash + 1));
+            if (!Number.isInteger(qIdx)) continue;
+
+            let lesson = null;
+            try { lesson = await loadLesson(ref.topic_id); } catch { lesson = null; }
+            const q = lesson && lesson.practice && lesson.practice[qIdx];
+            // Задание могло исчезнуть после правки урока — пропускаем его,
+            // а не роняем весь тренажёр.
+            if (!q) continue;
+
+            out.push({ topicId: ref.topic_id, itemId: ref.item_id, title: lesson.title, q });
+        }
+        return out;
+    }
+
+    async function startDrill() {
+        const items = (REVIEW.drillItems || []).slice(0, 10);
+        if (!items.length) return;
+
+        // Панель со списком уезжает: во время разбора она отвлекает, а после
+        // него всё равно перерисуется с новыми данными.
+        const panel = document.getElementById('mistakePanel');
+        if (panel) panel.hidden = true;
+
+        const slot = document.getElementById('drillSlot');
+        slot.innerHTML = '<div class="rv-sec"><div class="pd-wrap" id="drillRoot"></div></div>';
+        slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        PracticeDrill.mount(document.getElementById('drillRoot'), items, {
+            onAnswer: (item, correct, timeMs) => {
+                Attempts.record({
+                    topic: item.topicId,
+                    item: item.itemId,
+                    source: 'review',
+                    correct, timeMs,
+                });
+            },
+            onDone: async () => {
+                // Очередь ответов дожимается до перезагрузки списка, иначе
+                // счётчики показали бы старое состояние.
+                await Attempts.flush();
+                const [mist, plan] = await Promise.all([
+                    API.get('/api/mistakes'),
+                    API.get('/api/review/plan'),
+                ]);
+                if (mist.ok) REVIEW.mistakes = mist.data;
+                if (plan.ok) REVIEW.plan = plan.data;
+                REVIEW.drillItems = await collectDrillItems(REVIEW.mistakes.items || []);
+
+                // Итог разбора остаётся на экране: обновляем только счётчики
+                // сверху, чтобы было видно, что тетрадь похудела.
+                const stats = document.querySelector('.rv-stats');
+                if (stats) {
+                    stats.outerHTML = renderReviewStats(REVIEW.plan, REVIEW.plan.due || [],
+                                                        REVIEW.mistakes.items || []);
+                }
+            },
+        });
+    }
+
     loadProfile();
+    loadReview();
     </script>
 </body>
 </html>

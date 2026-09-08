@@ -25,6 +25,18 @@ type User struct {
 	GamesWonTypes   []string  `json:"games_won_types"`
 	LastDailyClaim  string    `json:"last_daily_claim"`
 	CreatedAt       time.Time `json:"created_at"`
+
+	// Роль учителя. Страница класса спрашивает её у /api/class/my, но
+	// админке роль нужна в общем списке — иначе её нечем выдавать.
+	IsTeacher bool `json:"is_teacher"`
+	// Согласие на использование обезличенных данных в исследовании.
+	// Ученик видит и меняет его сам, в профиле.
+	ResearchConsent bool `json:"research_consent"`
+	// Группа эксперимента. Уходит ТОЛЬКО в админку: ученик, узнавший, что
+	// он в контрольной группе, перестаёт быть участником эксперимента и
+	// становится его наблюдателем. Ответы самому ученику чистит
+	// handlers.selfView.
+	StudyGroup string `json:"study_group,omitempty"`
 }
 
 type LeaderboardEntry struct {

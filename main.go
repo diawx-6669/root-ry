@@ -44,6 +44,9 @@ func main() {
 	mux.HandleFunc("/api/progress", middleware.AuthMiddleware(h.Progress))
 	mux.HandleFunc("/api/review/plan", middleware.AuthMiddleware(h.ReviewPlan))
 	mux.HandleFunc("/api/mistakes", middleware.AuthMiddleware(h.Mistakes))
+	// ИИ-ассистент: разговорная практика русского языка. Ключ модели
+	// живёт на сервере, поэтому запрос идёт через нас, а не из браузера.
+	mux.HandleFunc("/api/assistant/chat", middleware.AuthMiddleware(h.AssistantChat))
 	mux.HandleFunc("/api/kspoya/start", middleware.AuthMiddleware(h.KspoyaStart))
 	mux.HandleFunc("/api/kspoya/submit", middleware.AuthMiddleware(h.KspoyaSubmit))
 	mux.HandleFunc("/api/kspoya/abort", middleware.AuthMiddleware(h.KspoyaAbort))
@@ -73,7 +76,7 @@ func main() {
 
 	handler := middleware.CORS(mux)
 	fmt.Printf("\n╔══════════════════════════════════════╗\n")
-	fmt.Printf("║  🎓 RootRy запущен на порту %s      ║\n", port)
+	fmt.Printf("║  RootRy запущен на порту %s          ║\n", port)
 	fmt.Printf("║  Demo: demo / demo123                ║\n")
 	fmt.Printf("╚══════════════════════════════════════╝\n\n")
 	log.Fatal(http.ListenAndServe(":"+port, handler))

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Панель Администратора</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css">
     <style>
@@ -57,7 +58,9 @@
             transition: 0.2s;
         }
         .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .stat-card .sc-icon { font-size: 28px; }
+        .stat-card .sc-icon { line-height: 0; margin-bottom: 4px; }
+        .admin-table .badge-cell { display: flex; gap: 4px; align-items: center; }
+        .admin-table .badge-cell img { width: 22px; height: 22px; }
         .stat-card .sc-val { font-size: 32px; font-weight: 900; color: #023e50; line-height: 1; }
         .stat-card .sc-label { font-size: 12px; font-weight: 700; color: #8e9fae; text-transform: uppercase; letter-spacing: 0.8px; }
         .stat-card .sc-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
@@ -95,6 +98,57 @@
             background: #e0f2fe; color: #0284c7; border-radius: 10px;
             padding: 6px 14px; font-size: 12px; font-weight: 800; white-space: nowrap;
         }
+        /* ===== ИССЛЕДОВАНИЕ ===== */
+        .research-wrap {
+            max-width: 900px; margin-bottom: 34px;
+            background: #fff; border-radius: 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border: 1px solid #edf0f4; overflow: hidden;
+        }
+        .research-head {
+            padding: 18px 24px; border-bottom: 1px solid #f0f4f8;
+            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+        }
+        .research-head .rh-title { font-size: 14px; font-weight: 800; color: #023e50; flex: 1 1 auto; }
+        .export-btn {
+            background: #023e50; color: #fff; border: none; border-radius: 12px;
+            padding: 9px 18px; font-size: 12.5px; font-weight: 700;
+            font-family: 'Montserrat', sans-serif; cursor: pointer; transition: 0.2s;
+        }
+        .export-btn:hover:not(:disabled) { background: #0099cc; }
+        .export-btn:disabled { opacity: 0.55; cursor: default; }
+        .research-legend {
+            padding: 12px 24px; background: #f8fbfd;
+            font-size: 12px; color: #6b8494; line-height: 1.6;
+            border-bottom: 1px solid #f0f4f8;
+        }
+        .research-legend b { color: #023e50; }
+        .group-pill {
+            display: inline-block; min-width: 26px; text-align: center;
+            border-radius: 8px; padding: 3px 8px;
+            font-size: 12px; font-weight: 800;
+        }
+        .group-pill.g-a { background: #dcfce7; color: #15803d; }
+        .group-pill.g-b { background: #fef3c7; color: #b45309; }
+        .group-pill.g-none { background: #f1f5f9; color: #94a3b8; }
+        .group-select {
+            border: 1.5px solid #e2e8f0; border-radius: 9px;
+            padding: 4px 6px; font-size: 12px; font-weight: 700;
+            font-family: 'Montserrat', sans-serif; color: #023e50;
+            background: #fff; cursor: pointer;
+        }
+        .role-btn {
+            border: 1.5px solid #cbd5e1; background: #fff; color: #64748b;
+            border-radius: 9px; padding: 4px 10px;
+            font-size: 11.5px; font-weight: 800;
+            font-family: 'Montserrat', sans-serif; cursor: pointer; transition: 0.2s;
+            white-space: nowrap;
+        }
+        .role-btn:hover:not(:disabled) { border-color: #0099cc; color: #0284c7; }
+        .role-btn.on { background: #0284c7; border-color: #0284c7; color: #fff; }
+        .role-btn:disabled { opacity: 0.5; cursor: default; }
+        .consent-dot { font-size: 13px; }
+
         table { width: 100%; border-collapse: collapse; }
         thead tr { background: #f8fafc; }
         th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
@@ -143,7 +197,7 @@
 
             <!-- Шапка с профилем -->
             <div class="admin-header-card" id="adminHeaderCard">
-                <div class="admin-av">👑</div>
+                <div class="admin-av"><i class="fa-solid fa-crown"></i></div>
                 <div>
                     <h2 id="adminNickname">Администратор</h2>
                     <p>@<span id="adminUsername">—</span> · Полный доступ к статистике платформы</p>
@@ -158,6 +212,32 @@
             </div>
             <div class="stats-grid" id="statsGrid">
                 <div style="color:#8e9fae;font-size:14px;padding:20px"><i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...</div>
+            </div>
+
+            <!-- ИССЛЕДОВАНИЕ.
+                 Эндпоинты /api/admin/research/* работали с самого начала, но
+                 открыть их можно было только руками через curl. Без экрана
+                 эксперимент никто бы не собрал: ни группы назначить, ни
+                 увидеть, что происходит с замерами. -->
+            <div class="users-section-title">
+                <i class="fa-solid fa-flask" style="color:#0099cc"></i> Исследование
+            </div>
+            <div class="research-wrap">
+                <div class="research-head">
+                    <div class="rh-title">Сводка по группам</div>
+                    <button class="refresh-btn" id="researchRefreshBtn" onclick="loadResearch()">
+                        <i class="fa-solid fa-arrows-rotate"></i> Обновить
+                    </button>
+                    <button class="export-btn" id="researchExportBtn">
+                        <i class="fa-solid fa-file-csv"></i> Выгрузить CSV
+                    </button>
+                </div>
+                <div class="research-legend" id="researchLegend"></div>
+                <div id="researchTableWrap">
+                    <div style="padding:30px;text-align:center;color:#8e9fae;font-size:14px">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...
+                    </div>
+                </div>
             </div>
 
             <!-- СПИСОК ПОЛЬЗОВАТЕЛЕЙ -->
@@ -175,16 +255,17 @@
     </main>
 
     <nav class="bottom-tabbar">
-        <a href="today.html" class="tab-item"><i class="fa-solid fa-calendar-day"></i><span>Сегодня</span></a>
         <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js"></script>
     <script>
     initHeader();
@@ -201,10 +282,10 @@
         document.getElementById('adminUsername').textContent = u.username;
 
         // Обновляем аватарку в шапке карточки
-        const avSrc = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username)}`;
+        const avSrc = avatarSrc(u);
         document.querySelector('.admin-av').innerHTML = `<img src="${avSrc}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
 
-        await Promise.all([loadStats(), loadUsers()]);
+        await Promise.all([loadStats(), loadUsers(), loadResearch()]);
     }
 
     async function loadStats() {
@@ -216,49 +297,49 @@
         const s = r.data;
         document.getElementById('statsGrid').innerHTML = `
             <div class="stat-card online-card">
-                <div class="sc-icon">🟢</div>
+                <div class="sc-icon">${svgIcon('dot', { size: 22, color: '#10b981' })}</div>
                 <div class="sc-val">${s.active_today ?? 0}</div>
                 <div class="sc-label">Активны сегодня</div>
                 <div class="sc-sub">Заходили или играли сегодня</div>
             </div>
             <div class="stat-card total-card">
-                <div class="sc-icon">👥</div>
+                <div class="sc-icon">${svgIcon('users', { size: 22, color: '#0284c7' })}</div>
                 <div class="sc-val">${s.total_users ?? 0}</div>
                 <div class="sc-label">Всего игроков</div>
                 <div class="sc-sub">Зарегистрировано на платформе</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">🎮</div>
+                <div class="sc-icon">${svgIcon('gamepad', { size: 22, color: '#7c3aed' })}</div>
                 <div class="sc-val">${s.total_games ?? 0}</div>
                 <div class="sc-label">Игр сыграно</div>
                 <div class="sc-sub">Всего за всё время</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">📦</div>
+                <div class="sc-icon">${svgIcon('box', { size: 22, color: '#b45309' })}</div>
                 <div class="sc-val">${s.total_cases ?? 0}</div>
                 <div class="sc-label">Кейсов открыто</div>
                 <div class="sc-sub">Суммарно всеми игроками</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">⚡</div>
+                <div class="sc-icon">${svgIcon('bolt', { size: 22, color: '#0099cc' })}</div>
                 <div class="sc-val">${(s.total_xp ?? 0).toLocaleString('ru')}</div>
                 <div class="sc-label">Суммарный XP</div>
                 <div class="sc-sub">Накоплен всеми игроками</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">🪙</div>
+                <div class="sc-icon">${svgIcon('coin', { size: 22, color: '#f0b429' })}</div>
                 <div class="sc-val">${(s.total_balance ?? 0).toLocaleString('ru')}</div>
                 <div class="sc-label">Монет в обороте</div>
                 <div class="sc-sub">Суммарный баланс игроков</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">🏅</div>
+                <div class="sc-icon">${svgIcon('medal', { size: 22, color: '#f0b429' })}</div>
                 <div class="sc-val">${s.total_badges ?? 0}</div>
                 <div class="sc-label">Значков выдано</div>
                 <div class="sc-sub">Суммарно у всех игроков</div>
             </div>
             <div class="stat-card">
-                <div class="sc-icon">🎨</div>
+                <div class="sc-icon">${svgIcon('palette', { size: 22, color: '#db2777' })}</div>
                 <div class="sc-val">${s.total_avatars ?? 0}</div>
                 <div class="sc-label">Аватарок открыто</div>
                 <div class="sc-sub">Суммарно у всех игроков</div>
@@ -301,15 +382,17 @@
                     <th>Уровень</th>
                     <th>XP</th>
                     <th>Монеты</th>
-                    <th>🔥 Серия</th>
+                    <th>Серия</th>
                     <th>Значки</th>
                     <th>Статус</th>
+                    <th>Роль</th>
+                    <th>Группа</th>
                 </tr>
             </thead>
             <tbody>
                 ${sorted.map((u, i) => {
                     const level = Math.floor((u.xp || 0) / 200) + 1;
-                    const avSrc = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username)}`;
+                    const avSrc = avatarSrc(u);
                     const isActiveToday = u.last_login === today || u.daily_tasks_date === today;
                     return `<tr>
                         <td style="color:#8e9fae;font-weight:800">${i + 1}</td>
@@ -324,17 +407,183 @@
                         </td>
                         <td><span style="background:#e0f2fe;color:#0284c7;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:800">Ур. ${level}</span></td>
                         <td>${(u.xp || 0).toLocaleString('ru')}</td>
-                        <td>🪙 ${(u.balance || 0).toLocaleString('ru')}</td>
+                        <td>${(u.balance || 0).toLocaleString('ru')}</td>
                         <td>${u.streak || 0} дн.</td>
-                        <td>${(u.badges || []).slice(0, 4).join(' ')}</td>
+                        <td class="badge-cell">${(u.badges || []).slice(0, 4).map(b =>
+                            `<img src="${esc(badgeImg(b))}" alt="" title="${esc(badgeLabel(b))}">`
+                        ).join('')}</td>
                         <td>
                             <span class="active-dot ${isActiveToday ? 'today' : ''}"></span>
                             ${isActiveToday ? '<span style="color:#059669;font-size:12px;font-weight:700">Сегодня</span>' : '<span style="color:#8e9fae;font-size:12px">Неактивен</span>'}
+                        </td>
+                        <td>
+                            <button class="role-btn ${u.is_teacher ? 'on' : ''}"
+                                    data-teacher="${esc(u.username)}"
+                                    data-on="${u.is_teacher ? '0' : '1'}"
+                                    title="${u.is_teacher ? 'Снять роль учителя' : 'Выдать роль учителя'}">
+                                ${u.is_teacher ? 'Учитель' : 'Ученик'}
+                            </button>
+                        </td>
+                        <td>
+                            <select class="group-select" data-group="${esc(u.username)}">
+                                <option value=""  ${!u.study_group ? 'selected' : ''}>—</option>
+                                <option value="A" ${u.study_group === 'A' ? 'selected' : ''}>A</option>
+                                <option value="B" ${u.study_group === 'B' ? 'selected' : ''}>B</option>
+                            </select>
+                            <span class="consent-dot" title="${u.research_consent ? 'Согласие на участие дано' : 'Согласия нет — в выгрузку не попадёт'}">${u.research_consent
+                                ? svgIcon('check', { size: 15, color: '#059669' })
+                                : svgIcon('ban', { size: 15, color: '#94a3b8' })}</span>
                         </td>
                     </tr>`;
                 }).join('')}
             </tbody>
         </table>`;
+    }
+
+    // ── Исследование: сводка, группы, роль учителя ──
+
+    async function loadResearch() {
+        const btn = document.getElementById('researchRefreshBtn');
+        if (btn) btn.classList.add('spinning');
+        const r = await API.get('/api/admin/research/summary');
+        if (btn) btn.classList.remove('spinning');
+
+        const wrap = document.getElementById('researchTableWrap');
+        const legend = document.getElementById('researchLegend');
+        if (!r.ok) {
+            wrap.innerHTML = '<div class="no-users">Не удалось загрузить сводку</div>';
+            return;
+        }
+
+        const lg = r.data.legend || {};
+        legend.innerHTML = Object.keys(lg).sort()
+            .map(k => `<div><b>Группа ${esc(k)}</b> — ${esc(lg[k])}</div>`).join('');
+
+        const rows = r.data.groups || [];
+        // «Пар» — участники, у которых есть и предтест, и посттест: только по
+        // ним считается прирост, и именно это число решает, есть ли вообще о
+        // чём говорить на защите.
+        wrap.innerHTML = `<table>
+            <thead>
+                <tr>
+                    <th>Группа</th>
+                    <th>Участников</th>
+                    <th>Пар пред/пост</th>
+                    <th>Предтест</th>
+                    <th>Посттест</th>
+                    <th>Прирост</th>
+                    <th>SD прироста</th>
+                    <th>Медиана дней</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows.map(g => `<tr>
+                    <td><span class="group-pill g-${esc(String(g.group).toLowerCase())}">${esc(g.group)}</span></td>
+                    <td>${g.n ?? 0}</td>
+                    <td>${g.paired ?? 0}</td>
+                    <td>${fmtNum(g.mean_pre)}</td>
+                    <td>${fmtNum(g.mean_post)}</td>
+                    <td><b>${fmtNum(g.mean_gain)}</b></td>
+                    <td>${fmtNum(g.sd_gain)}</td>
+                    <td>${g.median_days ?? 0}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+        ${rows.every(g => !g.paired)
+            ? '<div class="no-users" style="padding:16px 24px">Пар «предтест + посттест» пока нет: прирост появится, когда участники сдадут КСПОЯ второй раз.</div>'
+            : ''}`;
+    }
+
+    function fmtNum(v) {
+        const n = Number(v || 0);
+        return Number.isInteger(n) ? String(n) : n.toFixed(1);
+    }
+
+    // Роль учителя. Обновляем только одну строку списка, а не всю таблицу:
+    // иначе поиск и позиция прокрутки сбрасывались бы на каждый клик.
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.role-btn[data-teacher]');
+        if (!btn) return;
+        const username = btn.dataset.teacher;
+        const on = btn.dataset.on === '1';
+        btn.disabled = true;
+        const r = await API.post('/api/admin/teacher', { username, on });
+        btn.disabled = false;
+        if (!r.ok) {
+            showAdminToast((r.data && r.data.error) || 'Не удалось изменить роль');
+            return;
+        }
+        const u = allUsers.find(x => x.username === username);
+        if (u) u.is_teacher = on;
+        btn.classList.toggle('on', on);
+        btn.textContent = on ? 'Учитель' : 'Ученик';
+        btn.dataset.on = on ? '0' : '1';
+        btn.title = on ? 'Снять роль учителя' : 'Выдать роль учителя';
+    });
+
+    // Группа эксперимента.
+    document.addEventListener('change', async (e) => {
+        const sel = e.target.closest('.group-select[data-group]');
+        if (!sel) return;
+        const username = sel.dataset.group;
+        const value = sel.value;
+        const prev = (allUsers.find(x => x.username === username) || {}).study_group || '';
+        sel.disabled = true;
+        const r = await API.post('/api/admin/research/group', { username, group: value });
+        sel.disabled = false;
+        if (!r.ok) {
+            sel.value = prev;   // сервер группу не принял — показываем прежнюю
+            showAdminToast((r.data && r.data.error) || 'Не удалось назначить группу');
+            return;
+        }
+        const u = allUsers.find(x => x.username === username);
+        if (u) u.study_group = value;
+        loadResearch();
+    });
+
+    /* Выгрузка идёт через fetch с токеном: обычная ссылка не несёт заголовок
+       Authorization, и сервер ответил бы 401. */
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('#researchExportBtn');
+        if (!btn) return;
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/admin/research/export',
+                { headers: { Authorization: 'Bearer ' + API.token() } });
+            if (!res.ok) throw new Error('export failed');
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rootry-research.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch {
+            showAdminToast('Не удалось выгрузить файл');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // Короткое сообщение об ошибке. alert() посреди защиты проекта — не то,
+    // что стоит показывать залу.
+    function showAdminToast(text) {
+        let el = document.getElementById('adminToast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'adminToast';
+            el.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);' +
+                'background:#023e50;color:#fff;padding:12px 20px;border-radius:14px;' +
+                'font-size:13px;font-weight:700;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);' +
+                'font-family:Montserrat,sans-serif;max-width:80vw;text-align:center';
+            document.body.appendChild(el);
+        }
+        el.textContent = text;
+        el.style.display = 'block';
+        clearTimeout(el._t);
+        el._t = setTimeout(() => { el.style.display = 'none'; }, 3200);
     }
 
     init();
