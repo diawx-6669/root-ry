@@ -130,7 +130,14 @@
         .rarity-section-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#8e9fae; margin:18px 0 8px; }
 
         /* ===== НИКНЕЙМ ===== */
-        .edit-row { display:flex; gap:10px; margin-top:8px; }
+        .edit-row { display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; }
+        .edit-row .edit-input { min-width:0; }
+        @media (max-width:520px) {
+            /* Поле и кнопка встают в две строки: иначе кнопка «Сохранить»
+               уезжала за правый край экрана. */
+            .edit-row { flex-direction:column; }
+            .edit-row .save-btn { width:100%; }
+        }
         .edit-input { flex:1; height:44px; background:#f0f4f8; border:2px solid transparent; border-radius:14px; padding:0 16px; font-size:14px; font-weight:600; font-family:'Montserrat',sans-serif; outline:none; transition:0.3s; }
         .edit-input:focus { border-color:#0099cc; background:#fff; }
         .save-btn { height:44px; padding:0 22px; background:linear-gradient(90deg,#023e50,#0099cc); border:none; border-radius:14px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:'Montserrat',sans-serif; transition:0.2s; white-space:nowrap; }
@@ -151,6 +158,18 @@
         }
         .admin-goto-btn:hover { background:linear-gradient(90deg,#0099cc,#023e50); box-shadow:0 8px 28px rgba(0,153,204,0.3); transform:translateY(-1px); }
         .admin-goto-btn i { font-size:18px; }
+
+        /* Кабинет класса: тот же размер, что у кнопки админки, но спокойнее —
+           класс есть у всех, а админка у одного человека. */
+        .class-goto-btn {
+            display:flex; align-items:center; justify-content:center; gap:10px;
+            width:100%; margin-top:14px; padding:14px 24px;
+            background:#eaf7fc; color:#036389; border:1.5px solid #bfe4f2;
+            border-radius:16px; font-size:14px; font-weight:700;
+            font-family:'Montserrat',sans-serif; cursor:pointer; transition:0.25s;
+        }
+        .class-goto-btn:hover { background:#dcf1fa; border-color:#0099cc; }
+        .class-goto-btn i { font-size:17px; }
 
         /* ===== СОГЛАСИЕ НА УЧАСТИЕ В ИССЛЕДОВАНИИ ===== */
         .consent-box {
@@ -507,6 +526,9 @@
                 </label>
                 <div class="consent-state" id="consentState"></div>
             </div>
+
+            <button class="class-goto-btn" onclick="window.location.href='class.html'">
+                <i class="fa-solid fa-chalkboard-user"></i> Мой класс</button>
 
             <button class="logout-btn" onclick="API.logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из аккаунта</button>
             ${u.is_admin ? `<button class="admin-goto-btn" onclick="window.location.href='admin.html'"><i class="fa-solid fa-shield-halved"></i> Перейти в панель администратора</button>` : ''}

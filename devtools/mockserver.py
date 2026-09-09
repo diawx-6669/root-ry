@@ -49,16 +49,61 @@ CHAT = {
     "note": "Хорошо построил предложение с придаточным — это сложная конструкция.",
 }
 
+
+# ── КСПОЯ: полный проход теста без базы ──────────────────────────────
+KSPOYA_QUESTIONS = [
+    {"id": i, "level": ["A1","A2","B1","B2","C1","C2"][i % 6],
+     "topic": "Орфография · Проверка",
+     "text": f"Тестовый вопрос номер {i}: выберите верный вариант.",
+     "options": [f"вариант {j}" for j in range(1, 7)]}
+    for i in range(1, 41)
+]
+
+KSPOYA_START = {"session_id": "mock-session", "questions": KSPOYA_QUESTIONS,
+                "total": 40, "minutes": 40, "started_at": "2026-09-09T10:00:00Z",
+                "seconds_left": 2400}
+
+KSPOYA_SUBMIT = {
+    "correct": 27, "total": 40, "answered": 40, "best_streak": 6, "percent": 68,
+    "level": "B1", "level_label": "B1 — Средний", "level_badge": "rank_b1",
+    "level_scale": [], "by_level": {}, "by_topic": {},
+    "xp_earned": 750, "coins_earned": 200, "badge_earned": "rank_b1",
+    "prev_level": "", "improved": True, "new_balance": 1450, "new_xp": 1390,
+    "diagnosis": {"gaps": [], "route": []},
+    "items": [],
+}
+
+KSPOYA_STATUS = {"best": {"score": 27, "total": 40, "level": "B1"},
+                 "attempts": 1, "can_start": True, "active": None}
+
+CLASS_MY = {
+    "member": [{"id": 1, "name": "8В русский язык", "code": "AB12CD",
+                "teacher": "Касенова А. М.", "members": 24}],
+    "teaching": [],
+}
+
 ROUTES = {
     "/api/me": USER,
     "/api/review/plan": PLAN,
     "/api/mistakes": MISTAKES,
     "/api/kspoya/status": {"best": {"score": 27, "level": "B1"}},
     "/api/assistant/chat": CHAT,
+    "/api/kspoya/start": KSPOYA_START,
+    "/api/kspoya/submit": KSPOYA_SUBMIT,
+    "/api/kspoya/status": KSPOYA_STATUS,
+    "/api/kspoya/history": {"attempts": []},
+    "/api/kspoya/leaderboard": {"entries": []},
+    "/api/kspoya/abort": {"ok": True},
+    "/api/class/my": CLASS_MY,
+    "/api/class/create": {"id": 2, "name": "Новый класс", "code": "XY99ZZ"},
+    "/api/class/join": {"id": 1, "name": "8В русский язык"},
+    "/api/class/heatmap": {"days": [], "students": []},
+    "/api/topics": {"topics": []},
+    "/api/progress": {"topics": {}, "mastered": 4, "learned": 11},
     "/api/admin/stats": {"active_today": 12, "total_users": 84, "total_games": 431,
                          "total_cases": 96, "total_xp": 51240, "total_balance": 78300,
                          "total_badges": 61, "total_avatars": 143},
-    "/api/admin/users": {"users": [dict(USER, level=4)]},
+    "/api/admin/users": [dict(USER, level=4, is_admin=False, is_teacher=False, study_group="A")],
     "/api/case/open": {"item_emoji": "dragon", "item_rarity": "rare",
                        "is_duplicate": False, "compensation": 0,
                        "new_balance": 650, "new_xp": 700},

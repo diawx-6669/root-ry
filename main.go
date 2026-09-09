@@ -54,6 +54,9 @@ func main() {
 	mux.HandleFunc("/api/kspoya/history", middleware.AuthMiddleware(h.KspoyaHistory))
 	mux.HandleFunc("/api/kspoya/attempt", middleware.AuthMiddleware(h.KspoyaAttempt))
 	mux.HandleFunc("/api/kspoya/leaderboard", middleware.AuthMiddleware(h.KspoyaLeaderboard))
+	// Служебная подстановка ответов: живёт только при KSPOYA_PREFILL=1,
+	// иначе обработчик отвечает 404. См. internal/kspoya/prefill.go.
+	mux.HandleFunc("/api/kspoya/prefill", middleware.AuthMiddleware(h.KspoyaPrefill))
 	mux.HandleFunc("/api/profile/avatar", middleware.AuthMiddleware(h.UpdateAvatar))
 	mux.HandleFunc("/api/case/open", middleware.AuthMiddleware(h.CaseOpen))
 	mux.HandleFunc("/api/profile/nickname", middleware.AuthMiddleware(h.UpdateNickname))

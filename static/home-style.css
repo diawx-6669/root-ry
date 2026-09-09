@@ -488,3 +488,59 @@ h1 {
     margin-top: 5px;
     color: #7f8c8d !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Телефон.
+
+   До этого в общей вёрстке не было ни одного медиазапроса: отступы в
+   40px, задуманные под десктоп, на экране в 390px съедали десятую
+   часть ширины, карточки вылезали за край, а восемь подписей нижней
+   панели слипались в «АссистентМагазин».
+
+   Правила лежат здесь, а не в каждой странице отдельно: шапка, панель
+   и рабочая область одни на весь сайт.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+    .global-header { padding: 0 14px; height: 64px; }
+    .global-header .brand span { font-size: 18px; }
+    .header-center .user-info { padding: 4px 10px 4px 4px; }
+    .header-center .username {
+        max-width: 92px; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+    .balance-box { padding: 6px 12px; font-size: 13px; }
+
+    .main-content { padding: 0 14px; }
+    body { padding-top: 78px; padding-bottom: 82px; }
+
+    h1 { font-size: 23px; }
+    h2 { font-size: 19px; }
+
+    /* Карточки страниц свёрстаны под широкий экран: на телефоне у них
+       остаются десктопные отступы, и содержимое уезжает за край. */
+    .profile-card, .about-card, .team-card, .leader-card,
+    .app-window > section, .shop-section {
+        padding-left: 18px; padding-right: 18px;
+        border-radius: 20px;
+    }
+
+    /* Нижняя панель: восемь вкладок помещаются только с мелкой подписью
+       и без боковых отступов. Иконка остаётся крупной — по ней и
+       попадают пальцем. */
+    .bottom-tabbar { height: 62px; padding: 0 2px; }
+    .tab-item { font-size: 9px; gap: 3px; min-width: 0; letter-spacing: -.01em; }
+    .tab-item i { font-size: 18px; }
+    .tab-item span {
+        max-width: 100%; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+}
+
+@media (max-width: 380px) {
+    /* На самых узких экранах подпись уже не читается — оставляем иконки,
+       а название активной вкладки и так подсвечено цветом. */
+    .tab-item span { display: none; }
+    .tab-item i { font-size: 21px; }
+    .bottom-tabbar { height: 56px; }
+}

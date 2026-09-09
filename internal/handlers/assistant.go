@@ -66,6 +66,37 @@ var assistantLevels = map[string]string{
 // ученик мог бы переписать и превратить собеседника, скажем, в
 // решатель домашних заданий.
 func assistantSystemPrompt(level, topic string) string {
+	return assistantPrompt(level, topic, "")
+}
+
+// assistantVoiceRules — добавка к подсказке для голосового режима.
+//
+// Голос — это не чат с уменьшенным шрифтом. Реплику нельзя перечитать,
+// нельзя проглядеть по диагонали и нельзя пропустить середину: она
+// звучит один раз и линейно. Поэтому в голосовом режиме ответ короче,
+// без списков и без разметки, а разбор ошибок вслух не зачитывается —
+// он уходит на панель сбоку, где к нему можно вернуться глазами.
+const assistantVoiceRules = `Этот разговор идёт ГОЛОСОМ: собеседник говорит в микрофон, а твой
+ответ читает синтезатор речи вслух.
+
+Дополнительные правила для голоса:
+- Реплика («reply») — 1–3 коротких предложения. Длинную вслух не дослушают.
+- Никакой разметки: ни списков, ни звёздочек, ни заголовков, ни эмодзи,
+  ни скобок с пояснениями. Только живая устная речь.
+- Не зачитывай разбор ошибок в реплике: он показывается на экране.
+  В реплике можно одной фразой сказать, что стоит поправить, — и всё.
+- Речь распознаётся автоматически, поэтому в тексте собеседника не
+  будет знаков препинания и заглавных букв, а слова могут быть
+  расслышаны неверно. Пунктуационные ошибки в голосовом режиме НЕ
+  отмечай вовсе, а явно неверно расслышанное слово не считай ошибкой:
+  переспроси.
+- Заканчивай реплику вопросом — иначе разговор обрывается тишиной.
+
+`
+
+// assistantPrompt собирает подсказку. mode = "voice" включает правила
+// устного разговора, пустая строка — обычный текстовый чат.
+func assistantPrompt(level, topic, mode string) string {
 	var b strings.Builder
 	b.WriteString(`Ты — доброжелательный собеседник и наставник по русскому языку на
 образовательной платформе RootRy. Твой собеседник — школьник, для которого
@@ -103,6 +134,10 @@ func assistantSystemPrompt(level, topic string) string {
 	if topic != "" {
 		b.WriteString("Тема разговора: " + topic + ". Держись её, пока собеседник " +
 			"сам не сменит тему.\n\n")
+	}
+
+	if mode == "voice" {
+		b.WriteString(assistantVoiceRules)
 	}
 
 	b.WriteString(`Формат ответа — строго JSON:
@@ -177,6 +212,9 @@ type assistantRequest struct {
 	Messages []assistantTurn `json:"messages"`
 	Level    string          `json:"level"`
 	Topic    string          `json:"topic"`
+	// Mode = "voice" для голосового режима. Список закрытый: подставить
+	// в подсказку произвольную строку с клиента нельзя.
+	Mode string `json:"mode"`
 }
 
 type assistantMistake struct {
@@ -236,7 +274,12 @@ func (h *Handler) AssistantChat(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), assistantTimeout)
 	defer cancel()
 
-	reply, err := askGemini(ctx, assistantSystemPrompt(req.Level, strings.TrimSpace(req.Topic)), turns)
+	mode := ""
+	if req.Mode == "voice" {
+		mode = "voice"
+	}
+
+	reply, err := askGemini(ctx, assistantPrompt(req.Level, strings.TrimSpace(req.Topic), mode), turns)
 	if err != nil {
 		log.Printf("ассистент: %v", err)
 		writeError(w, http.StatusBadGateway,

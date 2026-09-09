@@ -44,6 +44,24 @@
         .as-hero h1 { margin:0 0 8px; font-size:25px; font-weight:700; color:#fff; }
         .as-hero p { margin:0; font-size:14px; line-height:1.6; color:#b8d2dd; max-width:64ch; }
 
+        /* Вход в голосовой режим. Стоит прямо в шапке ассистента:
+           это тот же собеседник, просто разговор идёт вслух, и искать
+           его в отдельной вкладке ученику неоткуда. */
+        .as-voice {
+            display:inline-flex; align-items:center; gap:9px; margin-top:16px;
+            padding:11px 20px; border-radius:999px; text-decoration:none;
+            background:rgba(255,255,255,.10); border:1px solid rgba(140,214,240,.35);
+            color:#dff2fb; font-size:13.5px; font-weight:600;
+            transition:background .2s, border-color .2s, transform .15s;
+        }
+        .as-voice:hover {
+            background:rgba(255,255,255,.17); border-color:#6fc6e6;
+            transform:translateY(-1px);
+        }
+        .as-voice small {
+            font-weight:500; color:#8fb9cc;
+        }
+
         /* ── Настройки разговора ──────────────────────────────────── */
         .as-controls {
             display:flex; flex-wrap:wrap; gap:10px; align-items:center;
@@ -222,6 +240,10 @@
                        а всё, что написано не по норме, разбирает справа: что было,
                        как правильно и почему. Ошибаться здесь можно и нужно —
                        именно на своих ошибках язык и ставится.</p>
+                    <a class="as-voice" href="voice.html">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                        Говорить вслух <small>— тот же ассистент, только голосом</small>
+                    </a>
                 </div>
 
                 <div class="as-controls">

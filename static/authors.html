@@ -57,6 +57,14 @@
             border: 3px solid var(--primary-color, #0099cc);
             margin-bottom: 12px;
         }
+        .about-list {
+            padding-left: 20px; line-height: 1.65; color: #33424e;
+            margin: 0 0 4px; font-size: 14.5px;
+        }
+        .about-list li { margin-bottom: 10px; }
+        .repo-link { color: #0099cc; font-weight: 700; text-decoration: none; }
+        .repo-link:hover { text-decoration: underline; }
+
         .member-name {
             font-size: 1.1rem;
             font-weight: bold;
@@ -113,37 +121,69 @@
             
            <div class="about-card">
                 <div class="section-header">
-                    <i class="fa-solid fa-rocket"></i>
-                    <h2>Философия и миссия RootRy</h2>
+                    <i class="fa-solid fa-flask"></i>
+                    <h2>Зачем мы это сделали</h2>
                 </div>
-                <p class="about-text"><strong>RootRy</strong> — это не просто образовательная платформа, это инновационный подход к изучению русского языка. Мы разрушаем стереотип о том, что учеба должна быть скучной и монотонной. Наша главная миссия — создать цифровую среду, где пользователи осваивают сложную грамматику и орфографию через игру, здоровую конкуренцию и визуально понятный прогресс.</p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p class="about-text">RootRy — школьный научный проект. Мы взялись за него,
+                    потому что заметили одну вещь по себе и по одноклассникам: правило,
+                    разобранное на уроке, через две недели помнят единицы. Не потому что
+                    его плохо объяснили, — просто к нему больше не возвращались.</p>
+                <p class="about-text">Поэтому платформа устроена вокруг повторения, а не
+                    вокруг объяснения. Тема, которую ты прошёл, сама вернётся: через день,
+                    потом через три, потом через неделю. Задание, в котором ты ошибся,
+                    попадёт в тетрадь ошибок и не уйдёт оттуда, пока не ответишь верно
+                    дважды в разные дни. Ответ сразу после разбора не считается: это
+                    память о только что прочитанном, а не знание.</p>
+
+                <hr style="border: none; border-top: 1px solid #eee; margin: 22px 0;">
 
                 <div class="section-header">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    <h2>Ключевые возможности</h2>
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <h2>Что внутри</h2>
                 </div>
-                <ul style="padding-left: 20px; line-height: 1.6; color: var(--text-color, #333); margin-bottom: 20px;">
-                    <li style="margin-bottom: 8px;"><strong>Интерактивное древо навыков:</strong> Наглядная карта вашего обучения. Пользователь открывает новые темы шаг за шагом — от базовых правил к сложным синтаксическим конструкциям.</li>
-                    <li style="margin-bottom: 8px;"><strong>Экономика и мотивация:</strong> Выполняйте задания, зарабатывайте внутреннюю валюту (монеты) и соревнуйтесь с другими учениками в глобальных таблицах лидеров.</li>
-                    <li style="margin-bottom: 8px;"><strong>Симуляторы экзаменов:</strong> Строгие, но справедливые тесты для проверки знаний и подготовки к реальным экзаменам с подробным разбором ошибок.</li>
-                    <li style="margin-bottom: 8px;"><strong>Мини-игры:</strong> Увлекательные механики для быстрого запоминания словарных слов, ударений и исключений из правил.</li>
+                <ul class="about-list">
+                    <li><strong>Дерево грамматики, 74 темы.</strong> Двенадцать разделов
+                        от фонетики до текстоведения. В каждой теме теория короткими
+                        блоками и задания, где надо не выбрать из готового, а собрать
+                        ответ самому.</li>
+                    <li><strong>Диагностика КСПОЯ.</strong> Банк из 200 вопросов, тест
+                        берёт 40 случайных, по шесть вариантов ответа — угадать сложнее,
+                        чем при четырёх. По результату выдаётся уровень от A1 до C2 и,
+                        главное, маршрут: с каких тем начинать и почему именно с них.</li>
+                    <li><strong>Тетрадь ошибок и план повторения.</strong> Считает не
+                        сайт, а модель знаний на схеме Лейтнера: у каждой темы своя
+                        коробка, интервал растёт, пока тема держится в памяти.</li>
+                    <li><strong>Семь мини-игр.</strong> Ударения, паронимы, запятые,
+                        сборка предложений. Короткие, на две минуты, — чтобы возвращаться
+                        было не в тягость.</li>
+                    <li><strong>ИИ-ассистент.</strong> Разговорная практика: пишешь
+                        по-русски о чём угодно, он отвечает как собеседник и отдельно
+                        разбирает, что стоит поправить.</li>
+                    <li><strong>Кабинет учителя.</strong> Класс по коду, карта активности,
+                        выгрузка результатов.</li>
                 </ul>
 
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <hr style="border: none; border-top: 1px solid #eee; margin: 22px 0;">
 
                 <div class="section-header">
-                    <i class="fa-brands fa-github"></i>
-                    <h2>Технологии и Open Source</h2>
+                    <i class="fa-solid fa-code"></i>
+                    <h2>Как это сделано</h2>
                 </div>
-                <p class="about-text">RootRy разрабатывается с упором на высокую производительность и масштабируемость. Мы открыты к сообществу, и вы можете следить за ходом разработки, обновлениями кодовой базы и архитектурными решениями в нашем репозитории: <a href="https://github.com/diawx-6669/--------------" target="_blank" style="color: var(--primary-color, #0099cc); text-decoration: none; font-weight: bold;">GitHub проекта</a>.</p>
-                
+                <p class="about-text">Сервер на Go, база PostgreSQL, фронтенд без
+                    фреймворков — обычный JavaScript. Так вышло не из принципа: проект
+                    надо показывать в школьном актовом зале, где интернет может не
+                    работать вовсе, и всё, что можно, лежит рядом с сайтом. Аватарки,
+                    значки и иконки — свои SVG, а не эмодзи: эмодзи рисует шрифт
+                    операционной системы, и на чужом компьютере экран выглядел бы иначе.</p>
+                <p class="about-text">Код открыт:
+                    <a href="https://github.com/diawx-6669/root-ry" target="_blank"
+                       rel="noopener" class="repo-link">github.com/diawx-6669/root-ry</a>.</p>
+
                 <div class="tech-stack-tagbox" style="margin-top: 16px;">
-                    <span class="tech-tag"><i class="fa-brands fa-html5"></i> HTML5 & CSS3</span>
-                    <span class="tech-tag"><i class="fa-brands fa-js"></i> Vanilla JS (Frontend)</span>
-                    <span class="tech-tag"><i class="fa-brands fa-golang"></i> Go (Backend API)</span>
-                    <span class="tech-tag"><i class="fa-solid fa-database"></i> Базы данных & Аналитика</span>
+                    <span class="tech-tag"><i class="fa-brands fa-golang"></i> Go</span>
+                    <span class="tech-tag"><i class="fa-solid fa-database"></i> PostgreSQL</span>
+                    <span class="tech-tag"><i class="fa-brands fa-js"></i> JavaScript без фреймворков</span>
+                    <span class="tech-tag"><i class="fa-brands fa-html5"></i> HTML и CSS</span>
                 </div>
             </div>
 

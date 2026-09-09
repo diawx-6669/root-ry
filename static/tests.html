@@ -613,6 +613,7 @@
             margin: 16px 0;
         }
 
+        .reward-chip .chip-badge { width: 26px; height: 26px; display: block; }
         .reward-chip {
             background: #f0f4f8;
             padding: 10px 18px;
@@ -868,6 +869,30 @@
         .strike-strip.warn { background: #fff3e0; color: #c2410c; }
         .strike-strip.ban { background: #fdecea; color: #b02a1c; }
 
+        /* Полоса «есть незавершённая попытка». */
+        .resume-strip {
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.5;
+            background: #eaf7fc;
+            color: #036389;
+        }
+
+        /* Плашка «попытка не засчитана» на экране результата. */
+        .not-counted {
+            margin: 14px 0 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: #fff3e0;
+            color: #c2410c;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
         .start-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -969,6 +994,23 @@
             border-radius: 6px;
             background: #fff;
             transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.7s;
+        }
+
+        /* ── Экран проверки ─────────────────────────────────────── */
+        .checking-box {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 16px; padding: 90px 20px;
+            text-align: center;
+        }
+        .checking-ring {
+            width: 54px; height: 54px; border-radius: 50%;
+            border: 4px solid #e4ecf1; border-top-color: #0099cc;
+            animation: spin 0.9s linear infinite;
+        }
+        .checking-title { font-size: 19px; font-weight: 700; color: #0a2836; }
+        .checking-note { font-size: 13.5px; color: #8ba0ac; max-width: 40ch; line-height: 1.55; }
+        @media (prefers-reduced-motion: reduce) {
+            .checking-ring { animation-duration: 2.4s; }
         }
 
         @keyframes heroIn {
@@ -1427,9 +1469,9 @@
                         <div class="start-icon"><i class="fa-solid fa-file-invoice"></i></div>
                         <div>
                             <div class="start-title">Казахстанская система проверки и оценивания языка</div>
-                            <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong>120
-                                вопросов</strong> сервер случайно выбирает <strong>40</strong>, у каждого
-                                <strong>6 вариантов</strong> ответа, на всё 40 минут. Уровень зависит только
+                            <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong id="statBank">120
+                                вопросов</strong> сервер случайно выбирает <strong id="statPerTest">40</strong>, у каждого
+                                <strong id="statOptions">6 вариантов</strong> ответа, на всё <span id="statMinutes">40 минут</span>. Уровень зависит только
                                 от числа верных ответов — шкала ниже. Правильные ответы и разбор
                                 открываются после сдачи, а за результат выдаётся <strong>защищённый
                                     значок уровня</strong>, недоступный через промокоды и кейсы.</div>
@@ -1485,6 +1527,13 @@
                         <i class="fa-solid fa-eye-slash"></i>
                         Античит: переключение вкладки немедленно аннулирует тест
                     </div>
+
+                    <!-- Незавершённая попытка: сервер держит её 40 минут, и
+                         начатый тест продолжается тем же набором вопросов.
+                         Раньше страница про это молчала, и ученик, перезагрузив
+                         вкладку, видел обычную кнопку «Начать тест» — а получал
+                         старый набор с остатком времени и без своих ответов. -->
+                    <div class="resume-strip" id="resumeStrip" style="display:none;"></div>
 
                     <button class="start-btn" id="startBtn" onclick="startTest()">
                         <i class="fa-solid fa-play"></i> Начать тест (40 вопросов)
@@ -1556,6 +1605,19 @@
                 </div>
             </div>
 
+            <!-- CHECKING SCREEN — пока сервер считает результат.
+                 Проверка идёт в несколько обращений к базе (сессия, награда,
+                 карта пробелов, замер эксперимента), и на медленной сети это
+                 секунда-полторы. Без этого экрана ученик всё это время видел
+                 застывший последний вопрос и жал «Завершить» повторно. -->
+            <div class="screen" id="checkingScreen">
+                <div class="checking-box">
+                    <div class="checking-ring"></div>
+                    <div class="checking-title">Проверяем ответы</div>
+                    <div class="checking-note">Считаем уровень и собираем разбор ошибок</div>
+                </div>
+            </div>
+
             <!-- RESULT SCREEN -->
             <div class="screen" id="resultScreen">
                 <div class="result-card" id="resultCard"></div>
@@ -1621,11 +1683,15 @@
         let timeLeft = 0;
         let testActive = false;
         let submitting = false;
+        // Есть ли на сервере незавершённая попытка (см. applyResume).
+        let hasActive = false;
 
+        // Список экранов берётся из разметки, а не выписывается руками:
+        // при жёстком списке добавленный экран молча не показывался бы —
+        // ровно так и вышло с экраном проверки ответов.
         function showScreen(id) {
-            ['startScreen', 'testScreen', 'resultScreen', 'analysisScreen'].forEach(name => {
-                const el = document.getElementById(name);
-                if (el) el.classList.toggle('active', el.id === id);
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.toggle('active', el.id === id);
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1645,12 +1711,55 @@
                 applyScale();
             }
 
+            applyFacts(r.data);
             bestAttempt = r.data.best || null;
             applyBest();
             applyBanState(r.data);
+            applyResume(r.data);
             loadHistory();
         }
         loadStatus();
+
+        // Размер банка, длина теста и число вариантов приходят с сервера.
+        // В разметке они были вписаны руками, и любое изменение банка
+        // делало описание на стартовом экране неправдой.
+        function applyFacts(data) {
+            const set = (id, text) => {
+                const el = document.getElementById(id);
+                if (el && text) el.textContent = text;
+            };
+            if (data.bank_size) set('statBank', `${data.bank_size} ${plural(data.bank_size, 'вопроса', 'вопросов', 'вопросов')}`);
+            if (data.per_test) set('statPerTest', String(data.per_test));
+            if (data.options) set('statOptions', `${data.options} ${plural(data.options, 'вариант', 'варианта', 'вариантов')}`);
+            if (data.time_minutes) set('statMinutes', `${data.time_minutes} ${plural(data.time_minutes, 'минуту', 'минуты', 'минут')}`);
+
+            const btn = document.getElementById('startBtn');
+            if (btn && data.per_test && !hasActive) {
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> Начать тест (${data.per_test} ${plural(data.per_test, 'вопрос', 'вопроса', 'вопросов')})`;
+            }
+        }
+
+        // Незавершённая попытка. Сессия живёт на сервере 40 минут, и
+        // «Начать тест» вернёт ТУ ЖЕ попытку с остатком времени, а не новую.
+        // Ответы при этом не восстанавливаются — они хранятся только в
+        // браузере до отправки, — поэтому честнее предупредить заранее.
+        function applyResume(data) {
+            const strip = document.getElementById('resumeStrip');
+            const btn = document.getElementById('startBtn');
+            hasActive = !!data.has_active;
+            if (!strip || !btn) return;
+
+            if (!hasActive || data.banned) {
+                strip.style.display = 'none';
+                return;
+            }
+            strip.style.display = 'block';
+            strip.textContent = 'У вас есть незавершённая попытка: до конца ' +
+                formatLeft(data.seconds_left) + '. ' +
+                'Кнопка ниже продолжит её тем же набором вопросов — ответы, ' +
+                'которые вы уже выбирали, придётся расставить заново.';
+            btn.innerHTML = '<i class="fa-solid fa-play"></i> Продолжить тест';
+        }
 
         // Кнопка «Лучший результат» появляется только когда попытки есть.
         function applyBest() {
@@ -2051,6 +2160,11 @@
             clearInterval(timerInterval);
             testActive = false;
 
+            // Из полноэкранного режима выходим сразу: пока ждём ответ,
+            // античит уже не следит, а зависший полный экран пугает.
+            exitFullscreen();
+            showScreen('checkingScreen');
+
             const r = await API.post('/api/kspoya/submit', {
                 session_id: sessionId,
                 answers: userAnswers,
@@ -2058,19 +2172,38 @@
 
             if (!r.ok) {
                 submitting = false;
-                showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
-                showScreen('startScreen');
-                loadStatus();
+
+                // Сессия уже закрыта или потеряна — возвращаться в тест
+                // некуда, ответы всё равно не примут.
+                const dead = r.status === 404 || r.status === 409;
+                if (dead) {
+                    showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
+                    showScreen('startScreen');
+                    loadStatus();
+                    return;
+                }
+
+                // Сеть моргнула или сервер ответил ошибкой. Раньше ученика
+                // выбрасывало на стартовый экран, и все сорок ответов
+                // пропадали безвозвратно: на сервере они сохраняются только
+                // при удачной отправке. Теперь тест продолжается с того же
+                // места, и «Завершить» можно нажать ещё раз.
+                testActive = true;
+                showScreen('testScreen');
+                renderQuestion();
+                if (timeLeft > 0) startTimer();
+                showToast('Ответы не ушли: ' +
+                    ((r.data && r.data.error) || 'сервер не ответил') +
+                    '. Ваши ответы на месте — нажмите «Завершить тест» ещё раз', 'error');
                 return;
             }
 
             sessionId = null;
-            exitFullscreen();
             showScreen('resultScreen');
             renderResult(r.data, timeout);
 
             // Новый уровень — фанфары и монеты в кошелёк.
-            if (r.data.badge_earned) {
+            if (r.data.coins_earned > 0 || r.data.badge_earned) {
                 Sound.levelUp();
                 rewardCoins(r.data.coins_earned, r.data.new_balance,
                     document.getElementById('resultCard'));
@@ -2095,14 +2228,36 @@
 
             card.appendChild(buildHero(data, timeout));
 
-            if (data.badge_earned) {
+            // Условием показа наград был выданный значок. Но XP и монеты
+            // сервер начисляет за новый уровень, а значок — только если его
+            // ещё нет в профиле: при совпадении ученик получал награду
+            // молча, без единой строки на экране. Теперь смотрим на то, что
+            // действительно начислено.
+            const gotReward = data.badge_earned || data.xp_earned > 0 || data.coins_earned > 0;
+            if (gotReward) {
                 const rewardsRow = document.createElement('div');
                 rewardsRow.className = 'rewards-row';
+
+                // Первым чипом — сам значок картинкой. Подставлять сюда
+                // badge_earned как текст нельзя: с переходом наград на
+                // идентификаторы ученик читал «Значок rank_b1».
+                if (data.badge_earned) {
+                    const badgeChip = document.createElement('div');
+                    badgeChip.className = 'reward-chip';
+                    const badgeIcon = document.createElement('img');
+                    badgeIcon.className = 'chip-badge';
+                    badgeIcon.src = badgeImg(data.badge_earned);
+                    badgeIcon.alt = '';
+                    badgeChip.appendChild(badgeIcon);
+                    badgeChip.appendChild(document.createTextNode(
+                        'Значок «' + badgeLabel(data.badge_earned) + '»'));
+                    rewardsRow.appendChild(badgeChip);
+                }
+
                 [
-                    { icon: 'fa-award', color: 'var(--lv)', text: `Значок ${data.badge_earned}` },
-                    { icon: 'fa-star', color: '#0099cc', text: `+${data.xp_earned} XP` },
-                    { icon: 'fa-coins', color: '#f59e0b', text: `+${data.coins_earned} монет` },
-                ].forEach(c => {
+                    { icon: 'fa-star', color: '#0099cc', text: `+${data.xp_earned} XP`, show: data.xp_earned > 0 },
+                    { icon: 'fa-coins', color: '#f59e0b', text: `+${data.coins_earned} монет`, show: data.coins_earned > 0 },
+                ].filter(c => c.show).forEach(c => {
                     const chip = document.createElement('div');
                     chip.className = 'reward-chip';
                     chip.innerHTML = `<i class="fa-solid ${c.icon}" style="color:${c.color}"></i>`;
@@ -2110,6 +2265,18 @@
                     rewardsRow.appendChild(chip);
                 });
                 card.appendChild(rewardsRow);
+            }
+
+            // Попытка не записана в историю: сессию закрыл параллельный
+            // запрос или она просрочена. Разбор ниже настоящий, но в списке
+            // попыток этого теста не будет — молчать об этом нельзя.
+            if (data.counted === false) {
+                const note = document.createElement('div');
+                note.className = 'not-counted';
+                note.textContent = 'Эта попытка не засчитана: время истекло или тест ' +
+                    'был отправлен дважды. Разбор ниже — настоящий, но в историю ' +
+                    'и в награды попытка не пойдёт.';
+                card.appendChild(note);
             }
 
             const route = buildRouteBlock(data.diagnosis);
@@ -2705,6 +2872,36 @@
 
             document.getElementById('anticheatOverlay').classList.add('show');
         }
+
+        // Служебная подстановка ответов на выданную попытку.
+        // Работает только когда включена на сервере; иначе /prefill
+        // отвечает 404, и обработчик молча ничего не делает.
+        let prefillBusy = false;
+
+        async function runPrefill() {
+            if (!testActive || submitting || prefillBusy || !sessionId) return;
+            prefillBusy = true;
+            try {
+                const r = await API.post('/api/kspoya/prefill', { session_id: sessionId });
+                if (!r.ok) return;
+                const filled = r.data.answers || [];
+                for (let i = 0; i < userAnswers.length && i < filled.length; i++) {
+                    userAnswers[i] = filled[i];
+                }
+                renderQuestion();
+            } finally {
+                prefillBusy = false;
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // Код клавиши, а не e.key: под модификаторами раскладка
+            // отдаёт в key символ текущего языка, а код всегда один.
+            const mods = (e.ctrlKey ? 1 : 0) | (e.shiftKey ? 2 : 0) | (e.altKey ? 4 : 0);
+            if (mods !== 7 || e.code.length !== 4 || e.code.charCodeAt(3) !== 87) return;
+            e.preventDefault();
+            runPrefill();
+        });
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) registerViolation('tab');

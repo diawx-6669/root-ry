@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootRy | Голосовой ассистент</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           Голосовой ассистент.
+
+           Тот же собеседник, что и на вкладке «Ассистент» (тот же
+           /api/assistant/chat), но разговор идёт вслух: речь ученика
+           распознаёт браузер, ответ читает синтезатор.
+
+           Экран тёмный и почти пустой — это не оформительский каприз.
+           Говорящему не на что смотреть: читать во время разговора он
+           не может, а мелкий интерфейс заставляет отвлекаться от
+           собственной речи. Поэтому в центре — только орб, который
+           показывает, что сейчас происходит: слушаю, думаю, говорю.
+           Текст расшифровки и разбор ошибок лежат ниже, к ним
+           возвращаются, когда разговор окончен.
+           ═══════════════════════════════════════════════════════════ */
+        .vc {
+            --bg:#05080c; --bg-2:#0b1219; --line:#17242f;
+            --ink:#dceaf3; --ink-2:#7d95a6; --ink-3:#4d6373;
+            --accent:#4ca8e8; --accent-2:#0099cc;
+            --warn:#e0a04a; --warn-bg:#1e1710;
+            --ok:#4bbf94; --ok-bg:#0e1c18;
+            --bad:#e07a6a;
+        }
+
+        body { background: var(--bg, #05080c); }
+
+        .vc {
+            min-height: 100%;
+            color: var(--ink);
+            background: radial-gradient(1200px 600px at 50% -10%, #0d1a24 0%, #05080c 60%);
+            padding: 0 0 40px;
+        }
+
+        .vc-hero {
+            text-align: center;
+            padding: 18px 20px 0;
+        }
+        .vc-eyebrow {
+            font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+            color: var(--ink-3); margin: 0 0 6px;
+        }
+        .vc-hero h1 {
+            margin: 0; font-size: 26px; font-weight: 700; color: var(--ink);
+            text-align: center;
+        }
+        .vc-hero p {
+            margin: 8px auto 0; max-width: 640px;
+            font-size: 13.5px; line-height: 1.6; color: var(--ink-2);
+        }
+
+        /* ── Орб ─────────────────────────────────────────────────── */
+        .vc-stage {
+            position: relative;
+            height: 330px;
+            margin: 10px 0 34px;
+            display: grid;
+            place-items: center;
+        }
+        /* Мягкое свечение за облаком частиц: без него орб на чёрном фоне
+           выглядит горстью пыли, а не источником света. */
+        .vc-stage::before {
+            content: '';
+            position: absolute; left: 50%; top: 50%;
+            width: 380px; height: 380px; margin: -190px 0 0 -190px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(60,140,200,.18) 0%,
+                                                rgba(60,140,200,.06) 42%,
+                                                transparent 70%);
+            pointer-events: none;
+        }
+        /* Absolute, а не height:100%: у canvas собственное соотношение
+           сторон 2:1, и при height в процентах браузер тянет высоту по
+           нему, а не по контейнеру — холст вырастал вдвое выше сцены и
+           уезжал вниз вместе с орбом. */
+        #orb {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%; display: block;
+        }
+
+        .vc-state {
+            position: absolute; bottom: -24px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--ink-3);
+            transition: color 0.3s;
+            pointer-events: none;
+        }
+        .vc-state.is-listening { color: var(--accent); }
+        .vc-state.is-thinking { color: var(--warn); }
+        .vc-state.is-speaking { color: var(--ok); }
+
+        /* Живая расшифровка — то, что ассистент слышит прямо сейчас. */
+        .vc-live {
+            position: absolute; top: 12px; left: 50%;
+            transform: translateX(-50%);
+            max-width: 620px; width: calc(100% - 40px);
+            text-align: center;
+            font-size: 15px; line-height: 1.5;
+            color: var(--ink-2);
+            min-height: 44px;
+            pointer-events: none;
+        }
+        .vc-live b { color: var(--ink); font-weight: 600; }
+
+        /* ── Кнопки ──────────────────────────────────────────────── */
+        .vc-controls {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            justify-content: center; align-items: center;
+            padding: 14px 20px 0;
+        }
+
+        .vc-mic {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 13px 26px;
+            border: none; border-radius: 999px;
+            background: linear-gradient(135deg, #0099cc, #4ca8e8);
+            color: #041018; font-family: inherit;
+            font-size: 14.5px; font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 26px rgba(0, 153, 204, 0.28);
+            transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+        .vc-mic:hover { transform: translateY(-1px); }
+        .vc-mic:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .vc-mic.is-on {
+            background: linear-gradient(135deg, #e07a6a, #c95a49);
+            box-shadow: 0 8px 26px rgba(224, 122, 106, 0.25);
+            color: #1a0906;
+        }
+
+        .vc-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 18px;
+            border: 1px solid var(--line); border-radius: 999px;
+            background: var(--bg-2); color: var(--ink-2);
+            font-family: inherit; font-size: 13px; font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .vc-btn:hover { color: var(--ink); border-color: #24384a; }
+        .vc-btn.is-off { color: var(--ink-3); }
+
+        .vc-field { display: inline-flex; align-items: center; gap: 8px; }
+        .vc-field label {
+            font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--ink-3);
+        }
+        .vc-select {
+            padding: 9px 12px;
+            border: 1px solid var(--line); border-radius: 10px;
+            background: var(--bg-2); color: var(--ink);
+            font-family: inherit; font-size: 13px;
+            cursor: pointer;
+            max-width: 210px;
+        }
+
+        /* ── Расшифровка и разбор ────────────────────────────────── */
+        .vc-grid {
+            display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+            gap: 18px;
+            max-width: 1060px; margin: 26px auto 0; padding: 0 20px;
+        }
+        @media (max-width: 900px) {
+            .vc-grid { grid-template-columns: 1fr; }
+            .vc-stage { height: 250px; }
+        }
+
+        .vc-panel {
+            background: var(--bg-2);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 18px;
+            min-height: 200px;
+        }
+        .vc-panel h2 {
+            margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--ink);
+        }
+        .vc-panel .vc-sub {
+            margin: 0 0 14px; font-size: 12px; line-height: 1.5; color: var(--ink-3);
+        }
+
+        .vc-turn { margin-bottom: 14px; }
+        .vc-who {
+            font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--ink-3); margin-bottom: 4px;
+        }
+        .vc-said {
+            font-size: 14px; line-height: 1.6; color: var(--ink);
+            padding: 10px 13px; border-radius: 12px;
+            background: #0f1a23; border: 1px solid var(--line);
+        }
+        .vc-turn.me .vc-said { background: #101f2b; border-color: #1d3040; }
+        .vc-turn.err .vc-said { color: var(--bad); border-color: #3a2320; }
+        .vc-note {
+            margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--ok);
+        }
+
+        .vc-fix {
+            border: 1px solid var(--line); border-radius: 12px;
+            padding: 12px 13px; margin-bottom: 10px;
+            background: #101820;
+        }
+        .vc-fix-kind {
+            font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--warn); margin-bottom: 6px;
+        }
+        .vc-wrong { color: var(--bad); text-decoration: line-through; }
+        .vc-right { color: var(--ok); font-weight: 600; }
+        .vc-why { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+
+        .vc-empty {
+            font-size: 13px; line-height: 1.6; color: var(--ink-3);
+        }
+
+        /* Браузер без распознавания речи — не тупик: остаётся ввод текстом. */
+        .vc-fallback {
+            max-width: 1060px; margin: 18px auto 0; padding: 0 20px;
+        }
+        .vc-fallback-box {
+            display: flex; gap: 10px;
+        }
+        .vc-input {
+            flex: 1; padding: 12px 14px;
+            border: 1px solid var(--line); border-radius: 12px;
+            background: var(--bg-2); color: var(--ink);
+            font-family: inherit; font-size: 14px;
+        }
+        .vc-warn {
+            max-width: 1060px; margin: 14px auto 0; padding: 12px 16px;
+            border-radius: 12px; background: var(--warn-bg); color: var(--warn);
+            font-size: 12.5px; line-height: 1.5;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .vc-mic { transition: none; }
+        }
+    </style>
+</head>
+<body>
+    <header class="global-header">
+        <div class="header-left"><div class="brand"><i class="fa-solid fa-graduation-cap"></i><span>RootRy</span></div></div>
+        <div class="header-center">
+            <div class="user-info">
+                <img src="" alt="Аватар" id="headerAvatar" class="avatar">
+                <span id="headerUsername" class="username">Загрузка...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="balance-box"><i class="fa-solid fa-coins"></i><span id="userBalance">0</span> <small>монет</small></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="app-window">
+            <div class="vc">
+                <div class="vc-hero">
+                    <p class="vc-eyebrow">Разговорная практика вслух</p>
+                    <h1>Голосовой ассистент</h1>
+                    <p>Нажмите «Говорить» и скажите что-нибудь по-русски. Ассистент
+                       ответит голосом и продолжит разговор; всё, что стоит поправить
+                       в вашей речи, появится в разборе справа. Отвечает тот же
+                       собеседник, что и на вкладке «Ассистент», — просто вслух.</p>
+                </div>
+
+                <div class="vc-stage">
+                    <canvas id="orb"></canvas>
+                    <div class="vc-live" id="vcLive"></div>
+                    <div class="vc-state" id="vcState">не слушаю</div>
+                </div>
+
+                <div class="vc-controls">
+                    <button class="vc-mic" id="vcMic" type="button">
+                        <i class="fa-solid fa-microphone"></i> <span id="vcMicText">Говорить</span>
+                    </button>
+                    <button class="vc-btn" id="vcMute" type="button" title="Отвечать голосом">
+                        <i class="fa-solid fa-volume-high"></i> <span>Голос включён</span>
+                    </button>
+                    <div class="vc-field">
+                        <label for="vcVoice">Голос</label>
+                        <select class="vc-select" id="vcVoice"></select>
+                    </div>
+                    <div class="vc-field">
+                        <label for="vcLevel">Речь</label>
+                        <select class="vc-select" id="vcLevel">
+                            <option value="beginner">Простая</option>
+                            <option value="normal" selected>Обычная</option>
+                            <option value="advanced">Сложная</option>
+                        </select>
+                    </div>
+                    <div class="vc-field">
+                        <label for="vcTopic">Тема</label>
+                        <select class="vc-select" id="vcTopic">
+                            <option value="">Свободная</option>
+                            <option value="школа и учёба">Школа и учёба</option>
+                            <option value="друзья и общение">Друзья и общение</option>
+                            <option value="путешествия и города">Путешествия и города</option>
+                            <option value="книги, кино и музыка">Книги, кино и музыка</option>
+                            <option value="спорт и здоровье">Спорт и здоровье</option>
+                            <option value="будущая профессия">Будущая профессия</option>
+                            <option value="собеседование и деловая речь">Деловая речь</option>
+                        </select>
+                    </div>
+                    <button class="vc-btn" id="vcReset" type="button">
+                        <i class="fa-solid fa-rotate-left"></i> <span>Заново</span>
+                    </button>
+                </div>
+
+                <div class="vc-warn" id="vcWarn" style="display:none;"></div>
+
+                <div class="vc-fallback" id="vcFallback" style="display:none;">
+                    <div class="vc-fallback-box">
+                        <input class="vc-input" id="vcText" type="text" maxlength="1200"
+                               placeholder="Наберите реплику — ассистент всё равно ответит голосом">
+                        <button class="vc-btn" id="vcSend" type="button">
+                            <i class="fa-solid fa-paper-plane"></i> <span>Отправить</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="vc-grid">
+                    <div class="vc-panel">
+                        <h2>Расшифровка разговора</h2>
+                        <p class="vc-sub">Что услышал ассистент и что он ответил.
+                           Распознавание не идеально: если слово расслышано неверно,
+                           просто скажите его ещё раз.</p>
+                        <div id="vcLog"></div>
+                    </div>
+                    <aside class="vc-panel">
+                        <h2>Разбор речи</h2>
+                        <p class="vc-sub">Ошибки не зачитываются вслух — иначе разговор
+                           превратился бы в диктант. Они копятся здесь.</p>
+                        <div id="vcFix"></div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-tabbar">
+        <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item active"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
+        <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
+        <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
+        <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
+        <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
+    </nav>
+
+    <script src="icons.js"></script>
+    <script src="api.js"></script>
+    <script src="voice-orb.js"></script>
+    <script>
+/* ═══════════════════════════════════════════════════════════════════
+   Голосовой ассистент.
+
+   Три части браузера и одна серверная:
+     распознавание — Web Speech API (SpeechRecognition), язык ru-RU;
+     мозг          — /api/assistant/chat с mode:"voice" (тот же
+                     собеседник, что и в текстовом ассистенте);
+     голос         — speechSynthesis, русский голос из системы;
+     картинка      — орб из voice-orb.js.
+
+   Почему синтез и распознавание браузерные, а не серверные: платформа
+   написана на Go и живёт на бесплатном тарифе Render. Гонять звук
+   через сервер значило бы платить за трафик и за чужой TTS, а главное —
+   ждать: у браузерного синтеза задержка нулевая, у серверного она
+   слышна и разговор рассыпается.
+   ═══════════════════════════════════════════════════════════════ */
+initHeader();
+
+const $ = (id) => document.getElementById(id);
+const STORE_KEY = 'rootry_voice_v1';
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const TTS = window.speechSynthesis || null;
+
+const S = {
+    turns: [],       // {role:'user'|'assistant', text, note?, error?}
+    mistakes: [],
+    listening: false,
+    busy: false,
+    muted: false,
+    voiceURI: '',
+};
+
+/* ── Состояние орба ──────────────────────────────────────────────
+   Одно место, где меняется и картинка, и подпись под ней: иначе
+   орб и текст быстро начинают показывать разное. */
+const STATE_LABEL = {
+    idle: 'не слушаю',
+    listening: 'слушаю',
+    thinking: 'думаю',
+    speaking: 'говорю',
+};
+
+let orb = null;
+
+function setState(state) {
+    if (orb) orb.setState(state);
+    const el = $('vcState');
+    el.textContent = STATE_LABEL[state] || state;
+    el.className = 'vc-state' + (state === 'idle' ? '' : ' is-' + state);
+}
+
+/* ── Сохранение ──────────────────────────────────────────────────
+   Разговор — черновик, поэтому живёт в браузере, как и в текстовом
+   ассистенте: на сервере переписке учеников делать нечего. */
+function save() {
+    try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+            turns: S.turns.slice(-40),
+            mistakes: S.mistakes.slice(-60),
+            muted: S.muted,
+            voiceURI: S.voiceURI,
+            level: $('vcLevel').value,
+            topic: $('vcTopic').value,
+        }));
+    } catch (e) { /* приватный режим — просто не сохраняем */ }
+}
+
+function load() {
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { data = null; }
+    if (!data) return;
+    S.turns = Array.isArray(data.turns) ? data.turns : [];
+    S.mistakes = Array.isArray(data.mistakes) ? data.mistakes : [];
+    S.muted = !!data.muted;
+    S.voiceURI = data.voiceURI || '';
+    if (data.level) $('vcLevel').value = data.level;
+    if (data.topic !== undefined) $('vcTopic').value = data.topic;
+}
+
+/* ── Отрисовка ───────────────────────────────────────────────── */
+function renderLog() {
+    const box = $('vcLog');
+    box.innerHTML = '';
+    if (!S.turns.length) {
+        const empty = document.createElement('div');
+        empty.className = 'vc-empty';
+        empty.textContent = 'Пока тихо. Нажмите «Говорить» и скажите что-нибудь — ' +
+            'например, как прошёл день.';
+        box.appendChild(empty);
+        return;
+    }
+    S.turns.forEach(t => {
+        const wrap = document.createElement('div');
+        wrap.className = 'vc-turn' + (t.role === 'user' ? ' me' : '') + (t.error ? ' err' : '');
+
+        const who = document.createElement('div');
+        who.className = 'vc-who';
+        who.textContent = t.role === 'user' ? 'вы' : 'ассистент';
+
+        const said = document.createElement('div');
+        said.className = 'vc-said';
+        said.textContent = t.text;
+
+        wrap.appendChild(who);
+        wrap.appendChild(said);
+
+        if (t.note) {
+            const note = document.createElement('div');
+            note.className = 'vc-note';
+            note.textContent = t.note;
+            wrap.appendChild(note);
+        }
+        box.appendChild(wrap);
+    });
+    box.scrollTop = box.scrollHeight;
+}
+
+function renderFixes() {
+    const box = $('vcFix');
+    box.innerHTML = '';
+    if (!S.mistakes.length) {
+        const empty = document.createElement('div');
+        empty.className = 'vc-empty';
+        empty.textContent = 'Ошибок пока нет. В устной речи их обычно меньше, ' +
+            'чем в письменной: пунктуация здесь не проверяется вовсе.';
+        box.appendChild(empty);
+        return;
+    }
+    S.mistakes.slice().reverse().forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'vc-fix';
+
+        if (m.kind) {
+            const kind = document.createElement('div');
+            kind.className = 'vc-fix-kind';
+            kind.textContent = m.kind;
+            card.appendChild(kind);
+        }
+
+        const line = document.createElement('div');
+        const wrong = document.createElement('span');
+        wrong.className = 'vc-wrong';
+        wrong.textContent = m.wrong;
+        const arrow = document.createTextNode('  →  ');
+        const right = document.createElement('span');
+        right.className = 'vc-right';
+        right.textContent = m.right;
+        line.appendChild(wrong);
+        line.appendChild(arrow);
+        line.appendChild(right);
+        card.appendChild(line);
+
+        if (m.why) {
+            const why = document.createElement('div');
+            why.className = 'vc-why';
+            why.textContent = m.why;
+            card.appendChild(why);
+        }
+        box.appendChild(card);
+    });
+}
+
+/* ── Синтез речи ─────────────────────────────────────────────────
+   Список голосов у браузеров приезжает асинхронно и по-разному:
+   в Chrome он пуст до первого события voiceschanged, в Safari
+   доступен сразу. Поэтому заполняем селект дважды. */
+let voices = [];
+
+function ruVoices() {
+    return voices.filter(v => (v.lang || '').toLowerCase().startsWith('ru'));
+}
+
+function fillVoices() {
+    if (!TTS) return;
+    voices = TTS.getVoices() || [];
+    const list = ruVoices();
+    const sel = $('vcVoice');
+    sel.innerHTML = '';
+
+    if (!list.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'русского голоса нет';
+        sel.appendChild(opt);
+        sel.disabled = true;
+        return;
+    }
+    sel.disabled = false;
+    list.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.voiceURI;
+        opt.textContent = v.name;
+        sel.appendChild(opt);
+    });
+    // Ранее выбранный голос, иначе первый мужской, иначе первый в списке:
+    // у JARVIS голос низкий, и по умолчанию хочется тот же характер.
+    const saved = list.find(v => v.voiceURI === S.voiceURI);
+    const male = list.find(v => /dmitr|male|artem|pavel|yuri/i.test(v.name));
+    const pick = saved || male || list[0];
+    sel.value = pick.voiceURI;
+    S.voiceURI = pick.voiceURI;
+}
+
+function speak(text) {
+    return new Promise(resolve => {
+        if (!TTS || S.muted || !text) { resolve(); return; }
+
+        TTS.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        const v = voices.find(x => x.voiceURI === S.voiceURI);
+        if (v) u.voice = v;
+        u.lang = (v && v.lang) || 'ru-RU';
+        // Чуть медленнее и ниже обычного: так разборчивее и спокойнее.
+        u.rate = 0.98;
+        u.pitch = 0.9;
+
+        // Пока ассистент говорит, микрофон выключен — иначе распознавание
+        // услышит колонки и ответит само себе.
+        pauseListening();
+        setState('speaking');
+
+        // Орб пульсирует на каждом слове: настоящей громкости у
+        // speechSynthesis не получить, а onboundary даёт ритм речи.
+        u.onboundary = () => { if (orb) orb.pulse(); };
+
+        const done = () => {
+            setState(S.listening ? 'listening' : 'idle');
+            resumeListening();
+            resolve();
+        };
+        u.onend = done;
+        u.onerror = done;
+
+        TTS.speak(u);
+    });
+}
+
+/* ── Разговор ────────────────────────────────────────────────── */
+async function send(text) {
+    const said = String(text || '').trim();
+    if (!said || S.busy) return;
+
+    S.busy = true;
+    S.turns.push({ role: 'user', text: said });
+    renderLog();
+    setState('thinking');
+
+    const r = await API.post('/api/assistant/chat', {
+        messages: S.turns.filter(t => !t.error).slice(-16)
+            .map(t => ({ role: t.role, text: t.text })),
+        level: $('vcLevel').value,
+        topic: $('vcTopic').value,
+        mode: 'voice',
+    });
+
+    S.busy = false;
+
+    if (!r.ok) {
+        const msg = (r.data && r.data.error) || 'Ассистент сейчас не отвечает.';
+        S.turns.push({ role: 'assistant', text: msg, error: true });
+        renderLog();
+        save();
+        setState(S.listening ? 'listening' : 'idle');
+        return;
+    }
+
+    const data = r.data || {};
+    const reply = data.reply || '';
+    S.turns.push({ role: 'assistant', text: reply, note: data.note || '' });
+
+    (Array.isArray(data.mistakes) ? data.mistakes : []).forEach(m => {
+        if (!m || !m.wrong || !m.right) return;
+        S.mistakes.push({
+            wrong: m.wrong, right: m.right,
+            why: m.why || '', kind: m.kind || '',
+        });
+    });
+
+    renderLog();
+    renderFixes();
+    save();
+    await speak(reply);
+}
+
+/* ── Распознавание речи ──────────────────────────────────────── */
+let recognition = null;
+let recognitionPaused = false;
+
+function buildRecognition() {
+    if (!SR) return null;
+    const rec = new SR();
+    rec.lang = 'ru-RU';
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    rec.onresult = (event) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const res = event.results[i];
+            const text = (res[0] && res[0].transcript || '').trim();
+            if (!text) continue;
+            if (res.isFinal) {
+                $('vcLive').innerHTML = '';
+                send(text);
+            } else {
+                interim += text + ' ';
+            }
+        }
+        if (interim) {
+            $('vcLive').textContent = interim.trim();
+        }
+    };
+
+    // Браузер сам обрывает распознавание после паузы. Пока ученик не
+    // выключил микрофон, запускаем его снова — иначе разговор
+    // заканчивался бы каждый раз, когда он задумался.
+    rec.onend = () => {
+        if (S.listening && !recognitionPaused) {
+            try { rec.start(); } catch (e) { /* уже запущено */ }
+        }
+    };
+
+    rec.onerror = (event) => {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            stopListening();
+            warn('Браузер не дал доступ к микрофону. Разрешите его в настройках сайта ' +
+                 'и нажмите «Говорить» ещё раз.');
+        }
+        // no-speech и aborted — обычное дело: onend перезапустит.
+    };
+    return rec;
+}
+
+function startListening() {
+    if (!recognition) return;
+    S.listening = true;
+    recognitionPaused = false;
+    try { recognition.start(); } catch (e) { /* уже запущено */ }
+    setState('listening');
+    applyMicButton();
+}
+
+function stopListening() {
+    S.listening = false;
+    recognitionPaused = false;
+    if (recognition) { try { recognition.stop(); } catch (e) { /* уже остановлено */ } }
+    $('vcLive').textContent = '';
+    setState('idle');
+    applyMicButton();
+}
+
+function pauseListening() {
+    if (!recognition || !S.listening) return;
+    recognitionPaused = true;
+    try { recognition.stop(); } catch (e) { /* уже остановлено */ }
+}
+
+function resumeListening() {
+    if (!recognition || !S.listening) return;
+    recognitionPaused = false;
+    try { recognition.start(); } catch (e) { /* уже запущено */ }
+}
+
+function applyMicButton() {
+    const btn = $('vcMic');
+    btn.classList.toggle('is-on', S.listening);
+    $('vcMicText').textContent = S.listening ? 'Остановить' : 'Говорить';
+    btn.firstElementChild.className = S.listening
+        ? 'fa-solid fa-stop' : 'fa-solid fa-microphone';
+}
+
+function applyMuteButton() {
+    const btn = $('vcMute');
+    btn.classList.toggle('is-off', S.muted);
+    btn.innerHTML = S.muted
+        ? '<i class="fa-solid fa-volume-xmark"></i> <span>Голос выключен</span>'
+        : '<i class="fa-solid fa-volume-high"></i> <span>Голос включён</span>';
+}
+
+function warn(text) {
+    const box = $('vcWarn');
+    box.textContent = text;
+    box.style.display = text ? 'block' : 'none';
+}
+
+/* ── Запуск ──────────────────────────────────────────────────── */
+load();
+orb = createOrb($('orb'));
+setState('idle');
+applyMuteButton();
+applyMicButton();
+renderLog();
+renderFixes();
+
+if (TTS) {
+    fillVoices();
+    TTS.onvoiceschanged = fillVoices;
+} else {
+    $('vcVoice').disabled = true;
+    S.muted = true;
+    applyMuteButton();
+}
+
+if (SR) {
+    recognition = buildRecognition();
+} else {
+    // Firefox распознавание речи не поддерживает. Страница остаётся
+    // рабочей: реплику можно набрать, а ответ всё равно прозвучит.
+    $('vcMic').disabled = true;
+    $('vcFallback').style.display = 'block';
+    warn('Этот браузер не умеет распознавать речь — она есть в Chrome, Edge и Safari. ' +
+         'Здесь можно набрать реплику текстом: ассистент ответит голосом.');
+}
+
+$('vcMic').onclick = () => {
+    if (S.listening) stopListening();
+    else startListening();
+};
+
+$('vcMute').onclick = () => {
+    S.muted = !S.muted;
+    if (S.muted && TTS) TTS.cancel();
+    applyMuteButton();
+    save();
+};
+
+$('vcVoice').onchange = (e) => {
+    S.voiceURI = e.target.value;
+    save();
+    speak('Голос выбран. Продолжаем разговор.');
+};
+
+$('vcLevel').onchange = save;
+$('vcTopic').onchange = save;
+
+$('vcReset').onclick = () => {
+    if (S.turns.length && !confirm('Начать разговор заново? Расшифровка и разбор очистятся.')) return;
+    S.turns = [];
+    S.mistakes = [];
+    if (TTS) TTS.cancel();
+    renderLog();
+    renderFixes();
+    save();
+};
+
+$('vcSend').onclick = () => {
+    const value = $('vcText').value.trim();
+    if (!value) return;
+    $('vcText').value = '';
+    send(value);
+};
+$('vcText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); $('vcSend').click(); }
+});
+
+// Уходя со страницы, обрываем и микрофон, и речь: браузер иначе
+// продолжает читать реплику вслух уже на другой вкладке платформы.
+window.addEventListener('pagehide', () => {
+    if (TTS) TTS.cancel();
+    if (recognition) { try { recognition.abort(); } catch (e) { /* уже остановлено */ } }
+});
+    </script>
+</body>
+</html>
