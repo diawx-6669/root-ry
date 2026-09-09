@@ -11,6 +11,48 @@
     <style>
         .profile-card { background:#fff; border-radius:30px; padding:35px 40px; max-width:680px; box-shadow:0 15px 40px rgba(0,0,0,0.06); margin-bottom:20px; }
 
+        /* ===== ДВУХКОЛОНОЧНЫЙ МАКЕТ ===== */
+        .profile-layout { display:grid; grid-template-columns:minmax(0,680px) minmax(260px,320px); gap:24px; align-items:start; }
+        .profile-main { min-width:0; }
+        .profile-sidebar { display:flex; flex-direction:column; gap:18px; position:sticky; top:95px; }
+        @media (max-width:1000px) {
+            .profile-layout { grid-template-columns:1fr; }
+            .profile-sidebar { position:static; max-width:680px; }
+        }
+
+        /* ===== БОКОВЫЕ КАРТОЧКИ ===== */
+        .side-card { background:#fff; border-radius:22px; padding:22px; box-shadow:0 12px 30px rgba(0,0,0,0.05); }
+        .side-card-head { display:flex; align-items:center; gap:9px; font-size:14px; font-weight:700; color:#023e50; margin-bottom:4px; }
+        .side-card-sub { font-size:12px; color:#8e9fae; font-weight:600; margin-bottom:14px; }
+        .side-card .icon-badge {
+            width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+            background:#eaf7fc; color:#0099cc; flex-shrink:0;
+        }
+        .side-progress-track { height:8px; background:#e9eff5; border-radius:10px; overflow:hidden; margin:10px 0 6px; }
+        .side-progress-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,#0099cc,#023e50); transition:1s; }
+        .side-progress-label { display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:#023e50; }
+        .side-next-lesson {
+            display:flex; align-items:center; gap:10px; background:#f4f9fc; border:1.5px solid #e4eef3;
+            border-radius:14px; padding:10px 12px; margin-top:12px; font-size:12.5px; color:#4d6472; font-weight:600;
+        }
+        .side-next-lesson b { color:#023e50; font-weight:700; display:block; font-size:13.5px; }
+        .side-cta {
+            display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:14px;
+            padding:12px 18px; border:none; border-radius:14px; font-size:13px; font-weight:700; cursor:pointer;
+            font-family:'Montserrat',sans-serif; transition:0.2s; text-decoration:none;
+            background:linear-gradient(90deg,#023e50,#0099cc); color:#fff;
+        }
+        .side-cta:hover { box-shadow:0 8px 20px rgba(0,153,204,0.28); transform:translateY(-1px); }
+        .side-cta.ghost { background:#eaf7fc; color:#036389; border:1.5px solid #bfe4f2; }
+        .side-cta.ghost:hover { background:#dcf1fa; box-shadow:none; }
+        .side-rank-row { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
+        .side-rank-num { font-size:26px; font-weight:800; color:#023e50; line-height:1; }
+        .side-rank-num span { font-size:13px; color:#8e9fae; font-weight:600; }
+        .side-mini-stat { display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:#6b8494; font-weight:600; padding:6px 0; border-top:1px solid #eef3f7; }
+        .side-mini-stat:first-of-type { border-top:none; padding-top:0; }
+        .side-mini-stat b { color:#023e50; font-weight:700; }
+        .side-empty-note { font-size:12px; color:#8e9fae; margin-top:10px; line-height:1.5; }
+
         /* ===== АВАТАР ===== */
         .profile-header { display:flex; align-items:center; gap:24px; margin-bottom:25px; }
         .avatar-clickable {
@@ -390,14 +432,27 @@
     <main class="main-content">
         <section class="app-window">
             <h1>Личный кабинет</h1>
-            <div id="profileContent"><div style="color:#8e9fae;font-size:15px;padding:20px 0"><i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...</div></div>
 
-            <div class="profile-card rv" id="reviewCard" hidden>
-                <div class="section-title" style="margin-bottom:16px">
-                    <span id="rvHead">Повторение и работа над ошибками</span>
+            <div class="profile-layout">
+                <div class="profile-main">
+                    <div id="profileContent"><div style="color:#8e9fae;font-size:15px;padding:20px 0"><i class="fa-solid fa-circle-notch fa-spin"></i> Загрузка...</div></div>
+
+                    <div class="profile-card rv" id="reviewCard" hidden>
+                        <div class="section-title" style="margin-bottom:16px">
+                            <span id="rvHead">Повторение и работа над ошибками</span>
+                        </div>
+                        <div id="reviewContent"></div>
+                        <div id="drillSlot"></div>
+                    </div>
                 </div>
-                <div id="reviewContent"></div>
-                <div id="drillSlot"></div>
+
+                <!-- Раньше справа от карточки профиля просто пустовало место
+                     на широких экранах. Здесь — сводка того же профиля с
+                     другого ракурса: что делать дальше, а не просто что уже
+                     есть. Данные берутся из того же /api/me и уже
+                     подключённых LESSON_INDEX / ALL_BADGES, отдельных
+                     запросов почти не требуется. -->
+                <aside class="profile-sidebar" id="profileSidebar"></aside>
             </div>
         </section>
     </main>
@@ -445,6 +500,7 @@
         kspoyaBest = (k.ok && k.data && k.data.best) ? k.data.best : null;
 
         renderProfile(r);
+        renderSidebar(r);
     }
 
     function levelFromXP(xp) { return Math.floor(xp / 200) + 1; }
@@ -544,6 +600,95 @@
         // расставляем каждый раз заново — иначе она сбрасывалась бы в
         // «не согласен» при любом обновлении профиля.
         applyConsent(u);
+    }
+
+    /* ===== БОКОВАЯ ПАНЕЛЬ: прогресс, ранг, магазин, КСПОЯ =====
+       Раньше справа от карточки профиля было пусто на широких экранах.
+       Здесь — то же самое «что дальше», собранное из данных, которые
+       страница и так уже загружает (LESSON_INDEX подключён скриптом
+       lessons/index.js, ALL_BADGES лежит в api.js). Единственный
+       дополнительный запрос — /api/leaderboard, и он необязателен:
+       если не получится, карточка ранга просто не покажется. */
+    async function renderSidebar(u) {
+        const box = document.getElementById('profileSidebar');
+        if (!box) return;
+
+        const completed = new Set(u.completed_topics || []);
+        const total = (typeof LESSON_INDEX !== 'undefined') ? LESSON_INDEX.length : 0;
+        const done = total ? [...completed].filter(id => LESSON_INDEX.some(l => l.id === id)).length : 0;
+        const pct = total ? Math.round(done / total * 100) : 0;
+        const next = total ? LESSON_INDEX.find(l => !completed.has(l.id)) : null;
+
+        const badgesOwned = (u.badges || []).length;
+        const badgesTotal = ALL_BADGES.length + RANK_BADGES.length;
+
+        const nextCase = 600; // цена самого дешёвого кейса в магазине
+        const toNextCase = Math.max(0, nextCase - (u.balance || 0));
+
+        box.innerHTML = `
+            <div class="side-card">
+                <div class="side-card-head">${svgIcon('tree', { size: 17, color: '#0099cc' })} Дерево грамматики</div>
+                <div class="side-card-sub">${total ? `${done} из ${total} тем пройдено` : 'Прогресс по темам'}</div>
+                <div class="side-progress-track"><div class="side-progress-fill" style="width:${pct}%"></div></div>
+                <div class="side-progress-label"><span>${pct}%</span><span>${badgesOwned}/${badgesTotal} значков</span></div>
+                ${next ? `
+                    <div class="side-next-lesson">
+                        ${svgIcon('bolt', { size: 15, color: '#0099cc' })}
+                        <div><b>${esc(next.title)}</b>${esc(next.section)} · +${next.xp} XP</div>
+                    </div>
+                    <a class="side-cta" href="lesson.html?id=${encodeURIComponent(next.id)}">
+                        ${svgIcon('bolt', { size: 14, color: '#fff' })} Продолжить обучение</a>
+                ` : total ? `
+                    <div class="side-next-lesson">${svgIcon('check', { size: 15, color: '#0e8f6f' })} <div><b>Всё дерево пройдено!</b>Можно повторять темы заново</div></div>
+                    <a class="side-cta ghost" href="tree.html">Открыть дерево</a>
+                ` : `<a class="side-cta ghost" href="tree.html">Открыть дерево</a>`}
+            </div>
+
+            <div class="side-card" id="sideRankCard" hidden>
+                <div class="side-card-head">${svgIcon('trophy', { size: 17, color: '#f0b429' })} Место в топе</div>
+                <div class="side-card-sub">По опыту (XP), среди учеников</div>
+                <div class="side-rank-row">
+                    <div class="side-rank-num" id="sideRankNum">—</div>
+                </div>
+                <a class="side-cta ghost" href="leaderboard.html">${svgIcon('chart', { size: 14, color: '#036389' })} Смотреть весь топ</a>
+            </div>
+
+            <div class="side-card">
+                <div class="side-card-head">${svgIcon('coin', { size: 17, color: '#0099cc' })} Магазин</div>
+                <div class="side-card-sub">${u.balance} монет на счету</div>
+                ${toNextCase > 0
+                    ? `<div class="side-progress-track"><div class="side-progress-fill" style="width:${Math.round((u.balance||0)/nextCase*100)}%"></div></div>
+                       <div class="side-empty-note">Ещё ${toNextCase} монет — и хватит на обычный кейс</div>`
+                    : `<div class="side-empty-note">Уже хватает на обычный кейс — можно открыть в магазине</div>`}
+                <a class="side-cta ghost" href="shop.html">${svgIcon('gem', { size: 14, color: '#036389' })} Перейти в магазин</a>
+            </div>
+
+            <div class="side-card">
+                <div class="side-card-head">${svgIcon('grad', { size: 17, color: '#0099cc' })} Тест КСПОЯ</div>
+                ${kspoyaBest
+                    ? `<div class="side-card-sub">Лучший результат</div>
+                       <div class="side-mini-stat"><span>Баллы</span><b>${kspoyaBest.score} / 40</b></div>
+                       <div class="side-mini-stat"><span>Уровень</span><b>${esc(kspoyaBest.level)}</b></div>
+                       <a class="side-cta ghost" href="tests.html">Пройти ещё раз</a>`
+                    : `<div class="side-card-sub">Ты ещё не сдавал(а) КСПОЯ</div>
+                       <div class="side-empty-note">Пройди тест, чтобы узнать свой уровень владения языком</div>
+                       <a class="side-cta" href="tests.html">${svgIcon('bolt', { size: 14, color: '#fff' })} Пройти тест</a>`}
+            </div>
+        `;
+
+        // Ранг по XP — необязательный запрос: если рейтинг не подтянулся,
+        // карточка просто остаётся скрытой вместо прочерка.
+        try {
+            const r = await API.get('/api/leaderboard');
+            if (r.ok && Array.isArray(r.data) && r.data.length) {
+                const sorted = [...r.data].sort((a, b) => (b.xp||0) - (a.xp||0));
+                const idx = sorted.findIndex(e => e.username === u.username);
+                if (idx !== -1) {
+                    document.getElementById('sideRankNum').innerHTML = `#${idx+1}<span> из ${sorted.length}</span>`;
+                    document.getElementById('sideRankCard').hidden = false;
+                }
+            }
+        } catch (e) { /* тихо: карточка ранга необязательна */ }
     }
 
     function declDays(n) {
