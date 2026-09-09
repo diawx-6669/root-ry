@@ -8,7 +8,7 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "static")
 USER = {
     "id": 1, "username": "demo", "nickname": "Демо", "balance": 1250, "xp": 640,
     "streak": 5, "badges": ["book", "fire", "trophy", "rank_b1", "🌳"],
-    "avatars": ["cat", "dog", "fox", "dragon", "crown", "🦊"],
+    "avatars": ["cat", "corgi", "arcticfox", "dragon", "sunlion", "🦊"],
     "active_avatar": "dragon", "completed_topics": ["fon-zvuki"],
     "favorite_games": [], "games_won_types": [], "promo_used": [],
     "is_admin": True, "research_consent": True, "last_daily_claim": "",

@@ -16,7 +16,7 @@ SEED = """() => {
     localStorage.setItem('currentUser', JSON.stringify({
         username: 'demo', nickname: 'Демо', balance: 1250, xp: 640, streak: 5,
         badges: ['book', 'fire', 'trophy', 'rank_b1', '\\u{1F333}'],
-        avatars: ['cat', 'dog', 'fox', 'dragon', 'crown', '\\u{1F98A}'],
+        avatars: ['cat', 'corgi', 'arcticfox', 'dragon', 'sunlion', '\\u{1F98A}'],
         active_avatar: 'dragon', completed_topics: [], favorite_games: [],
         is_admin: true, research_consent: true
     }));

@@ -31,14 +31,20 @@ var BadgeCaseChances = map[string]float64{
 
 // AvatarPool — аватарки по редкости.
 // Идентификаторы обязаны совпадать с ALL_AVATARS в static/api.js и с
-// файлами static/img/avatars/<id>.svg: выпавшую аватарку, которой нет в
+// файлами static/img/avatars/<id>.png: выпавшую аватарку, которой нет в
 // каталоге, страница нарисовать не сможет.
+//
+// Набор — коллекция "RootRy Modern Avatars v2" (PNG, пришла на смену
+// старым SVG-иконкам). У редкости "rare" теперь 4 аватарки вместо 7:
+// столько отрисовано в новой коллекции. Сами проценты выпадения редкости
+// (CaseChances) от размера пула не зависят — конкретный предмет внутри
+// редкости просто выбирается равновероятно из того, что есть.
 var AvatarPool = map[string][]string{
-	"common":    {"cat", "dog", "fox", "panda", "koala", "lion", "tiger", "bear", "frog"},
-	"rare":      {"unicorn", "dragon", "butterfly", "peacock", "parrot", "flamingo", "dolphin"},
-	"epic":      {"wizard", "vampire", "mermaid", "elf", "hero"},
-	"legendary": {"crown", "star", "comet"},
-	"mythic":    {"rainbow"},
+	"common":    {"cat", "corgi", "arcticfox", "panda", "shiba", "parrot", "robot", "squirrel", "frog"},
+	"rare":      {"moonfox", "dragon", "butterfly", "lynx"},
+	"epic":      {"gecko", "phoenix", "cloudspirit", "seaguardian", "owl"},
+	"legendary": {"sunlion", "frostleopard", "obsidiandragon"},
+	"mythic":    {"cosmichummingbird"},
 }
 
 // BadgePool — значки по редкости.

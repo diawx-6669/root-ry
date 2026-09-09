@@ -85,50 +85,50 @@ const API = {
 // Каталог общий для профиля, шапки, рейтинга и магазина: иначе выбранная
 // аватарка показывалась бы в одном месте и не показывалась в другом.
 //
-// Аватарка опознаётся коротким идентификатором (cat, dragon, rainbow), а
-// рисуется файлом img/avatars/<id>.svg из этой же папки. Раньше
+// Аватарка опознаётся коротким идентификатором (cat, dragon, sunlion), а
+// рисуется файлом img/avatars/<id>.png из этой же папки. Раньше
 // идентификатором был эмодзи, а картинка грузилась с api.dicebear.com:
 // без интернета вместо аватарок появлялись значки битых картинок, а
 // запасной вариант рисовал эмодзи системным шрифтом — на каждом
 // устройстве по-своему. Теперь ни сети, ни эмодзи-шрифта не требуется.
+//
+// Каталог — коллекция "RootRy Modern Avatars v2" (PNG 512×512, пришла на
+// смену старым SVG-иконкам зверей и фэнтези-персонажей).
 const ALL_AVATARS = {
     // Порядок и состав обязаны совпадать с AvatarPool в internal/store/cases.go:
     // выпавшую с сервера аватарку, которой нет в этом каталоге, страница
     // нарисовать не сможет. Так когда-то пропала коала.
     common: [
-        { id:'cat',     label:'Кот' },
-        { id:'dog',     label:'Пёс' },
-        { id:'fox',     label:'Лис' },
-        { id:'panda',   label:'Панда' },
-        { id:'koala',   label:'Коала' },
-        { id:'bear',    label:'Медведь' },
-        { id:'frog',    label:'Лягушка' },
-        { id:'lion',    label:'Лев' },
-        { id:'tiger',   label:'Тигр' },
+        { id:'cat',      label:'Чёрный кот' },
+        { id:'corgi',    label:'Корги' },
+        { id:'arcticfox',label:'Песец' },
+        { id:'panda',    label:'Панда' },
+        { id:'shiba',    label:'Шиба-ину' },
+        { id:'parrot',   label:'Попугай' },
+        { id:'robot',    label:'Робот' },
+        { id:'squirrel', label:'Белка' },
+        { id:'frog',     label:'Лягушка' },
     ],
     rare: [
-        { id:'unicorn',   label:'Единорог' },
-        { id:'dragon',    label:'Дракон' },
-        { id:'butterfly', label:'Бабочка' },
-        { id:'peacock',   label:'Павлин' },
-        { id:'parrot',    label:'Попугай' },
-        { id:'flamingo',  label:'Фламинго' },
-        { id:'dolphin',   label:'Дельфин' },
+        { id:'moonfox',          label:'Лунный лис' },
+        { id:'dragon',           label:'Ледяной дракон' },
+        { id:'butterfly',        label:'Хрустальная бабочка' },
+        { id:'lynx',             label:'Рысь' },
     ],
     epic: [
-        { id:'wizard',  label:'Маг' },
-        { id:'vampire', label:'Вампир' },
-        { id:'hero',    label:'Герой' },
-        { id:'elf',     label:'Эльф' },
-        { id:'mermaid', label:'Русалка' },
+        { id:'gecko',        label:'Электрогекон' },
+        { id:'phoenix',      label:'Феникс' },
+        { id:'cloudspirit',  label:'Дух облака' },
+        { id:'seaguardian',  label:'Страж моря' },
+        { id:'owl',          label:'Голографическая сова' },
     ],
     legendary: [
-        { id:'crown', label:'Корона' },
-        { id:'star',  label:'Звезда' },
-        { id:'comet', label:'Комета' },
+        { id:'sunlion',        label:'Солнечный лев' },
+        { id:'frostleopard',   label:'Снежный барс' },
+        { id:'obsidiandragon', label:'Обсидиановый дракон' },
     ],
     mythic: [
-        { id:'rainbow', label:'Радуга' },
+        { id:'cosmichummingbird', label:'Космический колибри' },
     ],
 };
 const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
@@ -197,7 +197,7 @@ function avatarId(v)  { return LEGACY_AVATAR_IDS[v] || v || ''; }
 function badgeId(v)   { return LEGACY_BADGE_IDS[v] || v || ''; }
 
 /** Путь к картинке аватарки. */
-function avatarImg(id) { return 'img/avatars/' + avatarId(id) + '.svg'; }
+function avatarImg(id) { return 'img/avatars/' + avatarId(id) + '.png'; }
 
 /** Путь к картинке значка: обычного или знака уровня. */
 function badgeImg(id) {
