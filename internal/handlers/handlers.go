@@ -756,11 +756,19 @@ func (h *Handler) UpdateFavorites(w http.ResponseWriter, r *http.Request) {
 
 // knownGames — идентификаторы мини-игр, совпадают с game_type в /api/game/submit.
 var knownGames = map[string]bool{
-	"comma_ninja":    true,
-	"stress_space":   true,
-	"word_alchemist": true,
-	"minefield":      true,
-	"detective_case": true,
+	"comma_ninja":      true,
+	"stress_space":     true,
+	"word_alchemist":   true,
+	"minefield":        true,
+	"detective_case":   true,
+	"paronym":          true,
+	"syntax":           true,
+	"dash":             true,
+	"phraseology":      true,
+	"style":            true,
+	"direct_speech":    true,
+	"slitno":           true,
+	"complex_sentence": true,
 }
 
 // validateUsername проверяет логин и возвращает текст ошибки («» — всё в порядке).

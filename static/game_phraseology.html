@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фразеологический архив | RootRy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        body { background: #1a1408; min-height: 100vh; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
+
+        .game-header {
+            width: 100%; background: rgba(15,15,20,0.97); display: flex; align-items: center;
+            justify-content: space-between; padding: 14px 24px; position: fixed; top: 0; left: 0; z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .brand { color: #fff; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .brand span { color: #f0b429; }
+        .hud { display: flex; gap: 20px; align-items: center; }
+        .hud-item { color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .score-num { color: #f0b429; font-size: 20px; }
+
+        .surrender-btn {
+            background: rgba(231,76,60,0.2); border: 1px solid #e74c3c; color: #e74c3c;
+            padding: 8px 18px; border-radius: 12px; font-family: 'Montserrat', sans-serif;
+            font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .surrender-btn:hover { background: rgba(231,76,60,0.4); }
+
+        #arena {
+            margin-top: 80px;
+            width: 100%; max-width: 680px;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 18px;
+        }
+
+        .story-panel {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(240,180,41,0.3);
+            border-radius: 20px;
+            padding: 20px 24px;
+            position: relative;
+        }
+        .case-badge {
+            position: absolute; top: -12px; left: 20px;
+            background: #f0b429; color: #0a0a0f; font-size: 10px; font-weight: 800;
+            padding: 4px 14px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .detective-name { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+        .story-text {
+            color: #f0ead6; font-size: 15px; line-height: 1.8; font-weight: 500;
+        }
+        .blank {
+            display: inline-block; min-width: 40px; border-bottom: 2px solid #f0b429;
+            color: #f0b429; font-weight: 800; text-align: center; padding: 0 6px;
+        }
+        .blank.filled { color: #2ecc71; border-color: #2ecc71; }
+        .blank.wrong-fill { color: #e74c3c; border-color: #e74c3c; animation: shake 0.4s ease; }
+
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+        .task-box {
+            width: 100%;
+            background: rgba(240,180,41,0.1);
+            border: 1px solid rgba(240,180,41,0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+        }
+        .task-label { font-size: 11px; font-weight: 700; color: rgba(240,180,41,0.75); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .task-word { color: #f0b429; font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+        .task-case { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .opt-btn {
+            padding: 14px 10px; border: 2px solid rgba(255,255,255,0.1); border-radius: 14px;
+            background: rgba(255,255,255,0.04); font-size: 14px; font-weight: 700;
+            color: #f0ead6; cursor: pointer; transition: 0.2s;
+            font-family: 'Montserrat', sans-serif; text-align: center;
+        }
+        .opt-btn:hover:not(:disabled) { border-color: #f0b429; background: rgba(240,180,41,0.1); transform: translateY(-2px); }
+        .opt-btn.correct { border-color: #2ecc71 !important; background: rgba(46,204,113,0.2) !important; color: #2ecc71 !important; }
+        .opt-btn.wrong   { border-color: #e74c3c !important; background: rgba(231,76,60,0.15) !important; color: #e74c3c !important; }
+
+        .progress-row { display: flex; align-items: center; gap: 14px; width: 100%; }
+        .progress-bar-outer { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 6px; }
+        .progress-bar-inner { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #a67c1e, #f0b429); transition: 0.4s; }
+        .progress-text { color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+        .feedback { padding: 12px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; width: 100%; text-align: center; display: none; }
+        .feedback.correct { display: block; background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+        .feedback.wrong   { display: block; background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,20,0.97); z-index: 300; align-items: center; justify-content: center; flex-direction: column; }
+        .overlay.show { display: flex; }
+        .overlay-box { background: #fff; border-radius: 28px; padding: 40px 50px; max-width: 460px; width: 90%; text-align: center; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes popIn { from{opacity:0;transform:scale(0.8);} to{opacity:1;transform:scale(1);} }
+        .overlay-box h2 { color: #023e50; font-size: 26px; margin-bottom: 8px; }
+        .big-num { font-size: 64px; font-weight: 800; color: #f0b429; line-height: 1; margin: 10px 0; }
+        .stars { font-size: 32px; margin: 8px 0; }
+        .action-btn { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(90deg,#a67c1e,#f0b429); color: #fff; border: none; border-radius: 16px; padding: 14px 28px; font-size: 15px; font-weight: 700; font-family: 'Montserrat', sans-serif; cursor: pointer; transition: 0.2s; margin: 4px; }
+        .action-btn:hover { box-shadow: 0 8px 24px rgba(240,180,41,0.3); transform: translateY(-2px); }
+        .action-btn.secondary { background: #e9eff5; color: #023e50; }
+        .action-btn.secondary:hover { box-shadow: none; transform: none; }
+        .overlay-icon { font-size: 46px; color: #a67c1e; margin-bottom: 10px; }
+        .explanation { margin-top: 8px; font-size: 13px; font-weight: 600; opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="game-header">
+    <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Root<span>Ry</span></div>
+    <div class="hud">
+        <div class="hud-item"><i class="fa-solid fa-star" style="color:#f0b429"></i><span class="score-num" id="scoreDisplay">0</span></div>
+        <div class="hud-item" style="color:rgba(255,255,255,0.5);font-size:12px;" id="qDisplay">Раунд 1/8</div>
+    </div>
+    <button class="surrender-btn" onclick="confirmSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
+</div>
+
+<div id="arena">
+    <div class="progress-row">
+        <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar" style="width:0%"></div></div>
+        <div class="progress-text" id="progressText">0/8</div>
+    </div>
+
+    <div class="story-panel" id="storyPanel">
+        <div class="case-badge"><i class="fa-solid fa-book-bookmark"></i> Раунд</div>
+        <div class="detective-name">Хранитель архива показывает старинное выражение:</div>
+        <div class="story-text" id="storyText"></div>
+    </div>
+
+    <div class="task-box">
+        <div class="task-label"><i class="fa-solid fa-clipboard-list"></i> Что означает это выражение?</div>
+        <div class="task-word" id="taskWord"></div>
+        <div class="task-case" id="taskCase"></div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <div class="feedback" id="feedbackEl"></div>
+</div>
+
+<!-- Start -->
+<div class="overlay show" id="startOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+        <h2>Фразеологический архив</h2>
+        <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Фразеологизмы — устойчивые выражения, значение которых нельзя понять по отдельным словам.<br><br>Прочитай выражение и выбери его настоящее значение.</p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-book-bookmark"></i> Начать!</button>
+    </div>
+</div>
+
+<!-- End -->
+<div class="overlay" id="endOverlay">
+    <div class="overlay-box">
+        <div class="stars" id="endStars"></div>
+        <h2 id="endTitle">Игра окончена!</h2>
+        <div class="big-num" id="endScore">0</div>
+        <p style="color:#666;font-size:14px;margin:8px 0 20px;">Раундов выиграно: <strong id="correctCnt">0</strong> из <strong id="totalCnt">8</strong></p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-rotate-right"></i> Играть снова</button>
+        <button class="action-btn secondary" onclick="window.location.href='games.html'"><i class="fa-solid fa-arrow-left"></i> Назад</button>
+    </div>
+</div>
+
+<!-- Surrender -->
+<div class="overlay" id="surrenderOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon" style="color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
+        <h2>Прекратить игру?</h2>
+        <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
+        <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="endGame()">Сдаться</button>
+        <button class="action-btn secondary" onclick="hideOverlay('surrenderOverlay')">Продолжить</button>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const GAME_ID = 'phraseology';
+const CASES = [
+    {
+        "story": "«Бить баклуши»",
+        "task": "«Бить баклуши»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Бездельничать, ничего не делать",
+            "Усердно и много трудиться"
+        ],
+        "correct": 0,
+        "explanation": "«Бить баклуши» — бездельничать. Баклушами называли заготовки для деревянных ложек, и их «битьё» считалось лёгкой, не требующей усилий работой."
+    },
+    {
+        "story": "«Зарубить на носу»",
+        "task": "«Зарубить на носу»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Запомнить крепко-накрепко",
+            "Случайно пораниться"
+        ],
+        "correct": 0,
+        "explanation": "«Зарубить на носу» — запомнить навсегда. «Носом» раньше называли дощечку для памятных зарубок, а не часть лица."
+    },
+    {
+        "story": "«Работать спустя рукава»",
+        "task": "«Спустя рукава»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Небрежно, кое-как",
+            "Быстро и очень аккуратно"
+        ],
+        "correct": 0,
+        "explanation": "«Спустя рукава» — небрежно. Выражение пошло от старинной одежды с длинными рукавами, в которых неудобно было работать."
+    },
+    {
+        "story": "«Денег осталось как кот наплакал»",
+        "task": "«Как кот наплакал»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Очень мало",
+            "Очень много"
+        ],
+        "correct": 0,
+        "explanation": "«Как кот наплакал» — очень мало, ничтожно малое количество чего-либо."
+    },
+    {
+        "story": "«Держать язык за зубами»",
+        "task": "«Держать язык за зубами»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Молчать, не выдавать тайну",
+            "Громко и много разговаривать"
+        ],
+        "correct": 0,
+        "explanation": "«Держать язык за зубами» — молчать, хранить секрет, не говорить лишнего."
+    },
+    {
+        "story": "«Он опять водит всех за нос»",
+        "task": "«Водить за нос»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Обманывать, вводить в заблуждение",
+            "Вести кого-то за собой в нужное место"
+        ],
+        "correct": 0,
+        "explanation": "«Водить за нос» — обманывать, вводить в заблуждение, обещая то, чего не собираешься выполнять."
+    },
+    {
+        "story": "«Она была на седьмом небе от счастья»",
+        "task": "«На седьмом небе»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Испытывать огромную радость",
+            "Находиться очень далеко от дома"
+        ],
+        "correct": 0,
+        "explanation": "«На седьмом небе» — испытывать сильную радость и счастье, восходит к древним представлениям о семи небесных сферах."
+    },
+    {
+        "story": "«После проигрыша он остался гол как сокол»",
+        "task": "«Гол как сокол»",
+        "caseLabel": "Выбери значение выражения",
+        "options": [
+            "Очень бедный, без денег",
+            "Быстрый и ловкий, как птица"
+        ],
+        "correct": 0,
+        "explanation": "«Гол как сокол» — очень бедный, не имеющий ничего. «Сокол» здесь — старинное название гладкого стенобитного бревна, а не птицы."
+    }
+];
+
+let score = 0, currentIdx = 0, correctCount = 0, answered = false;
+let qShownAt = 0;
+
+function startGame() {
+    hideOverlay('startOverlay'); hideOverlay('endOverlay'); hideOverlay('surrenderOverlay');
+    score = 0; currentIdx = 0; correctCount = 0;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    if (currentIdx >= CASES.length) { endGame(); return; }
+    answered = false;
+    qShownAt = Date.now();
+    const q = CASES[currentIdx];
+
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('qDisplay').textContent = `Раунд ${currentIdx+1}/${CASES.length}`;
+    document.getElementById('progressBar').style.width = `${(currentIdx/CASES.length)*100}%`;
+    document.getElementById('progressText').textContent = `${currentIdx}/${CASES.length}`;
+
+    const blank = `<span class="blank" id="blankEl">___</span>`;
+    document.getElementById('storyText').innerHTML = q.story.includes('___') ? q.story.replace('___', blank) : q.story;
+
+    document.getElementById('taskWord').textContent = q.task || '';
+    document.getElementById('taskCase').textContent = q.caseLabel || '';
+
+    const fb = document.getElementById('feedbackEl');
+    fb.className = 'feedback'; fb.textContent = '';
+
+    const grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.textContent = opt;
+        btn.onclick = () => answer(i, btn);
+        grid.appendChild(btn);
+    });
+}
+
+function answer(idx, btn) {
+    if (answered) return;
+    answered = true;
+    const q = CASES[currentIdx];
+    const isCorrect = idx === q.correct;
+    const fb = document.getElementById('feedbackEl');
+    const blank = document.getElementById('blankEl');
+
+    document.querySelectorAll('.opt-btn').forEach(b => b.onclick = null);
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer(GAME_ID, q.task || currentIdx, isCorrect,
+            typeof qShownAt !== 'undefined' && qShownAt ? Date.now() - qShownAt : 0);
+    }
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        if (blank) { blank.textContent = q.options[q.correct]; blank.classList.add('filled'); }
+        fb.className = 'feedback correct';
+        fb.innerHTML = `<i class="fa-solid fa-check"></i> Верно!<div class="explanation">${q.explanation || ''}</div>`;
+        score += 10; correctCount++;
+    } else {
+        btn.classList.add('wrong');
+        if (blank) { blank.textContent = q.options[idx]; blank.classList.add('wrong-fill'); }
+        document.querySelectorAll('.opt-btn')[q.correct].classList.add('correct');
+        fb.className = 'feedback wrong';
+        fb.innerHTML = `<i class="fa-solid fa-xmark"></i> Неверно. Правильно: «${q.options[q.correct]}»<div class="explanation">${q.explanation || ''}</div>`;
+    }
+
+    document.getElementById('scoreDisplay').textContent = score;
+    currentIdx++;
+    setTimeout(renderQuestion, 2800);
+}
+
+function endGame() {
+    hideOverlay('surrenderOverlay');
+
+    const pct = Math.round((correctCount / CASES.length) * 100);
+    document.getElementById('endStars').innerHTML = starIcons(pct >= 90 ? 3 : pct >= 60 ? 2 : 1);
+    document.getElementById('endTitle').textContent = pct >= 90 ? 'Знаток фразеологизмов!' : pct >= 60 ? 'Хороший результат!' : 'Архив фразеологизмов нужно изучить получше...';
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('correctCnt').textContent = correctCount;
+    document.getElementById('totalCnt').textContent = CASES.length;
+    if(typeof submitGameResult==='function')submitGameResult(GAME_ID, typeof score!=='undefined'?score:0);
+    showOverlay('endOverlay');
+}
+
+function confirmSurrender() {
+    document.getElementById('surrenderScore').textContent = score;
+    showOverlay('surrenderOverlay');
+}
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function starIcons(n) {
+    let h = '';
+    for (let i = 0; i < 3; i++) h += `<i class="fa-solid fa-star" style="color:${i < n ? '#f0b429' : 'rgba(0,0,0,0.15)'};margin:0 2px;"></i>`;
+    return h;
+}
+</script>
+</body>
+</html>

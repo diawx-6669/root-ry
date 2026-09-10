@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Слитно или раздельно | RootRy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <link rel="stylesheet" href="home-style.css">
+    <style>
+        body { background: #0e1a12; min-height: 100vh; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
+
+        .game-header {
+            width: 100%; background: rgba(15,15,20,0.97); display: flex; align-items: center;
+            justify-content: space-between; padding: 14px 24px; position: fixed; top: 0; left: 0; z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .brand { color: #fff; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .brand span { color: #3fe38a; }
+        .hud { display: flex; gap: 20px; align-items: center; }
+        .hud-item { color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .score-num { color: #3fe38a; font-size: 20px; }
+
+        .surrender-btn {
+            background: rgba(231,76,60,0.2); border: 1px solid #e74c3c; color: #e74c3c;
+            padding: 8px 18px; border-radius: 12px; font-family: 'Montserrat', sans-serif;
+            font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .surrender-btn:hover { background: rgba(231,76,60,0.4); }
+
+        #arena {
+            margin-top: 80px;
+            width: 100%; max-width: 680px;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 18px;
+        }
+
+        .story-panel {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(63,227,138,0.3);
+            border-radius: 20px;
+            padding: 20px 24px;
+            position: relative;
+        }
+        .case-badge {
+            position: absolute; top: -12px; left: 20px;
+            background: #3fe38a; color: #0a0a0f; font-size: 10px; font-weight: 800;
+            padding: 4px 14px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .detective-name { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+        .story-text {
+            color: #f0ead6; font-size: 15px; line-height: 1.8; font-weight: 500;
+        }
+        .blank {
+            display: inline-block; min-width: 40px; border-bottom: 2px solid #3fe38a;
+            color: #3fe38a; font-weight: 800; text-align: center; padding: 0 6px;
+        }
+        .blank.filled { color: #2ecc71; border-color: #2ecc71; }
+        .blank.wrong-fill { color: #e74c3c; border-color: #e74c3c; animation: shake 0.4s ease; }
+
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+        .task-box {
+            width: 100%;
+            background: rgba(63,227,138,0.1);
+            border: 1px solid rgba(63,227,138,0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+        }
+        .task-label { font-size: 11px; font-weight: 700; color: rgba(63,227,138,0.75); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .task-word { color: #3fe38a; font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+        .task-case { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .opt-btn {
+            padding: 14px 10px; border: 2px solid rgba(255,255,255,0.1); border-radius: 14px;
+            background: rgba(255,255,255,0.04); font-size: 14px; font-weight: 700;
+            color: #f0ead6; cursor: pointer; transition: 0.2s;
+            font-family: 'Montserrat', sans-serif; text-align: center;
+        }
+        .opt-btn:hover:not(:disabled) { border-color: #3fe38a; background: rgba(63,227,138,0.1); transform: translateY(-2px); }
+        .opt-btn.correct { border-color: #2ecc71 !important; background: rgba(46,204,113,0.2) !important; color: #2ecc71 !important; }
+        .opt-btn.wrong   { border-color: #e74c3c !important; background: rgba(231,76,60,0.15) !important; color: #e74c3c !important; }
+
+        .progress-row { display: flex; align-items: center; gap: 14px; width: 100%; }
+        .progress-bar-outer { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 6px; }
+        .progress-bar-inner { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #1f9d5c, #3fe38a); transition: 0.4s; }
+        .progress-text { color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+        .feedback { padding: 12px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; width: 100%; text-align: center; display: none; }
+        .feedback.correct { display: block; background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+        .feedback.wrong   { display: block; background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,20,0.97); z-index: 300; align-items: center; justify-content: center; flex-direction: column; }
+        .overlay.show { display: flex; }
+        .overlay-box { background: #fff; border-radius: 28px; padding: 40px 50px; max-width: 460px; width: 90%; text-align: center; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes popIn { from{opacity:0;transform:scale(0.8);} to{opacity:1;transform:scale(1);} }
+        .overlay-box h2 { color: #023e50; font-size: 26px; margin-bottom: 8px; }
+        .big-num { font-size: 64px; font-weight: 800; color: #3fe38a; line-height: 1; margin: 10px 0; }
+        .stars { font-size: 32px; margin: 8px 0; }
+        .action-btn { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(90deg,#1f9d5c,#3fe38a); color: #fff; border: none; border-radius: 16px; padding: 14px 28px; font-size: 15px; font-weight: 700; font-family: 'Montserrat', sans-serif; cursor: pointer; transition: 0.2s; margin: 4px; }
+        .action-btn:hover { box-shadow: 0 8px 24px rgba(63,227,138,0.3); transform: translateY(-2px); }
+        .action-btn.secondary { background: #e9eff5; color: #023e50; }
+        .action-btn.secondary:hover { box-shadow: none; transform: none; }
+        .overlay-icon { font-size: 46px; color: #1f9d5c; margin-bottom: 10px; }
+        .explanation { margin-top: 8px; font-size: 13px; font-weight: 600; opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="game-header">
+    <div class="brand"><i class="fa-solid fa-graduation-cap"></i> Root<span>Ry</span></div>
+    <div class="hud">
+        <div class="hud-item"><i class="fa-solid fa-star" style="color:#3fe38a"></i><span class="score-num" id="scoreDisplay">0</span></div>
+        <div class="hud-item" style="color:rgba(255,255,255,0.5);font-size:12px;" id="qDisplay">Раунд 1/8</div>
+    </div>
+    <button class="surrender-btn" onclick="confirmSurrender()"><i class="fa-solid fa-flag"></i> Сдаться</button>
+</div>
+
+<div id="arena">
+    <div class="progress-row">
+        <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar" style="width:0%"></div></div>
+        <div class="progress-text" id="progressText">0/8</div>
+    </div>
+
+    <div class="story-panel" id="storyPanel">
+        <div class="case-badge"><i class="fa-solid fa-link-slash"></i> Раунд</div>
+        <div class="detective-name">Как правильно написать выделенное слово?</div>
+        <div class="story-text" id="storyText"></div>
+    </div>
+
+    <div class="task-box">
+        <div class="task-label"><i class="fa-solid fa-clipboard-list"></i> Выбери верный вариант написания</div>
+        <div class="task-word" id="taskWord"></div>
+        <div class="task-case" id="taskCase"></div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <div class="feedback" id="feedbackEl"></div>
+</div>
+
+<!-- Start -->
+<div class="overlay show" id="startOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon"><i class="fa-solid fa-link-slash"></i></div>
+        <h2>Слитно или раздельно</h2>
+        <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">«Не» с разными частями речи пишется то слитно, то раздельно — всё зависит от контекста и наличия противопоставления.<br><br>Прочитай предложение и выбери правильный вариант написания.</p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-link-slash"></i> Начать!</button>
+    </div>
+</div>
+
+<!-- End -->
+<div class="overlay" id="endOverlay">
+    <div class="overlay-box">
+        <div class="stars" id="endStars"></div>
+        <h2 id="endTitle">Игра окончена!</h2>
+        <div class="big-num" id="endScore">0</div>
+        <p style="color:#666;font-size:14px;margin:8px 0 20px;">Раундов выиграно: <strong id="correctCnt">0</strong> из <strong id="totalCnt">8</strong></p>
+        <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-rotate-right"></i> Играть снова</button>
+        <button class="action-btn secondary" onclick="window.location.href='games.html'"><i class="fa-solid fa-arrow-left"></i> Назад</button>
+    </div>
+</div>
+
+<!-- Surrender -->
+<div class="overlay" id="surrenderOverlay">
+    <div class="overlay-box">
+        <div class="overlay-icon" style="color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
+        <h2>Прекратить игру?</h2>
+        <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
+        <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="endGame()">Сдаться</button>
+        <button class="action-btn secondary" onclick="hideOverlay('surrenderOverlay')">Продолжить</button>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const GAME_ID = 'slitno';
+const CASES = [
+    {
+        "story": "Он говорил ___, а тихо.",
+        "task": "«не(громко)»",
+        "caseLabel": "Есть противопоставление с союзом «а»",
+        "options": [
+            "не громко",
+            "негромко"
+        ],
+        "correct": 0,
+        "explanation": "При явном противопоставлении с союзом «а» наречие с «не» пишется раздельно: «не громко, а тихо»."
+    },
+    {
+        "story": "Дорога была ___, но живописная.",
+        "task": "«не(ровная)»",
+        "caseLabel": "Слово можно заменить синонимом без «не»",
+        "options": [
+            "не ровная",
+            "неровная"
+        ],
+        "correct": 1,
+        "explanation": "Без явного противопоставления и с возможностью заменить синонимом («кривая»), прилагательное с «не» пишется слитно: «неровная»."
+    },
+    {
+        "story": "Это была ___, а совсем крошечная комната.",
+        "task": "«не(большая)»",
+        "caseLabel": "Есть явное противопоставление",
+        "options": [
+            "не большая",
+            "небольшая"
+        ],
+        "correct": 0,
+        "explanation": "При явном противопоставлении («не большая, а крошечная») прилагательное с «не» пишется раздельно."
+    },
+    {
+        "story": "Он поступил ___.",
+        "task": "«не(хорошо)»",
+        "caseLabel": "Можно заменить словом «плохо»",
+        "options": [
+            "не хорошо",
+            "нехорошо"
+        ],
+        "correct": 1,
+        "explanation": "Без противопоставления, при возможности замены синонимом («плохо»), наречие с «не» пишется слитно: «нехорошо»."
+    },
+    {
+        "story": "Друг был мне ___ в тот момент.",
+        "task": "«не(обходим)»",
+        "caseLabel": "Слово не употребляется без «не»",
+        "options": [
+            "не обходим",
+            "необходим"
+        ],
+        "correct": 1,
+        "explanation": "Если слово не употребляется без «не», оно всегда пишется слитно: «необходим»."
+    },
+    {
+        "story": "Я вовсе ___ этой новости.",
+        "task": "«не(рад)»",
+        "caseLabel": "Краткое прилагательное, не имеющее полной формы",
+        "options": [
+            "не рад",
+            "нерад"
+        ],
+        "correct": 0,
+        "explanation": "Краткие прилагательные, не имеющие полной формы (рад, должен, готов), с «не» всегда пишутся раздельно: «не рад»."
+    },
+    {
+        "story": "Знания, ___ для сдачи экзамена, он получил на курсах.",
+        "task": "«не(обходимые)»",
+        "caseLabel": "Нет противопоставления, обычное отрицание",
+        "options": [
+            "не обходимые",
+            "необходимые"
+        ],
+        "correct": 1,
+        "explanation": "Без противопоставления полное прилагательное с «не» пишется слитно: «необходимые»."
+    },
+    {
+        "story": "Это далеко ___ лучшее решение проблемы.",
+        "task": "«не(лучшее)»",
+        "caseLabel": "Перед «не» стоит усилительное слово «далеко»",
+        "options": [
+            "не лучшее",
+            "нелучшее"
+        ],
+        "correct": 0,
+        "explanation": "Слова «далеко не», «вовсе не», «отнюдь не» перед прилагательным или наречием требуют раздельного написания «не»: «далеко не лучшее»."
+    }
+];
+
+let score = 0, currentIdx = 0, correctCount = 0, answered = false;
+let qShownAt = 0;
+
+function startGame() {
+    hideOverlay('startOverlay'); hideOverlay('endOverlay'); hideOverlay('surrenderOverlay');
+    score = 0; currentIdx = 0; correctCount = 0;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    if (currentIdx >= CASES.length) { endGame(); return; }
+    answered = false;
+    qShownAt = Date.now();
+    const q = CASES[currentIdx];
+
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('qDisplay').textContent = `Раунд ${currentIdx+1}/${CASES.length}`;
+    document.getElementById('progressBar').style.width = `${(currentIdx/CASES.length)*100}%`;
+    document.getElementById('progressText').textContent = `${currentIdx}/${CASES.length}`;
+
+    const blank = `<span class="blank" id="blankEl">___</span>`;
+    document.getElementById('storyText').innerHTML = q.story.includes('___') ? q.story.replace('___', blank) : q.story;
+
+    document.getElementById('taskWord').textContent = q.task || '';
+    document.getElementById('taskCase').textContent = q.caseLabel || '';
+
+    const fb = document.getElementById('feedbackEl');
+    fb.className = 'feedback'; fb.textContent = '';
+
+    const grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.textContent = opt;
+        btn.onclick = () => answer(i, btn);
+        grid.appendChild(btn);
+    });
+}
+
+function answer(idx, btn) {
+    if (answered) return;
+    answered = true;
+    const q = CASES[currentIdx];
+    const isCorrect = idx === q.correct;
+    const fb = document.getElementById('feedbackEl');
+    const blank = document.getElementById('blankEl');
+
+    document.querySelectorAll('.opt-btn').forEach(b => b.onclick = null);
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer(GAME_ID, q.task || currentIdx, isCorrect,
+            typeof qShownAt !== 'undefined' && qShownAt ? Date.now() - qShownAt : 0);
+    }
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        if (blank) { blank.textContent = q.options[q.correct]; blank.classList.add('filled'); }
+        fb.className = 'feedback correct';
+        fb.innerHTML = `<i class="fa-solid fa-check"></i> Верно!<div class="explanation">${q.explanation || ''}</div>`;
+        score += 10; correctCount++;
+    } else {
+        btn.classList.add('wrong');
+        if (blank) { blank.textContent = q.options[idx]; blank.classList.add('wrong-fill'); }
+        document.querySelectorAll('.opt-btn')[q.correct].classList.add('correct');
+        fb.className = 'feedback wrong';
+        fb.innerHTML = `<i class="fa-solid fa-xmark"></i> Неверно. Правильно: «${q.options[q.correct]}»<div class="explanation">${q.explanation || ''}</div>`;
+    }
+
+    document.getElementById('scoreDisplay').textContent = score;
+    currentIdx++;
+    setTimeout(renderQuestion, 2800);
+}
+
+function endGame() {
+    hideOverlay('surrenderOverlay');
+
+    const pct = Math.round((correctCount / CASES.length) * 100);
+    document.getElementById('endStars').innerHTML = starIcons(pct >= 90 ? 3 : pct >= 60 ? 2 : 1);
+    document.getElementById('endTitle').textContent = pct >= 90 ? 'Мастер НЕ и НИ!' : pct >= 60 ? 'Хороший результат!' : 'Слитное и раздельное написание нужно повторить...';
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('correctCnt').textContent = correctCount;
+    document.getElementById('totalCnt').textContent = CASES.length;
+    if(typeof submitGameResult==='function')submitGameResult(GAME_ID, typeof score!=='undefined'?score:0);
+    showOverlay('endOverlay');
+}
+
+function confirmSurrender() {
+    document.getElementById('surrenderScore').textContent = score;
+    showOverlay('surrenderOverlay');
+}
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function starIcons(n) {
+    let h = '';
+    for (let i = 0; i < 3; i++) h += `<i class="fa-solid fa-star" style="color:${i < n ? '#3fe38a' : 'rgba(0,0,0,0.15)'};margin:0 2px;"></i>`;
+    return h;
+}
+</script>
+</body>
+</html>

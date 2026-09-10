@@ -791,6 +791,12 @@ const GAME_TOPIC = {
     vocabulary: 'mrf-morfemy',         // «Алхимик слов» — сборка по морфемам
     detective:  'mor-sushestvitelnoe', // «Детектив Падеж» — падежи существительных
     syntax:     'sin-prostoe',         // «Строитель предложений»
+    dash:             'pun-tire',           // «Мастер тире»
+    phraseology:      'lex-frazeologiya',   // «Фразеологический архив»
+    style:            'sti-stili',          // «Стилист»
+    direct_speech:    'sin-pryamaya-rech',  // «Прямая речь»
+    slitno:           'orf-slitno',         // «Слитно или раздельно»
+    complex_sentence: 'sin-slozhnoe',       // «Сложное предложение»
 };
 
 /* У «Минного поля» пять уровней по разным правилам орфографии, и
