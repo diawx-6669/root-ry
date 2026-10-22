@@ -814,6 +814,8 @@ var knownGames = map[string]bool{
 	"direct_speech":    true,
 	"slitno":           true,
 	"complex_sentence": true,
+	"norm_runner":      true,
+	"ortho_storm":      true,
 }
 
 // legacyGameTypes — старые названия, под которыми страницы игр отправляли

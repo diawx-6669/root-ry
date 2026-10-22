@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Орфо-шторм | RootRy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           Орфо-шторм.
+           Сверху падают астероиды со словами с пропуском. Корабль
+           водишь пальцем, стреляешь буквой — кнопками внизу. Попал
+           верной буквой — астероид разлетается и показывает слово
+           целиком. Неверной — он вспыхивает и ускоряется. Долетел до
+           щита — минус щит. Волны идут по правилам, в конце — босс.
+           ═══════════════════════════════════════════════════════════ */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; background: #020611; font-family: 'Montserrat', 'Segoe UI', sans-serif; }
+        body { touch-action: none; user-select: none; -webkit-user-select: none; }
+        canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+        .hud {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 10; pointer-events: none;
+            padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; display: flex; gap: 8px; align-items: center; color: #fff;
+            background: linear-gradient(180deg, rgba(2,6,17,.9), rgba(2,6,17,0));
+        }
+        .pill { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 7px 12px; font-weight: 800; font-size: 14px; display: flex; gap: 7px; align-items: center; }
+        .score { color: #6ef0c2; font-size: 18px; }
+        .spacer { flex: 1; }
+        .shields { color: #6ec3ff; letter-spacing: 1px; }
+        .hud button { pointer-events: auto; width: 42px; height: 42px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #fff; font-size: 16px; cursor: pointer; }
+        .wave {
+            position: fixed; z-index: 9; top: calc(62px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+            color: #fff; text-align: center; pointer-events: none; width: min(560px, 92vw);
+        }
+        .wave .t { font-size: 11px; letter-spacing: 2px; font-weight: 800; color: #6ef0c2; text-transform: uppercase; }
+        .wave .r { font-size: 13px; color: #b8c7e8; margin-top: 2px; }
+        .banner {
+            position: fixed; z-index: 11; left: 50%; top: 38%; transform: translate(-50%,-50%); width: min(520px, 90vw);
+            text-align: center; color: #fff; pointer-events: none; opacity: 0;
+        }
+        .banner.go { animation: ban 2.6s cubic-bezier(.2,.9,.2,1) forwards; }
+        .banner h2 { font-size: 34px; font-weight: 900; text-shadow: 0 0 30px #6ef0c2; }
+        .banner p { font-size: 14px; color: #c9d6f3; margin-top: 8px; line-height: 1.5; background: rgba(2,6,17,.6); padding: 10px 14px; border-radius: 14px; }
+        @keyframes ban { 0% { opacity: 0; transform: translate(-50%,-40%) scale(.9); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-60%); } }
+
+        .ammo {
+            position: fixed; z-index: 10; left: 0; right: 0; bottom: 0;
+            padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+            display: flex; gap: 10px; justify-content: center;
+            background: linear-gradient(0deg, rgba(2,6,17,.95), rgba(2,6,17,0));
+        }
+        .ammo button {
+            flex: 1; max-width: 200px; height: 68px; border-radius: 20px; cursor: pointer;
+            font: 900 28px Montserrat, sans-serif; color: #fff;
+            background: linear-gradient(160deg, rgba(110,240,194,.25), rgba(110,195,255,.12));
+            border: 2px solid rgba(110,240,194,.6); box-shadow: 0 0 22px rgba(110,240,194,.15) inset;
+            transition: transform .08s, background .15s; position: relative;
+        }
+        .ammo button:active, .ammo button.fire { transform: scale(.94); background: rgba(110,240,194,.45); }
+        .ammo button small { position: absolute; top: 6px; right: 10px; font-size: 11px; opacity: .55; font-weight: 700; }
+        @media (hover: none) { .ammo button small { display: none; } }
+
+        .overlay { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(2,6,17,.8); backdrop-filter: blur(8px); padding: 18px; }
+        .overlay.show { display: flex; }
+        .card {
+            width: min(520px, 100%); max-height: 92vh; overflow-y: auto; color: #fff; text-align: center;
+            background: linear-gradient(160deg, #0c1a3a, #050c1e); border: 1px solid rgba(110,240,194,.3); border-radius: 26px; padding: 26px 22px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: pop .4s cubic-bezier(.34,1.5,.64,1) both;
+        }
+        @keyframes pop { from { transform: scale(.88); opacity: 0; } to { transform: none; opacity: 1; } }
+        .card h1 { font-size: 30px; font-weight: 900; } .card h1 span { color: #6ef0c2; }
+        .card p { color: #bfcdec; font-size: 14px; line-height: 1.55; margin: 10px 0; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; text-align: left; }
+        .controls div { background: rgba(255,255,255,.06); border-radius: 12px; padding: 10px; font-size: 12.5px; color: #d6e2fb; }
+        .controls i { color: #6ef0c2; width: 18px; }
+        .btn { height: 54px; padding: 0 26px; border: none; border-radius: 16px; cursor: pointer; margin: 6px 4px 0; font: 800 16px Montserrat, sans-serif; color: #021; background: linear-gradient(90deg, #6ef0c2, #6ec3ff); }
+        .btn.ghost { background: rgba(255,255,255,.1); color: #fff; }
+        .big { font-size: 56px; font-weight: 900; color: #6ef0c2; line-height: 1; margin: 10px 0 4px; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+        .stats div { background: rgba(255,255,255,.06); border-radius: 12px; padding: 10px 4px; }
+        .stats b { display: block; font-size: 20px; } .stats span { font-size: 11px; color: #9fb0d6; text-transform: uppercase; font-weight: 700; }
+        .mist { text-align: left; } .mist h3 { font-size: 13px; color: #6ef0c2; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 8px; }
+        .mist .m { background: rgba(255,90,120,.08); border: 1px solid rgba(255,90,120,.25); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+        .mist .m b { color: #6ef0c2; } .mist .m .r { color: #bfcdec; font-size: 12.5px; margin-top: 3px; }
+        @media (max-width: 600px) { .banner h2 { font-size: 27px; } .card h1 { font-size: 25px; } .ammo button { height: 64px; font-size: 26px; } }
+    </style>
+</head>
+<body>
+    <canvas id="cv"></canvas>
+    <div class="hud">
+        <div class="pill"><i class="fa-solid fa-star" style="color:#6ef0c2"></i><span class="score" id="hScore">0</span></div>
+        <div class="pill" id="hCombo" style="color:#ffd84d">×1</div>
+        <div class="spacer"></div>
+        <div class="pill shields" id="hShields"></div>
+        <button id="pauseBtn" aria-label="Пауза"><i class="fa-solid fa-pause"></i></button>
+    </div>
+    <div class="wave" id="waveInfo"><div class="t" id="wT"></div><div class="r" id="wR"></div></div>
+    <div class="banner" id="banner"><h2 id="bT"></h2><p id="bR"></p></div>
+    <div class="ammo" id="ammo"></div>
+
+    <div class="overlay show" id="startOv"><div class="card">
+        <h1>Орфо-<span>шторм</span></h1>
+        <p>На станцию летит метеоритный дождь из слов с пропущенными буквами. Наводи корабль и стреляй <b>нужной буквой</b>. Правильная буква разносит астероид, неправильная — только разгоняет его. Пять волн по правилам орфографии и босс-метеорит в конце.</p>
+        <div class="controls">
+            <div><i class="fa-solid fa-hand-pointer"></i> Веди пальцем — корабль</div>
+            <div><i class="fa-solid fa-crosshairs"></i> Кнопки внизу — выстрел буквой</div>
+            <div><i class="fa-solid fa-keyboard"></i> ← → / A D — движение</div>
+            <div><i class="fa-solid fa-keyboard"></i> 1 2 3 / J K L — буквы</div>
+        </div>
+        <button class="btn" id="startBtn"><i class="fa-solid fa-rocket"></i> На взлёт</button>
+        <button class="btn ghost" onclick="location.href='games.html'">Назад</button>
+    </div></div>
+    <div class="overlay" id="pauseOv"><div class="card">
+        <h1>Пауза</h1><p>Метеориты подождут.</p>
+        <button class="btn" id="resumeBtn"><i class="fa-solid fa-play"></i> Продолжить</button>
+        <button class="btn ghost" id="quitBtn">Закончить</button>
+    </div></div>
+    <div class="overlay" id="endOv"><div class="card">
+        <h1 id="endTitle">Шторм пройден</h1>
+        <div class="big" id="endScore">0</div><div style="color:#9fb0d6;font-weight:700;font-size:13px">очков</div>
+        <div class="stats">
+            <div><b id="sHit">0</b><span>сбито</span></div>
+            <div><b id="sAcc">0%</b><span>точность</span></div>
+            <div><b id="sWave">0</b><span>волна</span></div>
+        </div>
+        <div class="mist" id="endMist"></div>
+        <button class="btn" id="againBtn"><i class="fa-solid fa-rotate-right"></i> Ещё раз</button>
+        <button class="btn ghost" onclick="location.href='games.html'">К играм</button>
+    </div></div>
+
+    <script src="api.js?v=20261022"></script>
+    <script>
+    const GAME_ID = 'ortho_storm';
+
+    // ── Волны: правило, буквы-патроны и слова ──
+    // Слово записано как «пр|е|красный»: середина — правильная вставка.
+    const WAVES = [
+        {
+            title: 'ПРЕ или ПРИ', topic: 'orf-pristavki', ammo: ['е', 'и'],
+            rule: 'ПРИ — приближение, присоединение, близость, неполнота действия. ПРЕ — «очень» или «пере».',
+            words: ['пр|е|красный', 'пр|и|морский', 'пр|е|одолеть', 'пр|и|шить', 'пр|е|рвать', 'пр|и|клеить',
+                    'пр|е|следовать', 'пр|и|брежный', 'пр|е|небрегать', 'пр|и|открыть', 'пр|е|забавный', 'пр|и|школьный',
+                    'пр|е|зирать', 'пр|и|вокзальный', 'пр|е|увеличить', 'пр|и|сесть'],
+        },
+        {
+            title: 'Н или НН', topic: 'orf-n-nn', ammo: ['н', 'нн'],
+            rule: '-ан-/-ян- — одна Н (кожаный), кроме стеклянный, оловянный, деревянный. -енн-, -онн- и основа на Н — две (лимонный).',
+            words: ['деревя|нн|ый', 'кожа|н|ый', 'стекля|нн|ый', 'серебря|н|ый', 'оловя|нн|ый', 'лимо|нн|ый',
+                    'ю|н|ый', 'румя|н|ый', 'карма|нн|ый', 'ветре|н|ый', 'безветре|нн|ый', 'песча|н|ый',
+                    'клюкве|нн|ый', 'масля|н|ый'],
+            fix: { 'оловя|нн|ый': 'олов|я|нный' },
+        },
+        {
+            title: 'О или Ё после шипящих', topic: 'orf-shipyashchie', ammo: ['о', 'ё'],
+            rule: 'В корне под ударением пишем Ё, если есть проверка с Е (жёлтый — желтеть). Без проверки — О (шорох, крыжовник).',
+            words: ['ж|ё|лтый', 'ш|о|рох', 'крыж|о|вник', 'ч|ё|рный', 'ш|ё|пот', 'ж|о|кей', 'капюш|о|н',
+                    'реш|ё|тка', 'щ|ё|тка', 'ч|о|каться', 'пч|ё|лы', 'ш|о|рты', 'ж|ё|сткий', 'обж|о|ра'],
+        },
+        {
+            title: '-ТСЯ или -ТЬСЯ', topic: 'orf-znaki', ammo: ['т', 'ть'],
+            rule: 'Задай вопрос к глаголу. Что делать? — ТЬСЯ. Что делает? — ТСЯ.',
+            words: ['он учи|т|ся', 'надо учи|ть|ся', 'дождь собирае|т|ся', 'пора собира|ть|ся', 'мне нрави|т|ся',
+                    'хочу улыбну|ть|ся', 'она смеё|т|ся', 'стоит заня|ть|ся', 'солнце садит|т|ся', 'нельзя сдава|ть|ся'],
+            fix: { 'солнце садит|т|ся': 'солнце сади|т|ся' },
+        },
+        {
+            title: 'Финал: всё вместе', topic: null, ammo: null, boss: true,
+            rule: 'Буквы на кнопках меняются под каждое слово. Не торопись: босс прощает только точные выстрелы.',
+        },
+    ];
+    // Исправления в данных — чтобы в слове была ровно одна пара разделителей.
+    for (const w of WAVES) if (w.fix) w.words = w.words.map(x => w.fix[x] || x);
+    function parse(word) { const [a, mid, b] = word.split('|'); return { pre: a, ans: mid, post: b, full: a + mid + b }; }
+
+    const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+    let W = 0, H = 0;
+    function resize() {
+        const d = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+        cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+    }
+    addEventListener('resize', resize); resize();
+    const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stars = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), z: .3 + Math.random() * .7 }));
+
+    let S;
+    function reset() {
+        S = {
+            run: false, paused: false, t: 0, last: 0, waveIdx: 0, toSpawn: [], spawnT: 0, betweenT: 0,
+            shipX: W / 2, targetX: W / 2, shields: 4, score: 0, combo: 0, mult: 1, shots: [], rocks: [], parts: [],
+            hits: 0, fired: 0, wrongShots: 0, mistakes: [], shake: 0, cooldown: 0, boss: null, ammo: [],
+        };
+    }
+    function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+    function startWave(i) {
+        S.waveIdx = i;
+        const w = WAVES[i];
+        if (!w) return finish(true);
+        document.getElementById('wT').textContent = `Волна ${i + 1} / ${WAVES.length} · ${w.title}`;
+        document.getElementById('wR').textContent = '';
+        const b = document.getElementById('banner');
+        document.getElementById('bT').textContent = w.boss ? 'БОСС-МЕТЕОРИТ' : `Волна ${i + 1}: ${w.title}`;
+        document.getElementById('bR').textContent = w.rule;
+        b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+        if (w.boss) {
+            setAmmo([]);
+            setTimeout(spawnBoss, 1800);
+            return;
+        }
+        setAmmo(w.ammo);
+        S.toSpawn = shuffle(w.words.slice()).slice(0, 10 + i * 2);
+        S.spawnT = 2.2;
+    }
+
+    function spawnRock(word, wave) {
+        const p = parse(word);
+        ctx.font = '800 17px Montserrat, sans-serif';
+        const tw = ctx.measureText(p.pre + '_' + p.post).width;
+        const r = Math.max(42, tw / 2 + 16);
+        S.rocks.push({
+            p, wave, topic: wave.topic, ammo: wave.ammo,
+            x: r + Math.random() * (W - 2 * r), y: -r - 10, r,
+            vy: 26 + S.waveIdx * 7 + Math.random() * 10, vx: (Math.random() - .5) * 14,
+            rot: Math.random() * 6, vr: (Math.random() - .5) * .6, hurt: 0, wrongMarked: false, born: performance.now(),
+            shape: Array.from({ length: 11 }, () => .82 + Math.random() * .25),
+        });
+    }
+    function spawnBoss() {
+        // Босс — большой метеорит с пятью словами из всех волн подряд.
+        const words = WAVES.filter(w => w.words).map(w => ({ w, word: shuffle(w.words.slice())[0] }));
+        const extra = WAVES.filter(w => w.words).map(w => ({ w, word: shuffle(w.words.slice())[1] }));
+        S.boss = { x: W / 2, y: -120, r: Math.min(W * .32, 150), queue: shuffle(words.concat(extra)).slice(0, 6), hp: 6, vy: 12, hurt: 0, rot: 0 };
+        nextBossWord();
+    }
+    function nextBossWord() {
+        const b = S.boss; if (!b) return;
+        b.cur = b.queue.shift();
+        if (!b.cur) { killBoss(); return; }
+        b.cur.p = parse(b.cur.word); b.cur.born = performance.now();
+        setAmmo(b.cur.w.ammo);
+        document.getElementById('wR').textContent = b.cur.w.title;
+    }
+
+    function setAmmo(list) {
+        S.ammo = list;
+        const keys = ['1 / J', '2 / K', '3 / L'];
+        document.getElementById('ammo').innerHTML = list.map((a, i) => `<button data-i="${i}"><small>${keys[i]}</small>${a}</button>`).join('');
+    }
+    document.getElementById('ammo').addEventListener('pointerdown', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        e.preventDefault(); e.stopPropagation(); fire(+b.dataset.i);
+        b.classList.add('fire'); setTimeout(() => b.classList.remove('fire'), 90);
+    });
+
+    function fire(i) {
+        if (!S.run || S.paused || S.cooldown > 0) return;
+        const letter = S.ammo[i]; if (!letter) return;
+        S.cooldown = 0.16; S.fired++;
+        S.shots.push({ x: S.shipX, y: H - shipY(), letter, vy: -880 });
+        Sound.tone(880, .05, { type: 'square', gain: .02, slideTo: 1400 });
+    }
+    const shipY = () => 150 + (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0);
+
+    // Управление кораблём: палец/мышь в любой точке над кнопками.
+    let dragging = false;
+    cv.addEventListener('pointerdown', e => { dragging = true; S.targetX = e.clientX; });
+    addEventListener('pointermove', e => { if (dragging || e.pointerType === 'mouse') S && (S.targetX = e.clientX); });
+    addEventListener('pointerup', () => { dragging = false; });
+    const keys = {};
+    addEventListener('keydown', e => {
+        keys[e.key] = true;
+        const map = { '1': 0, '2': 1, '3': 2, j: 0, k: 1, l: 2, J: 0, K: 1, L: 2, 'о': 0, 'л': 1, 'д': 2 };
+        if (e.key in map) fire(map[e.key]);
+        if (e.key === 'Escape' || e.key === 'p') togglePause();
+    });
+    addEventListener('keyup', e => { keys[e.key] = false; });
+
+    function loop(ts) {
+        if (!S.run) return;
+        const dt = Math.min(.05, (ts - (S.last || ts)) / 1000); S.last = ts;
+        if (!S.paused) update(dt);
+        draw(); requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+        S.t += dt; S.cooldown -= dt; S.shake = Math.max(0, S.shake - dt * 2.4);
+        if (keys.ArrowLeft || keys.a || keys.A || keys['ф']) S.targetX -= 620 * dt;
+        if (keys.ArrowRight || keys.d || keys.D || keys['в']) S.targetX += 620 * dt;
+        S.targetX = Math.max(30, Math.min(W - 30, S.targetX));
+        S.shipX += (S.targetX - S.shipX) * Math.min(1, dt * 16);
+
+        // спавн волны
+        if (S.toSpawn.length) {
+            S.spawnT -= dt;
+            if (S.spawnT <= 0) { spawnRock(S.toSpawn.pop(), WAVES[S.waveIdx]); S.spawnT = Math.max(.9, 2.3 - S.waveIdx * .3) + Math.random() * .6; }
+        } else if (!S.rocks.length && !S.boss && WAVES[S.waveIdx] && !WAVES[S.waveIdx].boss) {
+            S.betweenT += dt;
+            if (S.betweenT > 1.2) { S.betweenT = 0; startWave(S.waveIdx + 1); }
+        }
+
+        for (const s of S.shots) s.y += s.vy * dt;
+        S.shots = S.shots.filter(s => s.y > -40 && !s.dead);
+
+        const groundY = H - shipY() + 10;
+        for (const r of S.rocks) {
+            r.y += r.vy * dt; r.x += r.vx * dt; r.rot += r.vr * dt; r.hurt = Math.max(0, r.hurt - dt);
+            if (r.x < r.r || r.x > W - r.r) r.vx *= -1;
+            for (const s of S.shots) {
+                if (s.dead) continue;
+                if ((s.x - r.x) ** 2 + (s.y - r.y) ** 2 < r.r * r.r) { s.dead = true; hitRock(r, s); break; }
+            }
+            if (!r.dead && r.y + r.r * .6 > groundY) { r.dead = true; impact(r); }
+        }
+        S.rocks = S.rocks.filter(r => !r.dead);
+
+        if (S.boss) updateBoss(dt, groundY);
+        for (const p of S.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
+        S.parts = S.parts.filter(p => p.life > 0);
+    }
+
+    function hitRock(r, s) {
+        const ms = performance.now() - r.born;
+        if (s.letter === r.p.ans) {
+            r.dead = true; S.hits++; S.combo++; S.mult = 1 + Math.floor(S.combo / 5);
+            S.score += (20 + S.waveIdx * 5) * S.mult;
+            boom(r.x, r.y, '#6ef0c2', 34); popWord(r.x, r.y, r.p.full, '#6ef0c2');
+            Sound.correct();
+            if (S.combo % 8 === 0 && S.shields < 4) { S.shields++; popWord(S.shipX, H - shipY() - 50, '+щит', '#6ec3ff'); }
+            if (!r.wrongMarked) recordGameAnswer(GAME_ID, r.p.full, true, ms, r.topic);
+        } else {
+            // Неверная буква: астероид вспыхивает и разгоняется.
+            r.hurt = .35; r.vy *= 1.35; S.combo = 0; S.mult = 1; S.wrongShots++;
+            boom(s.x, s.y, '#ff5a78', 10); popWord(r.x, r.y - r.r, `не «${s.letter}»`, '#ff5a78');
+            Sound.wrong();
+            if (!r.wrongMarked) { r.wrongMarked = true; S.mistakes.push({ p: r.p, wave: r.wave, shot: s.letter }); recordGameAnswer(GAME_ID, r.p.full, false, ms, r.topic); }
+        }
+        hud();
+    }
+    function impact(r) {
+        S.shields--; S.combo = 0; S.mult = 1; S.shake = 1;
+        boom(r.x, H - shipY(), '#ff9b4d', 40); popWord(r.x, H - shipY() - 30, r.p.full, '#ffcf6e');
+        Sound.error(); if (navigator.vibrate) navigator.vibrate([50, 30, 70]);
+        if (!r.wrongMarked) { r.wrongMarked = true; S.mistakes.push({ p: r.p, wave: r.wave, shot: null }); recordGameAnswer(GAME_ID, r.p.full, false, performance.now() - r.born, r.topic); }
+        hud();
+        if (S.shields <= 0) setTimeout(() => finish(false), 600);
+    }
+
+    function updateBoss(dt, groundY) {
+        const b = S.boss;
+        b.y = Math.min(H * .32, b.y + 60 * dt);
+        b.x = W / 2 + Math.sin(S.t * .9) * W * .22;
+        b.rot += dt * .2; b.hurt = Math.max(0, b.hurt - dt);
+        // Босс постепенно снижается: чем дольше думаешь, тем ближе он к станции.
+        b.pressure = (b.pressure || 0) + dt * 0.025;
+        if (b.pressure >= 1) { b.pressure = 0; impact({ x: b.x, p: b.cur.p, born: b.cur.born, topic: b.cur.w.topic, wave: b.cur.w, r: 60 }); }
+        for (const s of S.shots) {
+            if (s.dead || !b.cur) continue;
+            if ((s.x - b.x) ** 2 + (s.y - b.y) ** 2 < b.r * b.r) {
+                s.dead = true;
+                const ms = performance.now() - b.cur.born;
+                if (s.letter === b.cur.p.ans) {
+                    b.hp--; b.hurt = .3; S.hits++; S.combo++; S.score += 80 * Math.max(1, S.mult);
+                    boom(b.x, b.y, '#ffd84d', 46); popWord(b.x, b.y, b.cur.p.full, '#ffd84d'); Sound.correct();
+                    recordGameAnswer(GAME_ID, b.cur.p.full, true, ms, b.cur.w.topic);
+                    b.pressure = Math.max(0, b.pressure - .35);
+                    nextBossWord();
+                } else {
+                    S.combo = 0; S.mult = 1; S.wrongShots++; b.pressure += .3;
+                    boom(s.x, s.y, '#ff5a78', 12); popWord(b.x, b.y - b.r, `не «${s.letter}»`, '#ff5a78'); Sound.wrong();
+                    S.mistakes.push({ p: b.cur.p, wave: b.cur.w, shot: s.letter });
+                    recordGameAnswer(GAME_ID, b.cur.p.full, false, ms, b.cur.w.topic);
+                }
+                hud();
+            }
+        }
+    }
+    function killBoss() {
+        const b = S.boss; S.boss = null;
+        for (let i = 0; i < 4; i++) setTimeout(() => boom(b.x + (Math.random() - .5) * b.r, b.y + (Math.random() - .5) * b.r, ['#ffd84d', '#6ef0c2', '#ff9b4d'][i % 3], 60), i * 140);
+        S.score += 500; S.shake = 1.2; Sound.levelUp(); hud();
+        setTimeout(() => finish(true), 1300);
+    }
+
+    // ── эффекты ──
+    function boom(x, y, c, n) {
+        if (REDUCED) n = Math.min(n, 8);
+        for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = 60 + Math.random() * 320; S.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: 1.5 + Math.random() * 3.5, c, life: .5 + Math.random() * .6, max: 1.1 }); }
+    }
+    const pops = [];
+    function popWord(x, y, text, c) { pops.push({ x, y, text, c, t: 0 }); }
+
+    // ── отрисовка ──
+    function draw() {
+        const sx = S.shake && !REDUCED ? (Math.random() - .5) * 16 * S.shake : 0, sy = S.shake && !REDUCED ? (Math.random() - .5) * 12 * S.shake : 0;
+        ctx.save(); ctx.translate(sx, sy);
+        const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#020611'); g.addColorStop(1, '#0a1838');
+        ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+        for (const s of stars) {
+            const y = (s.y * H + S.t * 40 * s.z) % H;
+            ctx.fillStyle = `rgba(200,225,255,${s.z * .8})`; ctx.fillRect(s.x * W, y, s.z * 2, s.z * 2);
+        }
+        // щит станции
+        const gy = H - shipY() + 10;
+        ctx.strokeStyle = `rgba(110,195,255,${.15 + S.shields * .12})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.quadraticCurveTo(W / 2, gy - 26, W, gy); ctx.stroke();
+
+        for (const r of S.rocks) drawRock(r);
+        if (S.boss) drawBoss(S.boss);
+        for (const s of S.shots) {
+            ctx.save(); ctx.shadowColor = '#6ef0c2'; ctx.shadowBlur = 14;
+            ctx.fillStyle = '#6ef0c2'; ctx.font = '900 20px Montserrat, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(s.letter, s.x, s.y); ctx.fillRect(s.x - 1.5, s.y + 12, 3, 18); ctx.restore();
+        }
+        drawShip();
+        for (const p of S.parts) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill(); }
+        ctx.globalAlpha = 1;
+        for (let i = pops.length - 1; i >= 0; i--) {
+            const p = pops[i]; p.t += 1 / 60;
+            ctx.globalAlpha = Math.max(0, 1 - p.t / 1.1); ctx.fillStyle = p.c; ctx.font = '900 20px Montserrat, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(p.text, p.x, p.y - p.t * 50);
+            if (p.t > 1.1) pops.splice(i, 1);
+        }
+        ctx.globalAlpha = 1; ctx.restore();
+    }
+    function rockPath(r) {
+        ctx.beginPath();
+        r.shape.forEach((k, i) => { const a = r.rot + i / r.shape.length * 6.283; const x = r.x + Math.cos(a) * r.r * k, y = r.y + Math.sin(a) * r.r * k * .8; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.closePath();
+    }
+    function drawRock(r) {
+        ctx.save();
+        ctx.shadowColor = r.hurt ? '#ff5a78' : '#6ec3ff'; ctx.shadowBlur = r.hurt ? 26 : 10;
+        rockPath(r);
+        const g = ctx.createRadialGradient(r.x - r.r * .3, r.y - r.r * .3, 4, r.x, r.y, r.r);
+        g.addColorStop(0, r.hurt ? '#7a2a3a' : '#3b4a6b'); g.addColorStop(1, r.hurt ? '#3a0f1c' : '#141c33');
+        ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = r.hurt ? '#ff5a78' : 'rgba(110,195,255,.6)'; ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.font = '800 17px Montserrat, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const left = r.p.pre, right = r.p.post, gap = ' _ ';
+        const wl = ctx.measureText(left).width, wg = ctx.measureText(gap).width, wr = ctx.measureText(right).width;
+        let x = r.x - (wl + wg + wr) / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#fff'; ctx.fillText(left, x, r.y); x += wl;
+        ctx.fillStyle = '#ffd84d'; ctx.fillText(gap, x, r.y); x += wg;
+        ctx.fillStyle = '#fff'; ctx.fillText(right, x, r.y);
+        ctx.restore();
+    }
+    function drawBoss(b) {
+        ctx.save();
+        ctx.shadowColor = b.hurt ? '#ffd84d' : '#ff5a78'; ctx.shadowBlur = 40;
+        ctx.beginPath();
+        for (let i = 0; i < 16; i++) { const a = b.rot + i / 16 * 6.283, k = .85 + .15 * Math.sin(i * 2.3); ctx.lineTo(b.x + Math.cos(a) * b.r * k, b.y + Math.sin(a) * b.r * k * .85); }
+        ctx.closePath();
+        const g = ctx.createRadialGradient(b.x, b.y, 10, b.x, b.y, b.r); g.addColorStop(0, '#5a2040'); g.addColorStop(1, '#1a0718');
+        ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#ff5a78'; ctx.stroke(); ctx.shadowBlur = 0;
+        // полоса здоровья и давление
+        const bw = b.r * 1.4; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(b.x - bw / 2, b.y - b.r - 22, bw, 8);
+        ctx.fillStyle = '#ffd84d'; ctx.fillRect(b.x - bw / 2, b.y - b.r - 22, bw * (b.hp / 6), 8);
+        ctx.fillStyle = '#ff5a78'; ctx.fillRect(b.x - bw / 2, b.y - b.r - 10, bw * (b.pressure || 0), 4);
+        if (b.cur) {
+            ctx.font = '900 22px Montserrat, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff'; ctx.fillText(b.cur.p.pre + ' _ ' + b.cur.p.post, b.x, b.y);
+        }
+        ctx.restore();
+    }
+    function drawShip() {
+        const x = S.shipX, y = H - shipY();
+        ctx.save(); ctx.translate(x, y); ctx.rotate((S.targetX - S.shipX) * .002);
+        ctx.shadowColor = '#6ef0c2'; ctx.shadowBlur = 22;
+        const g = ctx.createLinearGradient(0, -30, 0, 24); g.addColorStop(0, '#eafff7'); g.addColorStop(1, '#2fd4a0');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(24, 18); ctx.lineTo(8, 12); ctx.lineTo(0, 22); ctx.lineTo(-8, 12); ctx.lineTo(-24, 18); ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0; ctx.fillStyle = '#0a1838'; ctx.beginPath(); ctx.ellipse(0, -8, 5, 9, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = `rgba(110,240,194,${.5 + Math.random() * .4})`; ctx.beginPath(); ctx.moveTo(-6, 20); ctx.lineTo(0, 34 + Math.random() * 10); ctx.lineTo(6, 20); ctx.fill();
+        ctx.restore();
+    }
+
+    function hud() {
+        document.getElementById('hScore').textContent = S.score;
+        document.getElementById('hCombo').textContent = S.combo ? `×${S.mult} · ${S.combo}` : '×1';
+        document.getElementById('hShields').innerHTML = Array.from({ length: 4 }, (_, i) => `<i class="fa-solid fa-shield${i < S.shields ? '' : '-halved'}" style="opacity:${i < S.shields ? 1 : .25}"></i>`).join('');
+    }
+
+    function togglePause() {
+        if (!S || !S.run) return;
+        S.paused = !S.paused; S.last = 0;
+        document.getElementById('pauseOv').classList.toggle('show', S.paused);
+    }
+    document.getElementById('pauseBtn').onclick = togglePause;
+    document.getElementById('resumeBtn').onclick = togglePause;
+    document.getElementById('quitBtn').onclick = () => { S.paused = false; document.getElementById('pauseOv').classList.remove('show'); finish(false); };
+    document.addEventListener('visibilitychange', () => { if (document.hidden && S && S.run && !S.paused) togglePause(); });
+
+    function start() {
+        reset(); hud(); S.shipX = S.targetX = W / 2;
+        ['startOv', 'endOv', 'pauseOv'].forEach(id => document.getElementById(id).classList.remove('show'));
+        S.run = true; startWave(0); requestAnimationFrame(loop);
+    }
+    function finish(win) {
+        if (!S.run) return;
+        S.run = false; setAmmo([]);
+        const acc = S.fired ? Math.round(S.hits * 100 / S.fired) : 0;
+        document.getElementById('endTitle').textContent = win ? 'Шторм отбит!' : 'Станция пала…';
+        document.getElementById('endScore').textContent = S.score;
+        document.getElementById('sHit').textContent = S.hits;
+        document.getElementById('sAcc').textContent = acc + '%';
+        document.getElementById('sWave').textContent = Math.min(S.waveIdx + 1, WAVES.length);
+        const uniq = []; for (const m of S.mistakes) if (!uniq.some(u => u.p.full === m.p.full)) uniq.push(m);
+        document.getElementById('endMist').innerHTML = uniq.length ? '<h3>Разбор ошибок</h3>' + uniq.map(m => `
+            <div class="m"><b>${esc(m.p.pre)}<u>${esc(m.p.ans)}</u>${esc(m.p.post)}</b>${m.shot ? ` — ты выстрелил «${esc(m.shot)}»` : ' — пропущено'}
+            <div class="r">${esc(m.wave.title)}: ${esc(m.wave.rule)}</div></div>`).join('') : '<h3>Ни одного промаха по правилам</h3>';
+        document.getElementById('endOv').classList.add('show');
+        win ? Sound.win() : Sound.error();
+        if (typeof submitGameResult === 'function') submitGameResult(GAME_ID, Math.min(10000, S.score));
+    }
+    document.getElementById('startBtn').onclick = start;
+    document.getElementById('againBtn').onclick = start;
+    requireAuth();
+    reset(); hud(); draw();
+    </script>
+</body>
+</html>

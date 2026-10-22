@@ -2010,6 +2010,15 @@
             const enabled = document.fullscreenEnabled ?? document.webkitFullscreenEnabled ?? true;
             return !!request && enabled !== false;
         }
+        // Телефон или планшет: полный экран не просим вообще. На многих
+        // телефонах его нет или он сбрасывается сам (поворот, клавиатура),
+        // и пройти тест было буквально невозможно. Античит здесь — уход
+        // со страницы: свернул, закрыл, переключил вкладку или приложение.
+        function isPhone() {
+            return matchMedia('(pointer: coarse)').matches ||
+                /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        }
+
         // Выход из полного экрана — нарушение, только если тест в нём шёл.
         let fullscreenMode = false;
 
@@ -2038,7 +2047,7 @@
         async function startTest() {
             const btn = document.getElementById('startBtn');
 
-            if (fullscreenSupported()) {
+            if (fullscreenSupported() && !isPhone()) {
                 if (!await enterFullscreen()) {
                     showToast('Тест проходит только в полноэкранном режиме. ' +
                         'Разрешите его в браузере и попробуйте снова', 'error');
@@ -2862,12 +2871,15 @@
             clearInterval(timerInterval);
             testActive = false;
 
-            const r = await API.post('/api/kspoya/abort', {
-                session_id: sessionId,
-                violation: true,
-                reason: reason,
-            });
+            // keepalive: запрос уходит, даже если страницу в этот момент
+            // закрывают. Без него при закрытии вкладки нарушение терялось.
+            const sid = sessionId;
             sessionId = null;
+            const r = await fetch('/api/kspoya/abort', {
+                method: 'POST', keepalive: true, headers: API.headers(),
+                body: JSON.stringify({ session_id: sid, violation: true, reason: reason }),
+            }).then(async res => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
+              .catch(() => ({ ok: false, data: null }));
             exitFullscreen();
             Sound.wrong();
             showAnticheat(r.ok ? r.data : null, reason);
@@ -2880,7 +2892,7 @@
 
             const cause = reason === 'fullscreen'
                 ? 'Вы вышли из полноэкранного режима во время теста.'
-                : 'Вы переключили вкладку во время теста.';
+                : 'Вы ушли со страницы теста: свернули браузер, закрыли или переключили вкладку.';
 
             if (data && data.banned) {
                 title.textContent = 'Тест заблокирован';
@@ -2929,9 +2941,14 @@
             runPrefill();
         });
 
+        // Ушёл со страницы — нарушение сразу: свернул браузер, переключил
+        // вкладку или приложение (visibilitychange), закрыл вкладку или
+        // перешёл по ссылке (pagehide). Первое — предупреждение, второе —
+        // блокировка на сутки; счёт ведёт сервер.
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) registerViolation('tab');
         });
+        window.addEventListener('pagehide', () => registerViolation('tab'));
 
         ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange']
             .forEach(evt => document.addEventListener(evt, () => {
