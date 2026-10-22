@@ -6,7 +6,7 @@
     <title>RootRy | Магазин</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <style>
         /* ===== ОБЩИЙ СБРОС И ПЕРЕМЕННЫЕ ===== */
@@ -538,6 +538,13 @@
         /* Промокод — по центру страницы */
         .shop-section:last-child { display: flex; flex-direction: column; align-items: center; }
         .shop-section:last-child .section-label { width: 100%; max-width: 680px; }
+    
+        /* Телефон: поле промокода во flex-строке не сжималось уже своей
+           собственной ширины и растягивало страницу до 473px. */
+        @media (max-width: 600px) {
+            .promo-input { min-width: 0; font-size: 16px; letter-spacing: 1px; padding: 0 14px; }
+            .promo-submit { padding: 0 18px; }
+        }
     </style>
 </head>
 <body>
@@ -696,7 +703,7 @@
                         </div>
                         <div class="case-name cn-epic">Эпический</div>
                         <div class="odds-box">
-                            <div class="odd-row"><span class="odd-name oc">Обычная</span><div class="odd-track"><div class="odd-fill bc" style="width:20%"></div></div><span class="odd-pct oc">20%</span></div>
+                            <div class="odd-row"><span class="odd-name oc">Обычная</span><div class="odd-track"><div class="odd-fill bc" style="width:15%"></div></div><span class="odd-pct oc">15%</span></div>
                             <div class="odd-row"><span class="odd-name or">Редкая</span><div class="odd-track"><div class="odd-fill br" style="width:52.5%"></div></div><span class="odd-pct or">52.5%</span></div>
                             <div class="odd-row"><span class="odd-name oe">Эпик</span><div class="odd-track"><div class="odd-fill be" style="width:22.5%"></div></div><span class="odd-pct oe">22.5%</span></div>
                             <div class="odd-row"><span class="odd-name ol">Лега</span><div class="odd-track"><div class="odd-fill bl" style="width:9%"></div></div><span class="odd-pct ol">9%</span></div>
@@ -800,7 +807,7 @@
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
-    <script src="api.js"></script>
+    <script src="api.js?v=20261022"></script>
     <script>
     initHeader();
 
@@ -820,7 +827,7 @@
         // --- Серия ---
         document.getElementById('streakNum').textContent = u.streak || 0;
         const btn = document.getElementById('claimBtn');
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayLocal();
         if (u.last_daily_claim === today) {
             btn.textContent = '✓ Уже получено сегодня';
             btn.disabled = true;
@@ -858,7 +865,9 @@
     }
 
     async function claimDaily() {
-        const r = await API.post('/api/daily/claim', {});
+        const btn = document.getElementById('claimBtn');
+        btn.disabled = true;
+        const r = await API.post('/api/daily/claim', {}).catch(() => ({ ok: false, data: {} }));
         if (r.ok && !r.data.already_claimed) {
             // Use coins_earned directly from server response (streak-based)
             const coinsEarned = r.data.coins_earned || 10;
@@ -867,15 +876,25 @@
             document.getElementById('streakNum').textContent = streak;
             rewardCoins(coinsEarned, newBalance, document.getElementById('claimBtn'));
             // Update cached user balance
+            // Запоминаем и дату получения: иначе при возврате на страницу
+            // кнопка на секунду снова становилась активной.
             const u = API.user();
-            if (u) { u.balance = newBalance; localStorage.setItem('currentUser', JSON.stringify(u)); }
+            if (u) {
+                u.balance = newBalance;
+                u.streak = streak;
+                u.last_daily_claim = todayLocal();
+                localStorage.setItem('currentUser', JSON.stringify(u));
+            }
             showToast(`+${coinsEarned} монет за серию ${streak} 🔥 дней!`, 'success');
-            const btn = document.getElementById('claimBtn');
             btn.textContent = '✓ Уже получено сегодня';
-            btn.disabled = true;
-        } else {
+        } else if (r.ok && r.data.already_claimed) {
             showToast('Бонус уже получен сегодня!', 'warn');
-            document.getElementById('claimBtn').disabled = true;
+            btn.textContent = '✓ Уже получено сегодня';
+        } else {
+            // Раньше любая ошибка сети выдавалась за «уже получено»,
+            // и кнопка блокировалась до перезагрузки.
+            showToast('Не удалось получить бонус, попробуй ещё раз', 'error');
+            btn.disabled = false;
         }
     }
 
@@ -926,7 +945,10 @@
     const CHANCES = {
         common:    { common:70, rare:18,   epic:10,   legendary:2,   mythic:0   },
         rare:      { common:40, rare:42.5, epic:12.5, legendary:4.5, mythic:0.5 },
-        epic:      { common:20, rare:52.5, epic:22.5, legendary:9,   mythic:1   },
+        // Должно совпадать с CaseChances в internal/store/cases.go: там
+        // обычную редкость эпического кейса уже снизили до 15%, а витрина
+        // всё ещё обещала 20% (в сумме выходило 105%).
+        epic:      { common:15, rare:52.5, epic:22.5, legendary:9,   mythic:1   },
         legendary: { common:0,  rare:20,   epic:40,   legendary:35,  mythic:5   },
     };
     const ORDER = ['common','rare','epic','legendary','mythic'];
@@ -1148,14 +1170,16 @@
 
         if (r.ok && r.data.success) {
             msg.className = 'promo-msg ok';
-            msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + r.data.message;
+            msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + esc(r.data.message);
             document.getElementById('promoInput').value = '';
             showToast(r.data.message, 'success');
-            const u = await API.refreshUser();
-            if (u) document.getElementById('userBalance').textContent = u.balance;
+            // force: иначе в первые полторы секунды после загрузки
+            // возвращался кэш, и баланс не обновлялся.
+            const u = await API.refreshUser({ force: true });
+            if (u) animateBalance(u.balance);
         } else {
             msg.className = 'promo-msg err';
-            msg.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (r.data.message || r.data.error || 'Неверный код');
+            msg.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + esc(r.data.message || r.data.error || 'Неверный код');
         }
 
         btn.disabled = false;

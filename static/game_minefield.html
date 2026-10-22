@@ -162,6 +162,7 @@
         .action-btn.safe { background: linear-gradient(90deg,#27ae60,#2ecc71); }
         .action-btn.safe:hover { box-shadow: 0 8px 24px rgba(46,204,113,0.4); }
     </style>
+    <link rel="stylesheet" href="game-mobile.css?v=20261022">
 </head>
 <body>
 
@@ -235,7 +236,7 @@
     </div>
 </div>
 
-<script src="api.js"></script>
+<script src="api.js?v=20261022"></script>
 <script>
 // Переработанная структура: каждый уровень состоит из 5 пошаговых пар
 const LEVELS = [
@@ -426,7 +427,7 @@ function endGame() {
     document.getElementById('endTitle').textContent = pct >= 80 ? '💎 Сапёр-эксперт!' : pct >= 40 ? '💣 Неплохо!' : '📚 Нужна практика!';
     document.getElementById('endScore').textContent = score;
     document.getElementById('levelsPassed').textContent = levelsPassed;
-    if(typeof submitGameResult==='function')submitGameResult('grammar', typeof score!=='undefined'?score:0);
+    if(typeof submitGameResult==='function')submitGameResult('minefield', typeof score!=='undefined'?score:0);
     showOverlay('endOverlay');
 }
 

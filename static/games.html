@@ -6,7 +6,7 @@
     <title>RootRy | Мини-игры</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
         /* ── TOOLBAR ── */
        /* ── TOOLBAR ── */
@@ -281,6 +281,11 @@
         @media (max-width: 860px)  { .games-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 600px)  { .games-grid { grid-template-columns: repeat(2, 1fr); } }
         
+    
+        /* Телефон: «сердечко» 32px — мимо него легко промахнуться пальцем */
+        @media (max-width: 600px) {
+            .fav-btn { width: 40px; height: 40px; top: 6px; right: 6px; font-size: 17px; }
+        }
     </style>
 </head>
 <body>
@@ -348,7 +353,7 @@
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
-    <script src="api.js"></script>
+    <script src="api.js?v=20261022"></script>
     <script>
     // Fallback if api.js not loaded
     if (typeof initHeader === 'undefined') { function initHeader(){} }
@@ -369,7 +374,7 @@
                 'У тебя 3 жизни на раунд',
                 'Побей рекорд по количеству правильных разрубов'
             ],
-            tags: ['Аркада', '+60 монет'],
+            tags: ['Аркада', '+50 монет'],
             hashtags: ['#пунктуация', '#синтаксис', '#запятая', '#аркада'],
             file: 'game_comma_ninja.html'
         },
@@ -386,7 +391,7 @@
                 'На уровнях 3+ нужно следовать заданной схеме',
                 'Блоки падают быстрее с каждым уровнем'
             ],
-            tags: ['Головоломка', '+70 монет'],
+            tags: ['Головоломка', '+50 монет'],
             hashtags: ['#морфемика', '#словообразование', '#морфология', '#тетрис'],
             file: 'game_word_alchemist.html'
         },
@@ -403,7 +408,7 @@
                 'Щит поглощает один неправильный ответ',
                 'Слова из орфоэпического словника ЕГЭ'
             ],
-            tags: ['Шутер', '+60 монет'],
+            tags: ['Шутер', '+50 монет'],
             hashtags: ['#ударение', '#орфоэпия', '#ЕГЭ', '#космос'],
             file: 'game_stress_space.html'
         },
@@ -420,7 +425,7 @@
                 'Ошибка меняет ход следствия',
                 'Сложные числительные и прилагательные'
             ],
-            tags: ['Квест', '+80 монет'],
+            tags: ['Квест', '+50 монет'],
             hashtags: ['#падеж', '#склонение', '#морфология', '#детектив'],
             file: 'game_detective_case.html'
         },
@@ -437,7 +442,7 @@
                 'Уровни: Н/НН, чередующиеся корни, ЖИ-ШИ',
                 '3 жизни на всё прохождение'
             ],
-            tags: ['Платформер', '+70 монет'],
+            tags: ['Платформер', '+50 монет'],
             hashtags: ['#орфография', '#НиНН', '#исключения', '#платформер'],
             file: 'game_minefield.html'
         }

@@ -6,7 +6,7 @@
     <title>RootRy | Панель Администратора</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
         .admin-header-card {
             background: linear-gradient(135deg, #023e50, #0099cc);
@@ -121,6 +121,31 @@
         .refresh-btn i { transition: 0.4s; }
         .refresh-btn.spinning i { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+    
+        /* ===== ТЕЛЕФОН =====
+           Аватар без flex-shrink:0 сжимался в полоску, кнопка «Назад»
+           выталкивала текст в узкую колонку, а таблица учеников обрезалась:
+           у обёртки был overflow:hidden. */
+        .admin-header-card .admin-av { flex-shrink: 0; }
+        @media (max-width: 600px) {
+            .admin-header-card { flex-wrap: wrap; padding: 22px 18px; gap: 14px; border-radius: 24px; }
+            .admin-header-card .admin-av { width: 56px; height: 56px; font-size: 26px; }
+            .admin-header-card > div:not(.admin-av) { flex: 1; min-width: 0; }
+            .admin-header-card h2 { font-size: 20px; }
+            .back-btn { margin-left: 0; width: 100%; min-height: 44px; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .stat-card { padding: 16px 14px; }
+            .stat-card .sc-val { font-size: 26px; }
+            .stat-card .sc-label { font-size: 11px; letter-spacing: 0.3px; }
+            .users-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .users-table-wrap table { min-width: 560px; }
+            .users-search { flex-wrap: wrap; padding: 14px; }
+            .users-search input { min-width: 0; font-size: 16px; }
+            th, td { padding: 10px 12px; }
+        }
+        @media (hover: none) {
+            .stat-card:hover { transform: none; }
+        }
     </style>
 </head>
 <body>
@@ -184,7 +209,7 @@
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
-    <script src="api.js"></script>
+    <script src="api.js?v=20261022"></script>
     <script>
     initHeader();
     let allUsers = [];
@@ -284,7 +309,7 @@
     }
 
     function renderUsers(users) {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayLocal();
         const wrap = document.getElementById('usersTableWrap');
         if (!users.length) {
             wrap.innerHTML = '<div class="no-users">Пользователи не найдены</div>';

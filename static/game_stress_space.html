@@ -128,6 +128,7 @@
         .action-btn.secondary { background: #e9eff5; color: #023e50; }
         .action-btn.secondary:hover { box-shadow: none; transform: none; background: #d0dce6; }
     </style>
+    <link rel="stylesheet" href="game-mobile.css?v=20261022">
 </head>
 <body>
 
@@ -184,7 +185,7 @@
 </div>
 
 
-<script src="api.js"></script>
+<script src="api.js?v=20261022"></script>
 <script>
 // Starfield animation
 const canvas = document.getElementById('starfield');
@@ -400,7 +401,7 @@ function endGame() {
     document.getElementById('endTitle').textContent = pct >= 85 ? '🏆 Космический ас!' : pct >= 60 ? '🚀 Хорошо!' : '📚 Учи ударения!';
     document.getElementById('endScore').textContent = score;
     document.getElementById('accuracy').textContent = pct + '%';
-    if(typeof submitGameResult==='function')submitGameResult('stress', typeof score!=='undefined'?score:0);
+    if(typeof submitGameResult==='function')submitGameResult('stress_space', typeof score!=='undefined'?score:0);
     showOverlay('endOverlay');
 }
 

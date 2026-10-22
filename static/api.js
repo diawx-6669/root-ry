@@ -143,6 +143,18 @@ function findAvatarData(emoji) {
     return null;
 }
 
+// todayLocal — сегодняшняя дата YYYY-MM-DD по времени учеников (Алматы),
+// как её считает сервер (internal/timeutil). toISOString() даёт дату по UTC:
+// с полуночи до пяти утра она отстаёт на день, и дейлики со стриком
+// показывались «вчерашними».
+function todayLocal() {
+    try {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Almaty' });
+    } catch {
+        return new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+    }
+}
+
 function requireAuth() {
     if (!API.token()) {
         window.location.href = '/index.html';
@@ -213,32 +225,21 @@ async function initHeader() {
     };
 
     applyUser(user);
-    addSoundToggle();
 
     // Обновляем в фоне полными данными с сервера.
     API.refreshUser().then(u => { if (u) applyUser(u); });
 }
 
-
-// Кнопка «звук вкл/выкл» появляется в шапке на всех страницах.
-function addSoundToggle() {
-    const right = document.querySelector('.header-right');
-    if (!right || right.querySelector('.sound-toggle')) return;
-
-    const btn = document.createElement('button');
-    btn.className = 'sound-toggle';
-    btn.textContent = Sound.muted ? '🔇' : '🔊';
-    btn.title = Sound.muted ? 'Включить звук' : 'Выключить звук';
-    btn.onclick = () => Sound.toggle();
-    right.appendChild(btn);
-}
+// Переключатель звука жил в шапке и висел на каждой странице ради
+// настройки, которую меняют один раз. Он переехал в профиль —
+// в блок «Настройки», где ему и место.
 
 function showToast(msg, type = 'info') {
     let toast = document.getElementById('globalToast');
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'globalToast';
-        toast.style.cssText = 'position:fixed;top:85px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 26px;border-radius:20px;font-family:Montserrat,sans-serif;font-weight:600;font-size:13px;z-index:9999;opacity:0;transition:0.3s;box-shadow:0 6px 20px rgba(0,0,0,0.15);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;';
+        toast.style.cssText = 'position:fixed;top:85px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 26px;border-radius:20px;font-family:Montserrat,sans-serif;font-weight:600;font-size:13px;z-index:9999;opacity:0;transition:0.3s;box-shadow:0 6px 20px rgba(0,0,0,0.15);pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center;line-height:1.35;';
         document.body.appendChild(toast);
     }
     if (type === 'success') Sound.correct();
@@ -281,8 +282,15 @@ function showRewardNotification(lines) {
         'transform:translateX(40px)',
         'transition:0.35s cubic-bezier(.4,0,.2,1)',
         'min-width:200px',
+        'max-width:calc(100vw - 24px)',
         'pointer-events:none',
     ].join(';');
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        notif.style.right = '12px';
+        notif.style.left = '12px';
+        notif.style.top = '72px';
+        notif.style.minWidth = '0';
+    }
 
     notif.innerHTML = lines.map(l => `<div style="margin:3px 0">${l}</div>`).join('');
     document.body.appendChild(notif);
@@ -300,7 +308,14 @@ function showRewardNotification(lines) {
 }
 
 // Submit game result to backend — call this at the end of every game
+// Защита от двойной отправки: одна партия может закончиться дважды
+// (два таймера конца игры, двойной тап по «Сдаться»).
+const _lastSubmit = {};
+
 async function submitGameResult(gameType, score) {
+    const now = Date.now();
+    if (_lastSubmit[gameType] && now - _lastSubmit[gameType] < 3000) return { ok: false, duplicate: true };
+    _lastSubmit[gameType] = now;
     try {
         const r = await API.post('/api/game/submit', { game_type: gameType, score: score });
         if (r.ok) {
@@ -318,8 +333,7 @@ async function submitGameResult(gameType, score) {
                 // Keep games_won_today and daily_tasks_date in sync so shop shows correct quest progress
                 if (r.data.games_won_today !== undefined) {
                     u.games_won_today = r.data.games_won_today;
-                    const today = new Date().toISOString().slice(0, 10);
-                    u.daily_tasks_date = today;
+                    u.daily_tasks_date = todayLocal();
                 }
                 if (r.data.quest_bonus_earned) {
                     u.daily_tasks_done = 1;
@@ -335,21 +349,24 @@ async function submitGameResult(gameType, score) {
             const gamesWon = r.data.games_won_today || 0;
 
             if (isWin) {
+                // Значки Font Awesome вместо эмодзи: одинаково выглядят
+                // на всех системах и наследуют цвет плашки.
+                const ic = n => `<i class="fa-solid ${n}" style="margin-right:6px;opacity:.85"></i>`;
                 const lines = [];
                 if (firstWin) {
-                    lines.push(`🪙 +50 монет — первая победа в этой игре!`);
+                    lines.push(`${ic('fa-coins')}+50 монет — первая победа в этой игре!`);
                 } else {
-                    lines.push('✅ Игра пройдена');
-                    lines.push('💡 50 монет уже получены ранее за эту игру');
+                    lines.push(`${ic('fa-circle-check')}Игра пройдена`);
+                    lines.push(`${ic('fa-lightbulb')}50 монет уже получены ранее за эту игру`);
                 }
-                if (xp > 0) lines.push(`⚡ +${xp} XP`);
+                if (xp > 0) lines.push(`${ic('fa-bolt')}+${xp} XP`);
                 if (questBonus) {
                     lines.push('');
-                    lines.push(`🎯 Дейлик выполнен! +50 монет`);
+                    lines.push(`${ic('fa-bullseye')}Дейлик выполнен! +50 монет`);
                 } else if (firstWin && gamesWon < 5) {
-                    lines.push(`📊 Побед в разных играх: ${gamesWon}/5`);
+                    lines.push(`${ic('fa-chart-simple')}Побед в разных играх: ${gamesWon}/5`);
                 }
-                if (r.data.badge_earned) lines.push(`🏅 Новый значок: ${r.data.badge_earned}`);
+                if (r.data.badge_earned) lines.push(`${ic('fa-award')}Новый значок: ${r.data.badge_earned}`);
                 if (lines.length) showRewardNotification(lines);
                 if (firstWin) Sound.win();
             }
@@ -382,10 +399,6 @@ const Sound = {
         this.muted = !this.muted;
         localStorage.setItem('soundMuted', this.muted ? '1' : '0');
         if (!this.muted) this.click();
-        document.querySelectorAll('.sound-toggle').forEach(b => {
-            b.textContent = this.muted ? '🔇' : '🔊';
-            b.title = this.muted ? 'Включить звук' : 'Выключить звук';
-        });
         return this.muted;
     },
 
@@ -430,7 +443,9 @@ const Sound = {
 // Клик по любой кнопке или ссылке-вкладке звучит одинаково.
 document.addEventListener('click', e => {
     const el = e.target.closest('button, .tab-item, .lb-tab, .case-card');
-    if (el && !el.disabled && !el.classList.contains('sound-toggle')) Sound.click();
+    // Переключатель звука сам решает, звучать ему или нет, — иначе при
+    // включении щелчок раздался бы дважды.
+    if (el && !el.disabled && !el.classList.contains('switch')) Sound.click();
 }, true);
 
 // ── Монеты ──────────────────────────────────────────────────────────
@@ -477,7 +492,7 @@ function flyCoins(origin, count) {
     for (let i = 0; i < n; i++) {
         const coin = document.createElement('div');
         coin.className = 'flying-coin';
-        coin.textContent = '🪙';
+        coin.innerHTML = '<i class="fa-solid fa-coins"></i>';
         coin.style.left = (from.left + from.width / 2) + 'px';
         coin.style.top = (from.top + from.height / 2) + 'px';
         document.body.appendChild(coin);
@@ -513,7 +528,8 @@ function rewardCoins(amount, newBalance, origin) {
     const css = document.createElement('style');
     css.textContent = `
         .flying-coin {
-            position: fixed; z-index: 99998; font-size: 22px;
+            position: fixed; z-index: 99998; font-size: 20px;
+            color: #fbbf24; text-shadow: 0 2px 6px rgba(180,120,0,.35);
             pointer-events: none; will-change: transform, opacity;
         }
         .balance-bump { animation: balanceBump 0.45s cubic-bezier(0.34,1.56,0.64,1); }
@@ -522,12 +538,6 @@ function rewardCoins(amount, newBalance, origin) {
             45%  { transform: scale(1.35); color: #fcd34d; }
             100% { transform: scale(1); }
         }
-        .sound-toggle {
-            border: none; background: rgba(255,255,255,0.18); color: #fff;
-            width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
-            font-size: 15px; line-height: 1; transition: 0.2s;
-        }
-        .sound-toggle:hover { background: rgba(255,255,255,0.32); }
         @media (prefers-reduced-motion: reduce) {
             .flying-coin { display: none; }
             .balance-bump { animation: none; }

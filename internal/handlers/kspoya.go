@@ -118,6 +118,7 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -226,14 +227,16 @@ func (h *Handler) KspoyaHistory(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCtx(r)
 	attempts := h.store.ListKspoyaAttempts(username, 20)
 
-	best := ""
 	for i := range attempts {
 		reward := kspoya.Rewards[attempts[i].Level]
 		attempts[i].LevelLabel = reward.Label
 		attempts[i].LevelBadge = reward.Badge
-		if best == "" || kspoya.LevelIndex(attempts[i].Level) > kspoya.LevelIndex(best) {
-			best = attempts[i].Level
-		}
+	}
+	// Лучший уровень берём по всем попыткам, а не по 20 последним:
+	// раньше старый рекорд «пропадал», как только уходил из списка.
+	best := ""
+	if _, _, level, ok := h.store.BestKspoyaAttemptID(username); ok {
+		best = level
 	}
 	if attempts == nil {
 		attempts = []models.KspoyaAttempt{}

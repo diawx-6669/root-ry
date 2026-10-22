@@ -7,10 +7,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 50% 0%,#eef5fb 0%,#e6eef6 55%,#dfe9f3 100%); }
+/* padding:0 — общий home-style.css даёт body отступы под шапку и таббар
+   (120/100px), а дерево сдвигает себя само через margin-top. Отступы
+   складывались: полоса прогресса уезжала вниз, и вся страница начинала
+   прокручиваться поверх области, которую двигают пальцем. */
+body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 50% 0%,#eef5fb 0%,#e6eef6 55%,#dfe9f3 100%); padding:0; overflow:hidden; }
 
 /* ===== HEADER ===== */
 .global-header {
@@ -55,6 +59,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     width:100%;
     margin-top:64px;
     height:calc(100vh - 64px);
+    height:calc(100dvh - 64px); /* на телефоне 100vh выше видимой области */
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -95,7 +100,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 .node-box:active { transform:translateY(0) scale(.97); }
 .node-label { overflow:hidden; text-overflow:ellipsis; }
 
-.node-root { background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff; font-size:16px; font-weight:700; letter-spacing:.3px; box-shadow:0 8px 22px rgba(2,62,80,0.3); }
+.node-root { background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff; font-size:14px; font-weight:700; letter-spacing:0; padding:0 8px; gap:4px; box-shadow:0 8px 22px rgba(2,62,80,0.3); }
 .node-l1 { background:linear-gradient(160deg,#e6f6ff,#dcf0fd); border-color:#7dd3fc; color:#0c4a6e; font-weight:700; }
 .node-l2 { background:#f0f9ff; border-color:#bae6fd; color:#075985; }
 .node-l3 { background:#f8fafc; border-color:#e2e8f0; color:#334155; }
@@ -146,7 +151,36 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
   cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:inherit;
 }
 #lp-continue:hover { filter:brightness(1.08); }
+#lp-label i { color:#0099cc; margin-right:5px; }
 @media (max-width:560px) { #lp-label { display:none; } }
+
+/* ===== ТЕЛЕФОН ===== */
+@media (max-width:600px) {
+  /* семь вкладок с боковыми отступами по 8px не помещались, и подписи
+     обрезались до «Мага…», «Проф…» */
+  .tab-item { padding:6px 0; min-width:0; flex:1; }
+  .header-center { min-width:0; }
+  .header-center .username { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:30vw; }
+  .header-right .balance-box small { display:none; }
+  #lp-continue { padding:9px 14px; font-size:13px; border-radius:12px; }
+  #search-bar input { font-size:16px; }
+  #search-bar button { padding:9px 12px; font-size:12px; }
+  .lesson-btn { width:28px; height:28px; font-size:12px; }
+}
+
+.tooltip .tt-lesson {
+  margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.16);
+  color:#7dd3fc; font-size:12px; display:flex; align-items:center; gap:6px;
+}
+
+/* Кнопка урока на узле: лёгкая пульсация у непройденных тем, чтобы
+   было видно, где вообще есть чему учиться. */
+.node-box.has-lesson:not(.lesson-done) .lesson-btn { animation:lessonPulse 2.6s ease-in-out infinite; }
+@keyframes lessonPulse {
+  0%,72%,100% { box-shadow:0 2px 6px rgba(0,153,204,.35); }
+  86%         { box-shadow:0 2px 6px rgba(0,153,204,.35), 0 0 0 6px rgba(0,153,204,.14); }
+}
+@media (prefers-reduced-motion:reduce) { .lesson-btn { animation:none !important; } }
 
 /* ===== ZOOM HINT / CONTROLS (минимальные, не мешают) ===== */
 #treeHint {
@@ -213,13 +247,13 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 
 <div id="tree-root">
   <div id="lesson-progress">
-    <span id="lp-label">🌳 Дерево грамматики</span>
+    <span id="lp-label"><i class="fa-solid fa-graduation-cap"></i> Пройдено тем</span>
     <div id="lp-bar"><div id="lp-fill"></div></div>
     <span id="lp-text">0 / 0</span>
     <button id="lp-continue">Продолжить</button>
   </div>
   <div id="search-bar">
-    <span class="ico">🔍</span>
+    <span class="ico"><i class="fa-solid fa-magnifying-glass"></i></span>
     <input id="q" type="text" placeholder="Поиск по дереву грамматики...">
     <span id="search-count"></span>
     <button id="exp-all">Развернуть всё</button>
@@ -251,7 +285,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
 </nav>
 
-<script src="api.js"></script>
+<script src="api.js?v=20261022"></script>
 <script src="lessons/index.js"></script>
 <script>
 // Init header if api.js available
@@ -794,7 +828,7 @@ function renderProgress() {
     btn.textContent = done ? 'Продолжить' : 'Начать';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(next.id); };
   } else {
-    btn.textContent = '🌳 Всё пройдено';
+    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Всё пройдено';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(LESSON_INDEX[0].id); };
   }
 }
@@ -851,8 +885,9 @@ function update(source) {
         const lesson = lessonFor(d);
         if (!def && !lesson) return;
         tooltip.innerHTML = `<strong>${d.data.label}</strong>${def || ''}` +
-          (lesson ? `<div style="margin-top:6px;color:#7dd3fc;font-size:12px">
-                       ${isDone(lesson.id) ? '✓ урок пройден' : '📘 есть урок · +' + lesson.xp + ' XP'}
+          (lesson ? `<div class="tt-lesson">${isDone(lesson.id)
+                       ? '<i class="fa-solid fa-circle-check"></i> урок пройден'
+                       : `<i class="fa-solid ${lesson.icon}"></i> есть урок · +${lesson.xp} XP`}
                      </div>` : '');
         tooltip.classList.add('show');
       })

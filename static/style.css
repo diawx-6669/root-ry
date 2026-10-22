@@ -113,3 +113,108 @@ h1 { font-size: 32px; margin-bottom: 20px; color: #023e50; text-align: center; f
 .container.active .toggle-left { left: -50%; transition-delay: .6s; }
 .toggle-right { right: -50%; transition-delay: .6s; }
 .container.active .toggle-right { right: 0; transition-delay: 1.2s; }
+
+/* Ховер-подъём кнопки только там, где есть мышь: на телефоне он «залипал»
+   после касания. */
+@media (hover: none) {
+    .btn:hover { box-shadow: none; transform: none; }
+}
+
+/* ── Планшет: карточка 850px шире экрана ─────────────────────────────── */
+@media (max-width: 900px) {
+    body { padding: 16px; }
+    .container { width: 100%; max-width: 850px; }
+}
+
+/* ── Телефон ─────────────────────────────────────────────────────────────
+   Та же хореография, что на ноутбуке, но по вертикали:
+   вход    — синяя плашка сверху (30%), форма снизу (70%);
+   рег-ция — плашка уезжает вниз, форма регистрации поднимается наверх. */
+@media (max-width: 650px) {
+    body {
+        padding: 12px;
+        align-items: stretch;
+        min-height: 100svh;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 440px;
+        margin: 0 auto;
+        /* svh не прыгает, когда у браузера прячется адресная строка */
+        height: calc(100svh - 24px);
+        min-height: 600px;
+        max-height: 820px;
+        border-radius: 30px;
+    }
+
+    .form-box {
+        bottom: 0;
+        width: 100%;
+        height: 70%;
+        padding: 60px 24px 20px;
+        justify-content: center;
+        transition: bottom .55s cubic-bezier(.65,0,.35,1) .9s, opacity .4s ease .9s, visibility 0s .9s;
+    }
+    .container.active .form-box.login {
+        right: 0;
+        bottom: 30%;
+        transition: bottom .55s cubic-bezier(.65,0,.35,1), opacity .3s ease, visibility 0s .55s;
+    }
+    .form-box.register { bottom: 0; transform: none; }
+    .container.active .form-box.register {
+        bottom: 30%;
+        transform: none;
+        transition: bottom .55s cubic-bezier(.65,0,.35,1) .9s, opacity .4s ease .9s, visibility 0s .9s;
+    }
+
+    .top-bar { top: 22px; padding: 0 24px; }
+
+    h1 { font-size: 26px; margin-bottom: 14px; }
+
+    .input-box { height: 52px; margin: 8px 0; }
+    /* 16px — меньше iOS увеличивает страницу при фокусе на поле */
+    .input-box input { font-size: 16px; padding: 0 44px; }
+
+    .btn { height: 52px; margin-top: 12px; }
+
+    /* Синяя «капля» лежит над формой и опускается вниз целиком */
+    .toggle-box::before {
+        left: 0;
+        top: -270%;
+        width: 100%;
+        height: 300%;
+        border-radius: 20vw;
+        transition: top 1.4s cubic-bezier(.65,0,.35,1);
+    }
+    .container.active .toggle-box::before { left: 0; top: 70%; }
+
+    .toggle-panel {
+        width: 100%;
+        height: 30%;
+        padding: 0 24px;
+        transition: top .5s cubic-bezier(.65,0,.35,1), bottom .5s cubic-bezier(.65,0,.35,1);
+    }
+    .toggle-panel h2 { font-size: 26px; margin-bottom: 6px; }
+    .toggle-panel p { font-size: 13.5px; line-height: 1.45; margin-bottom: 14px; max-width: 320px; }
+    .toggle-btn { width: 150px; height: 44px; margin-top: 0; }
+
+    .toggle-left { left: 0; top: 0; transition-delay: .9s; }
+    .container.active .toggle-left { left: 0; top: -30%; transition-delay: .4s; }
+    .toggle-right { right: 0; bottom: -30%; transition-delay: .4s; }
+    .container.active .toggle-right { right: 0; bottom: 0; transition-delay: .9s; }
+}
+
+/* Очень низкий экран (телефон боком, маленькие модели) — даём прокрутку,
+   а не сжимаем форму. */
+@media (max-width: 650px) and (max-height: 620px) {
+    .toggle-panel p { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .form-box, .toggle-box::before, .toggle-panel,
+    .container.active .form-box.login, .container.active .form-box.register {
+        transition-duration: .01s !important;
+        transition-delay: 0s !important;
+    }
+}

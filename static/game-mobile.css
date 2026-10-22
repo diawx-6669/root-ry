@@ -1,0 +1,30 @@
+/* Общие правила мини-игр для телефона.
+   Шапка игры рассчитана на ноутбук: на 375px счёт наезжал на логотип,
+   а сердечки жизней переносились на вторую строку. */
+@media (max-width: 600px) {
+    .game-header {
+        padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;
+        gap: 10px;
+        box-sizing: border-box;
+    }
+    /* На телефоне от логотипа остаётся только значок */
+    .game-header .brand { font-size: 0; gap: 0; flex-shrink: 0; }
+    .game-header .brand i { font-size: 22px; }
+    .game-header .brand span { font-size: 0; }
+
+    .hud { gap: 12px; flex: 1; min-width: 0; justify-content: center; }
+    .hud-item { font-size: 12px; white-space: nowrap; }
+    .score-num { font-size: 18px; }
+    .lives, .lives-row { font-size: 15px; letter-spacing: 1px; white-space: nowrap; }
+
+    .surrender-btn {
+        flex-shrink: 0;
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (hover: none) {
+    .surrender-btn:hover { background: rgba(231,76,60,0.2); }
+}

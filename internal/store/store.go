@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -156,18 +157,36 @@ func (s *Store) seedDemo() {
 	}
 }
 
+// legacyAdminPromo — код админа, который раньше подставлялся по умолчанию.
+// Он лежит в открытых исходниках и в schema.sql, поэтому знает его любой.
+const legacyAdminPromo = "ADMIN240411"
+
 func (s *Store) seedPromos() {
-	adminPromo := os.Getenv("ADMIN_PROMO")
-	if adminPromo == "" {
-		adminPromo = "ADMIN240411"
-	}
+	// Промокод на права администратора создаётся только из переменной
+	// окружения. Промокоды хранятся в верхнем регистре, а ввод ученика
+	// приводится к нему же, поэтому код из окружения тоже поднимаем.
+	adminPromo := strings.ToUpper(strings.TrimSpace(os.Getenv("ADMIN_PROMO")))
 	promos := []struct {
 		code, reward string
 		value, uses  int
 	}{
 		{"MEGACOINS", "coins", 10_000_000, -1},
 		{"777", "coins", 10_000_000, -1},
-		{adminPromo, "admin", 0, 10},
+	}
+	if adminPromo != "" {
+		promos = append(promos, struct {
+			code, reward string
+			value, uses  int
+		}{adminPromo, "admin", 0, 10})
+	}
+	if adminPromo != legacyAdminPromo {
+		// Старый общеизвестный код больше не должен выдавать права.
+		// Строку не удаляем, а исчерпываем: история использования остаётся.
+		if _, err := s.db.Exec(`
+			UPDATE promos SET uses = used_count
+			WHERE code = $1 AND reward = 'admin' AND uses <> used_count`, legacyAdminPromo); err != nil {
+			log.Printf("seedPromos: disable legacy admin promo: %v", err)
+		}
 	}
 	for _, p := range promos {
 		_, err := s.db.Exec(`
@@ -227,6 +246,39 @@ func (s *Store) GetUserByUsername(username string) (*models.User, bool) {
 	return u, true
 }
 
+// IsAdmin читает актуальный флаг администратора из базы.
+func (s *Store) IsAdmin(username string) bool {
+	var admin bool
+	if err := s.db.QueryRow(`SELECT is_admin FROM users WHERE username = $1`, username).Scan(&admin); err != nil {
+		return false
+	}
+	return admin
+}
+
+// UsernameExistsFold — занят ли логин без учёта регистра. Уникальный индекс
+// в базе регистр различает, и рядом с @demo можно было завести @DEMO:
+// в рейтинге двойника не отличить от настоящего ученика.
+func (s *Store) UsernameExistsFold(username string) bool {
+	var exists bool
+	s.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE lower(username) = lower($1))`, username).Scan(&exists)
+	return exists
+}
+
+// CountRows возвращает число строк в таблице результатов для статистики
+// админки. Раньше ради одного числа в память читались все строки таблиц.
+func (s *Store) CountRows(table string) int {
+	switch table {
+	case "game_results", "case_results":
+	default:
+		return 0
+	}
+	var n int
+	if err := s.db.QueryRow(`SELECT count(*) FROM ` + table).Scan(&n); err != nil {
+		log.Printf("CountRows(%s): %v", table, err)
+	}
+	return n
+}
+
 func (s *Store) ValidatePassword(username, password string) (*models.User, bool) {
 	u, ok := s.GetUserByUsername(username)
 	if !ok {
@@ -239,33 +291,34 @@ func (s *Store) ValidatePassword(username, password string) (*models.User, bool)
 }
 
 // UpdateUser writes all mutable user fields back to Postgres.
+//
+// Серия (streak) и дата входа (last_login) здесь НЕ пишутся: ими управляет
+// только TouchDailyLogin одним атомарным запросом. Раньше любой обработчик,
+// прочитавший пользователя за миг до продления серии, записывал обратно
+// старые значения и откатывал серию.
 func (s *Store) UpdateUser(u *models.User) {
 	_, err := s.db.Exec(`
 		UPDATE users SET
 		  nickname         = $1,
 		  balance          = $2,
 		  xp               = $3,
-		  streak           = $4,
-		  last_login       = NULLIF($5,'')::DATE,
-		  last_nick_change = NULLIF($6,'')::DATE,
-		  is_admin         = $7,
-		  badges           = $8::JSONB,
-		  avatars          = $9::JSONB,
-		  active_avatar    = $10,
-		  completed_topics = $11::JSONB,
-		  promo_used       = $12::JSONB,
-		  favorite_games   = $13::JSONB,
-		  daily_tasks_date = NULLIF($14,'')::DATE,
-		  daily_tasks_done = $15,
-		  games_won_today  = $16,
-		  games_won_types  = $17::JSONB,
-		  last_daily_claim = NULLIF($18,'')::DATE
-		WHERE username = $19`,
+		  last_nick_change = NULLIF($4,'')::DATE,
+		  is_admin         = $5,
+		  badges           = $6::JSONB,
+		  avatars          = $7::JSONB,
+		  active_avatar    = $8,
+		  completed_topics = $9::JSONB,
+		  promo_used       = $10::JSONB,
+		  favorite_games   = $11::JSONB,
+		  daily_tasks_date = NULLIF($12,'')::DATE,
+		  daily_tasks_done = $13,
+		  games_won_today  = $14,
+		  games_won_types  = $15::JSONB,
+		  last_daily_claim = NULLIF($16,'')::DATE
+		WHERE username = $17`,
 		u.Nickname,
 		u.Balance,
 		u.XP,
-		u.Streak,
-		u.LastLogin,
 		u.LastNickChange,
 		u.IsAdmin,
 		jsonbCol(u.Badges),

@@ -6,7 +6,7 @@
     <title>RootRy | Вход и Регистрация</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261022">
     <style>
         .hint-box {
             background: rgba(0,153,204,0.1);
@@ -25,7 +25,7 @@
     </style>
 </head>
 <body>
-    <div id="authMsg" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:20px;font-family:Montserrat,sans-serif;font-weight:600;font-size:14px;z-index:9999;transition:0.3s;box-shadow:0 8px 25px rgba(0,0,0,0.15);opacity:0;pointer-events:none;"></div>
+    <div id="authMsg" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:20px;font-family:Montserrat,sans-serif;font-weight:600;font-size:14px;z-index:9999;transition:0.3s;box-shadow:0 8px 25px rgba(0,0,0,0.15);opacity:0;pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center;"></div>
 
     <div class="container" id="mainContainer">
         <div class="form-box login">
@@ -36,7 +36,7 @@
                 <h1>С возвращением</h1>
                 <div class="input-box">
                     <span class="prefix">@</span>
-                    <input type="text" id="loginUser" placeholder="username" required autocomplete="username">
+                    <input type="text" id="loginUser" placeholder="username" required autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
                 </div>
                 <div class="input-box">
                     <input type="password" id="loginPass" class="password-input" placeholder="Пароль" required autocomplete="current-password">
@@ -58,10 +58,10 @@
                 <h1>Регистрация</h1>
                 <div class="input-box">
                     <span class="prefix">@</span>
-                    <input type="text" id="regUser" placeholder="username (только латиница)" required minlength="3" autocomplete="username">
+                    <input type="text" id="regUser" placeholder="username (латиница)" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" title="Латиница, цифры и _" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
                 </div>
                 <div class="input-box">
-                    <input type="text" id="regNickname" placeholder="Никнейм" required autocomplete="off">
+                    <input type="text" id="regNickname" placeholder="Никнейм" required maxlength="32" autocomplete="off">
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div class="input-box">
@@ -111,7 +111,9 @@
         msg.style.background = type === 'error' ? '#e74c3c' : '#2ecc71';
         msg.style.color = '#fff';
         msg.style.opacity = '1';
-        setTimeout(() => { msg.style.opacity = '0'; }, 3000);
+        // Новое сообщение не должно гаснуть по таймеру предыдущего.
+        clearTimeout(msg._t);
+        msg._t = setTimeout(() => { msg.style.opacity = '0'; }, 3000);
     }
 
     function setLoading(btn, loading) {

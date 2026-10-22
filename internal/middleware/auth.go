@@ -108,9 +108,21 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// adminCheck узнаёт актуальные права по базе. Флаг в токене живёт 30 дней:
+// выданные промокодом права не работали до перелогина, а снятые —
+// продолжали работать до истечения токена.
+var adminCheck func(username string) bool
+
+// SetAdminChecker подключает проверку прав по базе.
+func SetAdminChecker(f func(username string) bool) { adminCheck = f }
+
 func AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		isAdmin, _ := r.Context().Value(IsAdminKey).(bool)
+		if adminCheck != nil {
+			username, _ := r.Context().Value(UsernameKey).(string)
+			isAdmin = adminCheck(username)
+		}
 		if !isAdmin {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)

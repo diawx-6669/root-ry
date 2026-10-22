@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS promos (
 -- Seed default promo codes (idempotent)
 INSERT INTO promos (code, reward, value, uses) VALUES
     ('MEGACOINS', 'coins', 10000000, -1),
-    ('777',       'coins', 10000000, -1),
-    ('ADMIN240411','admin', 0,       10)
+    ('777',       'coins', 10000000, -1)
 ON CONFLICT (code) DO NOTHING;
+-- Промокод на права администратора здесь больше не создаётся: код лежал
+-- в открытых исходниках. Сервер создаёт его сам из переменной ADMIN_PROMO.
 
 -- ── Game results ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS game_results (

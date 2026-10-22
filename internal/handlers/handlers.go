@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -33,10 +34,28 @@ const maxBodyBytes = 64 << 10
 
 type Handler struct {
 	store *store.Store
+	// userLocks — по мьютексу на ученика. Каждый обработчик читает
+	// пользователя целиком, меняет и записывает обратно. Без блокировки два
+	// параллельных запроса читали один и тот же баланс: при 500 монетах
+	// открывались два кейса по 300, а ежедневный бонус выдавался несколько
+	// раз за день.
+	userLocks sync.Map // username → *sync.Mutex
 }
 
 func New(s *store.Store) *Handler {
 	return &Handler{store: s}
+}
+
+// lockUser сериализует изменяющие запросы одного ученика.
+// Использование: defer h.lockUser(username)()
+//
+// Защищает в пределах одного процесса сервера: при запуске нескольких
+// копий нужна блокировка на стороне базы (SELECT … FOR UPDATE).
+func (h *Handler) lockUser(username string) func() {
+	m, _ := h.userLocks.LoadOrStore(username, &sync.Mutex{})
+	mu := m.(*sync.Mutex)
+	mu.Lock()
+	return mu.Unlock
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -98,6 +117,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	if utf8.RuneCountInString(req.Password) < passwordMin {
 		writeError(w, http.StatusBadRequest, "Пароль: минимум 6 символов")
+		return
+	}
+	if h.store.UsernameExistsFold(req.Username) {
+		writeError(w, http.StatusConflict, "Логин уже занят")
 		return
 	}
 
@@ -175,6 +198,7 @@ func (h *Handler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -228,6 +252,7 @@ func (h *Handler) RedeemPromo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -299,6 +324,7 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -312,6 +338,16 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Score < 0 || req.Score > 10000 {
 		writeError(w, http.StatusBadRequest, "Неверный счёт")
+		return
+	}
+	// Награда даётся за первую победу в каждой игре за день. Тип игры раньше
+	// не проверялся: подставляя выдуманные названия, можно было бесконечно
+	// получать по 10 XP и 50 монет.
+	if canon, ok := legacyGameTypes[req.GameType]; ok {
+		req.GameType = canon
+	}
+	if !knownGames[req.GameType] {
+		writeError(w, http.StatusBadRequest, "Неизвестная игра")
 		return
 	}
 
@@ -394,6 +430,7 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -466,6 +503,7 @@ func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -540,6 +578,7 @@ func (h *Handler) DailyClaim(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -549,6 +588,12 @@ func (h *Handler) DailyClaim(w http.ResponseWriter, r *http.Request) {
 	if user.LastDailyClaim == today {
 		writeJSON(w, http.StatusOK, map[string]any{"already_claimed": true})
 		return
+	}
+	// Серию сначала продлеваем или обнуляем: иначе ученик, пропустивший
+	// несколько дней, получал бонус по старой длинной серии, если нажимал
+	// кнопку раньше, чем страница успевала обратиться к /api/me.
+	if streak, updated := h.store.TouchDailyLogin(username); updated {
+		user.Streak = streak
 	}
 	// Streak-based reward matching frontend formula: 10 + floor(streak/7)*5
 	streakDays := user.Streak
@@ -571,6 +616,7 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -623,8 +669,6 @@ func (h *Handler) AdminStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	users := h.store.GetAllUsers()
-	results := h.store.GetGameResults()
-	caseResults := h.store.GetCaseResults()
 	totalXP, totalBalance, totalUsers := 0, 0, 0
 	totalBadges, totalAvatars := 0, 0
 	activeToday := 0
@@ -643,8 +687,8 @@ func (h *Handler) AdminStats(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"total_users":   totalUsers,
-		"total_games":   len(results),
-		"total_cases":   len(caseResults),
+		"total_games":   h.store.CountRows("game_results"),
+		"total_cases":   h.store.CountRows("case_results"),
 		"total_xp":      totalXP,
 		"total_balance": totalBalance,
 		"total_badges":  totalBadges,
@@ -687,6 +731,7 @@ func (h *Handler) UpdateFavorites(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := getUsernameFromCtx(r)
+	defer h.lockUser(username)()
 	user, ok := h.store.GetUserByUsername(username)
 	if !ok {
 		writeError(w, http.StatusNotFound, "User not found")
@@ -725,6 +770,17 @@ var knownGames = map[string]bool{
 	"word_alchemist": true,
 	"minefield":      true,
 	"detective_case": true,
+}
+
+// legacyGameTypes — старые названия, под которыми страницы игр отправляли
+// результат. Их по-прежнему принимаем: в браузерах учеников могут остаться
+// закэшированные страницы.
+var legacyGameTypes = map[string]string{
+	"spelling":   "comma_ninja",
+	"stress":     "stress_space",
+	"vocabulary": "word_alchemist",
+	"grammar":    "minefield",
+	"detective":  "detective_case",
 }
 
 // validateUsername проверяет логин и возвращает текст ошибки («» — всё в порядке).

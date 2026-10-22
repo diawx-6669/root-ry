@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,12 +20,21 @@ func main() {
 	}
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "rootry_dev_secret_change_in_prod"
-		log.Println("WARNING: JWT_SECRET not set, using default dev secret")
+		// Раньше подставлялся секрет из исходников. Зная его, любой мог
+		// подписать себе токен администратора. Теперь без переменной
+		// окружения секрет случайный: после перезапуска все просто войдут
+		// заново, но подделать токен нельзя.
+		var b [32]byte
+		if _, err := rand.Read(b[:]); err != nil {
+			log.Fatalf("JWT_SECRET: %v", err)
+		}
+		jwtSecret = hex.EncodeToString(b[:])
+		log.Println("WARNING: JWT_SECRET not set, using a random secret (sessions reset on restart)")
 	}
 	middleware.SetJWTSecret(jwtSecret)
 
 	s := store.New()
+	middleware.SetAdminChecker(s.IsAdmin)
 	h := handlers.New(s)
 
 	mux := http.NewServeMux()

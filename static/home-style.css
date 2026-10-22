@@ -488,3 +488,79 @@ h1 {
     margin-top: 5px;
     color: #7f8c8d !important;
 }
+/* ══════════════════════════════════════════════════════════════════════
+   ТЕЛЕФОН
+   Раньше медиазапросов здесь не было вовсе: шапка с отступами по 40px не
+   помещалась в 375px, баланс уезжал за край, а таббар из семи вкладок
+   сжимался в нечитаемые подписи.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (hover: none) {
+    .promo-btn:hover, .admin-enter-btn:hover { transform: none; box-shadow: none; }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding-top: calc(76px + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        -webkit-text-size-adjust: 100%;
+        overflow-x: hidden;
+    }
+
+    .global-header {
+        height: calc(60px + env(safe-area-inset-top, 0px));
+        padding: env(safe-area-inset-top, 0px) 12px 0;
+        gap: 8px;
+    }
+    .global-header .brand { font-size: 18px; gap: 6px; flex-shrink: 0; }
+    .global-header .brand i { font-size: 20px; }
+    .header-center { min-width: 0; flex: 1; display: flex; justify-content: center; }
+    .user-info { padding: 4px 10px 4px 4px; gap: 8px; min-width: 0; max-width: 100%; }
+    .avatar { width: 30px; height: 30px; flex-shrink: 0; }
+    .username { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .header-right { flex-shrink: 0; }
+    .balance-box { padding: 6px 12px; border-radius: 12px; font-size: 14px; gap: 6px; }
+    .balance-box i { font-size: 15px; }
+    /* «монет» рядом с иконкой монет — лишнее слово на узком экране */
+    .balance-box small { display: none; }
+
+    .main-content { padding: 0 16px; }
+    h1 { font-size: 26px; margin-bottom: 16px; }
+
+    .card { border-radius: 24px; }
+    .empty-games-placeholder,
+    .shop-grid-placeholder,
+    .leaderboard-placeholder,
+    .profile-placeholder,
+    .tests-placeholder,
+    .tree-placeholder,
+    .authors-placeholder { padding: 24px 20px; }
+    .promo-section { padding: 24px 20px; }
+
+    .search-box { margin-bottom: 16px; }
+    .search-box input { height: 50px; font-size: 16px; border-radius: 16px; }
+
+    /* 16px в полях ввода — иначе iOS увеличивает страницу при фокусе */
+    input, select, textarea { font-size: 16px; }
+
+    .promo-form-box { flex-wrap: wrap; }
+    .promo-form-box input { min-width: 0; flex-basis: 180px; }
+    .promo-btn { flex: 1 1 auto; }
+
+    .tree-stats-preview { flex-wrap: wrap; gap: 10px; }
+
+    .bottom-tabbar {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+        padding: 0 2px env(safe-area-inset-bottom, 0px);
+        justify-content: space-between;
+    }
+    .tab-item { font-size: 10px; gap: 3px; min-width: 0; padding: 8px 0; letter-spacing: -0.1px; }
+    .tab-item i { font-size: 19px; }
+    .tab-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* Совсем узкие телефоны (iPhone SE и меньше): прячем имя, остаётся аватар. */
+@media (max-width: 360px) {
+    .global-header .brand span { display: none; }
+    .username { display: none; }
+    .user-info { padding: 3px; }
+}

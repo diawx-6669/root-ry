@@ -6,7 +6,7 @@
     <title>RootRy | Профиль</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="home-style.css">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
         .profile-card { background:#fff; border-radius:30px; padding:35px 40px; max-width:680px; box-shadow:0 15px 40px rgba(0,0,0,0.06); margin-bottom:20px; }
 
@@ -132,6 +132,33 @@
         .save-btn { height:44px; padding:0 22px; background:linear-gradient(90deg,#023e50,#0099cc); border:none; border-radius:14px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:'Montserrat',sans-serif; transition:0.2s; white-space:nowrap; }
         .save-btn:hover { box-shadow:0 5px 15px rgba(0,153,204,0.25); transform:translateY(-1px); }
 
+        /* ===== НАСТРОЙКИ ===== */
+        .setting-row {
+            display:flex; align-items:center; gap:14px;
+            background:#f7fbfd; border:1px solid #e6eef4; border-radius:16px;
+            padding:14px 16px; margin-top:8px;
+        }
+        .setting-info { flex:1; min-width:0; }
+        .setting-name { font-size:14px; font-weight:700; color:#023e50; display:flex; align-items:center; gap:9px; }
+        .setting-name i { color:#0099cc; font-size:13px; width:16px; text-align:center; }
+        .setting-hint { font-size:12.5px; color:#8095a3; margin-top:3px; padding-left:25px; }
+
+        /* Переключатель: тумблер вместо кнопки со значком —
+           сразу видно текущее состояние, а не только действие. */
+        .switch {
+            flex-shrink:0; width:52px; height:30px; border-radius:16px;
+            border:none; background:#cbd9e3; cursor:pointer; padding:3px;
+            display:flex; align-items:center; transition:background .25s;
+        }
+        .switch.on { background:linear-gradient(90deg,#023e50,#0099cc); }
+        .switch .knob {
+            width:24px; height:24px; border-radius:50%; background:#fff;
+            box-shadow:0 2px 6px rgba(2,62,80,.28);
+            transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+        }
+        .switch.on .knob { transform:translateX(22px); }
+        .switch:focus-visible { outline:2px solid #0099cc; outline-offset:2px; }
+
         .logout-btn { background:#e9eff5; color:#023e50; border:none; border-radius:14px; padding:12px 24px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Montserrat',sans-serif; margin-top:14px; transition:0.2s; }
         .logout-btn:hover { background:#e74c3c; color:#fff; }
 
@@ -147,6 +174,46 @@
         }
         .admin-goto-btn:hover { background:linear-gradient(90deg,#0099cc,#023e50); box-shadow:0 8px 28px rgba(0,153,204,0.3); transform:translateY(-1px); }
         .admin-goto-btn i { font-size:18px; }
+    
+        /* ===== ТЕЛЕФОН ===== */
+        @media (max-width: 600px) {
+            .profile-card { padding: 22px 18px; border-radius: 24px; }
+            .profile-header { gap: 16px; }
+            .avatar-clickable { width: 76px; height: 76px; }
+            .avatar-edit-hint { font-size: 10px; }
+            .profile-info h2 { font-size: 20px; word-break: break-word; }
+            .stats-row { gap: 10px; }
+            .stat-box { padding: 12px 8px; min-width: 0; }
+            .stat-box .val { font-size: 19px; }
+            /* поле ника не сжималось и выталкивало «Сохранить» за край */
+            .edit-input { min-width: 0; font-size: 16px; }
+            .save-btn { padding: 0 16px; }
+            .badges-strip { overflow-x: auto; scrollbar-width: none; }
+            .badges-strip::-webkit-scrollbar { display: none; }
+
+            /* Модальные окна на телефоне — шторка снизу: выезжает вверх
+               и закрывается вниз, до кнопок легко дотянуться пальцем. */
+            .modal-overlay { align-items: flex-end; }
+            .modal-box, .avatar-modal-box {
+                width: 100%; max-width: 100%;
+                max-height: 86vh; max-height: 86svh;
+                border-radius: 26px 26px 0 0;
+                padding: 26px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+                animation: sheetUp .38s cubic-bezier(.32,.72,0,1) both;
+            }
+            .modal-close { width: 44px; height: 44px; margin: -12px -8px 0 0; }
+            .avatar-grid { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
+            .avatar-option img { width: 52px; height: 52px; }
+        }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+        @keyframes sheetDown { from { transform: none; } to { transform: translateY(100%); } }
+        @keyframes overlayOut { to { opacity: 0; } }
+        .modal-overlay.closing { animation: overlayOut .26s ease forwards; }
+        .modal-overlay.closing .modal-box,
+        .modal-overlay.closing .avatar-modal-box { animation: sheetDown .26s cubic-bezier(.4,0,1,1) both; }
+        @media (prefers-reduced-motion: reduce) {
+            .modal-box, .avatar-modal-box { animation: none; }
+        }
     </style>
 </head>
 <body>
@@ -166,7 +233,7 @@
     <!-- МОДАЛ: ВСЕ ЗНАЧКИ -->
     <div class="modal-overlay" id="badgesModal">
         <div class="modal-box">
-            <button class="modal-close" onclick="closeBadgesModal()">✕</button>
+            <button class="modal-close" onclick="closeBadgesModal()"><i class="fa-solid fa-xmark"></i></button>
             <div class="modal-title">🏅 Все значки</div>
             <div class="modal-sub" id="badgesModalSub">Твои значки и ещё не открытые</div>
             <div class="all-badges-grid" id="allBadgesGrid"></div>
@@ -176,8 +243,8 @@
     <!-- МОДАЛ: ВЫБОР АВАТАРКИ -->
     <div class="modal-overlay" id="avatarModal">
         <div class="avatar-modal-box">
-            <button class="modal-close" onclick="closeAvatarModal()">✕</button>
-            <div class="modal-title">🎨 Выбери аватарку</div>
+            <button class="modal-close" onclick="closeAvatarModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-palette"></i> Выбери аватарку</div>
             <div class="modal-sub">Нажми на аватарку чтобы сменить. Серые — ещё не открыты.</div>
             <div id="avatarPickerGrid"></div>
         </div>
@@ -200,7 +267,7 @@
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
-    <script src="api.js"></script>
+    <script src="api.js?v=20261022"></script>
     <script>
     initHeader();
     let userData = null;
@@ -218,6 +285,17 @@
         { emoji:'💎', label:'Алмаз',    rarity:'epic' },
         { emoji:'🎓', label:'Диплом',   rarity:'legendary' },
         { emoji:'👑', label:'Корона',   rarity:'legendary' },
+        // Значки, которые не купить в кейсах: за всё дерево грамматики
+        // и за уровни КСПОЯ. Раньше их не было в каталоге — полученный
+        // значок не показывался в окне «Все значки», а счётчик мог
+        // показать «13 из 11».
+        { emoji:'🌳', label:'Всё дерево', rarity:'legendary' },
+        { emoji:'🔰', label:'КСПОЯ A1', rarity:'common' },
+        { emoji:'📗', label:'КСПОЯ A2', rarity:'rare' },
+        { emoji:'📘', label:'КСПОЯ B1', rarity:'rare' },
+        { emoji:'🏅', label:'КСПОЯ B2', rarity:'epic' },
+        { emoji:'🔮', label:'КСПОЯ C1', rarity:'epic' },
+        { emoji:'🦉', label:'КСПОЯ C2', rarity:'legendary' },
     ];
 
 
@@ -295,10 +373,24 @@
 
             <!-- НИКНЕЙМ -->
             <div style="margin-bottom:18px">
-                <div class="section-title" style="margin-bottom:8px"><span>✏️ Изменить никнейм</span></div>
+                <div class="section-title" style="margin-bottom:8px"><span><i class="fa-solid fa-pen"></i> Изменить никнейм</span></div>
                 <div class="edit-row">
                     <input class="edit-input" id="newNick" placeholder="Новый никнейм..." value="${esc(u.nickname||'')}">
                     <button class="save-btn" onclick="saveNickname()">Сохранить</button>
+                </div>
+            </div>
+
+            <!-- НАСТРОЙКИ -->
+            <div style="margin-bottom:18px">
+                <div class="section-title" style="margin-bottom:8px"><span><i class="fa-solid fa-sliders"></i> Настройки</span></div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-name"><i class="fa-solid fa-volume-high"></i> Звуки в играх и уроках</div>
+                        <div class="setting-hint" id="soundHint"></div>
+                    </div>
+                    <button class="switch" id="soundSwitch" role="switch" onclick="toggleSoundSetting()">
+                        <span class="knob"></span>
+                    </button>
                 </div>
             </div>
 
@@ -311,6 +403,25 @@
             const fill = document.getElementById('xpFill');
             if (fill) fill.style.width = xpPct + '%';
         }, 100);
+
+        renderSoundSetting();
+    }
+
+    /* ── Звук ────────────────────────────────────────────────────────
+       Переключатель переехал сюда из шапки: в шапке он занимал место
+       на каждой странице ради настройки, которую меняют один раз. */
+    function renderSoundSetting() {
+        const sw = document.getElementById('soundSwitch');
+        if (!sw) return;
+        sw.classList.toggle('on', !Sound.muted);
+        sw.setAttribute('aria-checked', String(!Sound.muted));
+        document.getElementById('soundHint').textContent =
+            Sound.muted ? 'Выключены' : 'Включены';
+    }
+
+    function toggleSoundSetting() {
+        Sound.toggle();
+        renderSoundSetting();
     }
 
     function declDays(n) {
@@ -326,7 +437,8 @@
         if (!userData) return;
         const myBadges = new Set(userData.badges || []);
         const grid = document.getElementById('allBadgesGrid');
-        document.getElementById('badgesModalSub').textContent = `У тебя ${myBadges.size} из ${ALL_BADGES.length} значков`;
+        const ownedKnown = ALL_BADGES.filter(b => myBadges.has(b.emoji)).length;
+        document.getElementById('badgesModalSub').textContent = `У тебя ${ownedKnown} из ${ALL_BADGES.length} значков`;
         grid.innerHTML = '';
         ALL_BADGES.forEach(b => {
             const owned = myBadges.has(b.emoji);
@@ -335,13 +447,24 @@
             div.innerHTML = `
                 <div class="b-emoji">${b.emoji}</div>
                 <div class="b-label">${b.label}</div>
-                ${!owned ? '<div class="b-lock">🔒</div>' : ''}
+                ${!owned ? '<div class="b-lock"><i class="fa-solid fa-lock"></i></div>' : ''}
             `;
             grid.appendChild(div);
         });
         document.getElementById('badgesModal').classList.add('show');
     }
-    function closeBadgesModal() { document.getElementById('badgesModal').classList.remove('show'); }
+    function closeBadgesModal() { closeSheet('badgesModal'); }
+
+    // На телефоне окно — шторка: закрываем анимацией вниз, а не мгновенно.
+    function closeSheet(id) {
+        const overlay = document.getElementById(id);
+        if (!overlay.classList.contains('show') || overlay.classList.contains('closing')) return;
+        const narrow = window.matchMedia('(max-width: 600px)').matches;
+        const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!narrow || calm) { overlay.classList.remove('show'); return; }
+        overlay.classList.add('closing');
+        setTimeout(() => overlay.classList.remove('show', 'closing'), 260);
+    }
 
     /* ===== АВАТАР ПИКЕР ===== */
     function openAvatarModal() {
@@ -370,7 +493,7 @@
                     <img src="${av.img}" alt="${av.label}">
                     <div class="av-label">${av.label}</div>
                     <div class="av-rarity rar-${rarity}">${RARITY_LABELS[rarity]}</div>
-                    ${!owned ? '<div style="font-size:18px;margin-top:2px">🔒</div>' : ''}
+                    ${!owned ? '<div style="font-size:18px;margin-top:2px"><i class="fa-solid fa-lock"></i></div>' : ''}
                 `;
                 if (owned) {
                     div.onclick = () => selectAvatar(av);
@@ -381,7 +504,7 @@
         });
         document.getElementById('avatarModal').classList.add('show');
     }
-    function closeAvatarModal() { document.getElementById('avatarModal').classList.remove('show'); }
+    function closeAvatarModal() { closeSheet('avatarModal'); }
 
     async function selectAvatar(av) {
         if (!userData) return;
@@ -414,7 +537,7 @@
             userData = r.data;
             localStorage.setItem('currentUser', JSON.stringify(r.data));
             document.getElementById('headerUsername').textContent = r.data.nickname;
-            showToast('Никнейм обновлён ✓', 'success');
+            showToast('Никнейм обновлён', 'success');
         } else {
             showToast(r.data.error || 'Ошибка', 'error');
         }
