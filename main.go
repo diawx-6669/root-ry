@@ -82,6 +82,9 @@ func main() {
 	mux.HandleFunc("/api/class/heatmap", middleware.AuthMiddleware(h.ClassHeatmap))
 	mux.HandleFunc("/api/class/export", middleware.AuthMiddleware(h.ClassExport))
 	mux.HandleFunc("/api/admin/teacher", middleware.AdminMiddleware(h.AdminSetTeacher))
+	// Классрум: участники исследования и полная картина для админа.
+	mux.HandleFunc("/api/classroom", middleware.AuthMiddleware(h.Classroom))
+	mux.HandleFunc("/api/classroom/student", middleware.AuthMiddleware(h.ClassroomStudent))
 	// Исследовательский контур: сводка, выгрузка, распределение по группам.
 	mux.HandleFunc("/api/admin/research/summary", middleware.AdminMiddleware(h.ResearchSummary))
 	mux.HandleFunc("/api/admin/research/export", middleware.AdminMiddleware(h.ResearchExport))

@@ -226,6 +226,14 @@
         .consent-state { font-size:12px; margin-top:8px; min-height:16px; }
         .consent-state.on  { color:#0e8f6f; }
         .consent-state.off { color:#8ba0ab; }
+        .classroom-btn {
+            display:none; width:100%; margin-top:12px; height:48px; padding:0 16px; border:none; border-radius:14px;
+            background:linear-gradient(90deg,#023e50,#0099cc); color:#fff; cursor:pointer;
+            font:700 14px 'Montserrat',sans-serif; align-items:center; gap:10px;
+            animation:crBtnIn .35s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .classroom-btn.show { display:flex; }
+        @keyframes crBtnIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
 
         /* ═══ Повторение и работа над ошибками ═══════════════════════
            Раньше это была отдельная вкладка «Сегодня». Она отвечала на
@@ -604,6 +612,11 @@
                     <span>Согласен(а) на использование обезличенных данных</span>
                 </label>
                 <div class="consent-state" id="consentState"></div>
+                <!-- Участники исследования попадают в общий классрум:
+                     видят друг друга, а админ — полную картину по каждому. -->
+                <button class="classroom-btn" id="classroomBtn" onclick="window.location.href='classroom.html'">
+                    <i class="fa-solid fa-people-group"></i> Открыть классрум
+                    <i class="fa-solid fa-arrow-right" style="margin-left:auto"></i></button>
             </div>
 
             <button class="class-goto-btn" onclick="window.location.href='class.html'">
@@ -848,6 +861,13 @@
         if (!box) return;
         box.checked = !!(u && u.research_consent);
         showConsentState(box.checked);
+        showClassroomBtn(box.checked || !!(u && u.is_admin));
+    }
+
+    // Кнопка классрума видна участникам исследования и админам.
+    function showClassroomBtn(on) {
+        const b = document.getElementById('classroomBtn');
+        if (b) b.classList.toggle('show', !!on);
     }
 
     function showConsentState(on) {
@@ -871,6 +891,7 @@
         }
         if (userData) userData.research_consent = !!on;
         showConsentState(!!on);
+        showClassroomBtn(!!on || !!(userData && userData.is_admin));
         showToast(on ? 'Согласие сохранено' : 'Согласие отозвано', 'success');
     }
 

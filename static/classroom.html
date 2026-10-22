@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>RootRy | Классрум</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="home-style.css?v=20261022">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           Классрум — общий класс участников исследования.
+
+           Ученики видят друг друга: ник, уровень, серию, значки.
+           Администратор открывает карточку и видит всё: темы, ошибки
+           в уроках, играх и КСПОЯ.
+           ═══════════════════════════════════════════════════════════ */
+        :root {
+            --ink: #023e50; --muted: #7b93a2; --line: #e7eef3;
+            --brand: #0099cc; --good: #10b981; --bad: #ef4444; --warn: #f59e0b;
+        }
+        .cr-hero {
+            background: linear-gradient(135deg, #023e50 0%, #0a6f93 55%, #0099cc 100%);
+            color: #fff; border-radius: 28px; padding: 28px 30px;
+            max-width: 1100px; margin-bottom: 20px; position: relative; overflow: hidden;
+        }
+        .cr-hero::after {
+            content: ''; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px;
+            border-radius: 50%; background: rgba(255,255,255,.08);
+        }
+        .cr-hero h1 { color: #fff; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+        .cr-hero p { opacity: .85; font-size: 14px; line-height: 1.55; max-width: 620px; }
+        .cr-hero-stats { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; position: relative; z-index: 1; }
+        .cr-pill {
+            background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
+            border-radius: 14px; padding: 8px 14px; font-size: 13px; font-weight: 700;
+        }
+        .cr-pill b { font-size: 17px; margin-right: 4px; }
+        .cr-admin-tag {
+            display: inline-flex; align-items: center; gap: 6px; background: #fde68a; color: #92400e;
+            font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;
+        }
+
+        .cr-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; max-width: 1100px; margin-bottom: 16px; }
+        .cr-search { position: relative; flex: 1 1 240px; }
+        .cr-search i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--brand); }
+        .cr-search input {
+            width: 100%; height: 48px; border-radius: 16px; border: 2px solid transparent; background: #fff;
+            padding: 0 16px 0 44px; font: 600 15px Montserrat, sans-serif; outline: none;
+            box-shadow: 0 6px 18px rgba(2,62,80,.05);
+        }
+        .cr-search input:focus { border-color: var(--brand); }
+        .cr-sort { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+        .cr-sort::-webkit-scrollbar { display: none; }
+        .cr-sort button {
+            flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line);
+            background: #fff; color: var(--ink); font: 700 13px Montserrat, sans-serif; cursor: pointer;
+        }
+        .cr-sort button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+        .cr-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 14px; max-width: 1100px;
+        }
+        .cr-card {
+            background: #fff; border-radius: 22px; padding: 16px; cursor: pointer; text-align: left;
+            border: 1.5px solid var(--line); box-shadow: 0 6px 18px rgba(2,62,80,.05);
+            display: flex; flex-direction: column; gap: 12px; font-family: Montserrat, sans-serif;
+            transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s, border-color .2s;
+            animation: crIn .45s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .cr-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(2,62,80,.1); border-color: #bfe6f5; }
+        .cr-card.me { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,153,204,.15); }
+        @keyframes crIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        .cr-top { display: flex; align-items: center; gap: 12px; }
+        .cr-rank { width: 28px; font-weight: 800; color: var(--muted); font-size: 14px; text-align: center; flex-shrink: 0; }
+        .cr-rank.r1 { color: #d4a017; } .cr-rank.r2 { color: #8a9aa6; } .cr-rank.r3 { color: #b8743c; }
+        .cr-av { width: 52px; height: 52px; border-radius: 50%; background: #eef6fa; border: 2px solid #d6eef8; flex-shrink: 0; object-fit: cover; }
+        .cr-name { min-width: 0; }
+        .cr-nick { font-weight: 800; color: var(--ink); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cr-user { font-size: 12px; color: var(--muted); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cr-lvl {
+            margin-left: auto; flex-shrink: 0; background: #e0f2fe; color: #0369a1;
+            font-size: 12px; font-weight: 800; border-radius: 10px; padding: 4px 9px;
+        }
+        .cr-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .cr-m { background: #f6fafc; border-radius: 12px; padding: 8px 6px; text-align: center; }
+        .cr-m b { display: block; color: var(--ink); font-size: 15px; }
+        .cr-m span { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+        .cr-bar { height: 7px; background: #eaf1f5; border-radius: 99px; overflow: hidden; }
+        .cr-bar i { display: block; height: 100%; background: linear-gradient(90deg, #0099cc, #10b981); border-radius: 99px; transition: width .8s cubic-bezier(.2,.8,.2,1); }
+        .cr-empty { max-width: 1100px; background: #fff; border-radius: 22px; padding: 36px 24px; text-align: center; color: var(--muted); font-weight: 600; }
+
+        /* Экран «нет доступа» */
+        .cr-gate { max-width: 620px; background: #fff; border-radius: 26px; padding: 30px; box-shadow: 0 12px 34px rgba(2,62,80,.07); }
+        .cr-gate h2 { color: var(--ink); font-size: 21px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
+        .cr-gate p { color: #5d7887; line-height: 1.6; font-size: 14px; margin-bottom: 18px; }
+        .cr-btn {
+            height: 50px; padding: 0 22px; border: none; border-radius: 15px; cursor: pointer;
+            background: linear-gradient(90deg, #023e50, #0099cc); color: #fff; font: 700 15px Montserrat, sans-serif;
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+
+        /* ── Карточка ученика: шторка на телефоне, окно на компьютере ── */
+        .sheet-overlay {
+            position: fixed; inset: 0; z-index: 5000; background: rgba(2,20,30,.6); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .sheet-overlay.show { display: flex; animation: fadeIn .2s ease both; }
+        .sheet {
+            background: #fff; border-radius: 28px; width: min(760px, 100%); max-height: 88vh; overflow: hidden;
+            display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.25);
+            animation: popIn .32s cubic-bezier(.34,1.4,.64,1) both;
+        }
+        @keyframes popIn { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
+        .sheet-head {
+            padding: 22px 24px 16px; display: flex; gap: 14px; align-items: center;
+            background: linear-gradient(135deg, #f0f9ff, #fff); border-bottom: 1px solid var(--line); position: relative;
+        }
+        .sheet-head .cr-av { width: 68px; height: 68px; }
+        .sheet-head h3 { color: var(--ink); font-size: 20px; font-weight: 800; }
+        .sheet-close {
+            position: absolute; right: 14px; top: 14px; width: 42px; height: 42px; border-radius: 50%;
+            border: none; background: #eef4f7; color: var(--ink); font-size: 18px; cursor: pointer;
+        }
+        .sheet-grab { display: none; width: 44px; height: 5px; border-radius: 9px; background: #d5e1e8; margin: 8px auto 0; }
+        .sheet-body { overflow-y: auto; padding: 18px 24px 26px; -webkit-overflow-scrolling: touch; }
+        .sheet-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+        .badges-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badges-row img { width: 40px; height: 40px; background: #f4f8fb; border-radius: 12px; padding: 5px; }
+        .sec-title { font-size: 13px; font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: .6px; margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+        .tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 4px 0 6px; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tabs button {
+            flex-shrink: 0; height: 38px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line);
+            background: #fff; font: 700 13px Montserrat, sans-serif; color: var(--ink); cursor: pointer;
+        }
+        .tabs button.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .tab-pane { display: none; animation: fadeIn .25s ease both; }
+        .tab-pane.on { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .acc-row { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; margin: 8px 0; font-size: 13px; font-weight: 700; color: var(--ink); }
+        .acc-row .cr-bar { height: 10px; }
+        .acc-row .pct { text-align: right; color: var(--muted); font-size: 12px; white-space: nowrap; }
+        .acc-bad i { background: linear-gradient(90deg, #f97316, #ef4444); }
+        .acc-mid i { background: linear-gradient(90deg, #f59e0b, #eab308); }
+
+        .topic-sec { font-size: 12px; font-weight: 800; color: var(--muted); margin: 14px 0 6px; }
+        .topic-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tchip { font-size: 12px; font-weight: 700; border-radius: 10px; padding: 6px 10px; background: #f1f5f8; color: #7b8f9c; }
+        .tchip.done { background: #dcfce7; color: #166534; }
+
+        .list { display: flex; flex-direction: column; gap: 8px; }
+        .li { border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 12px; font-size: 13px; color: var(--ink); }
+        .li .li-top { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-weight: 800; }
+        .li .li-sub { color: var(--muted); font-size: 12px; font-weight: 600; margin-top: 3px; }
+        .src { font-size: 10.5px; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 8px; flex-shrink: 0; }
+        .src-lesson { background: #e0f2fe; color: #0369a1; }
+        .src-game { background: #f3e8ff; color: #7e22ce; }
+        .src-kspoya { background: #fee2e2; color: #b91c1c; }
+        .src-review { background: #fef3c7; color: #92400e; }
+        .q-wrong { color: var(--bad); font-weight: 700; }
+        .q-right { color: var(--good); font-weight: 700; }
+        .q-explain { color: #5d7887; font-size: 12px; margin-top: 6px; line-height: 1.5; }
+        .muted { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+        table.gt { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.gt th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; padding: 6px 8px; }
+        table.gt td { padding: 9px 8px; border-top: 1px solid var(--line); color: var(--ink); font-weight: 600; }
+
+        @media (hover: none) { .cr-card:hover { transform: none; box-shadow: 0 6px 18px rgba(2,62,80,.05); border-color: var(--line); } }
+
+        /* ── Телефон ── */
+        @media (max-width: 600px) {
+            .cr-hero { padding: 22px 18px; border-radius: 22px; }
+            .cr-hero p { font-size: 13px; }
+            .cr-grid { grid-template-columns: 1fr; gap: 10px; }
+            .sheet-overlay { align-items: flex-end; padding: 0; }
+            .sheet {
+                width: 100%; max-height: 90vh; max-height: 90svh; border-radius: 26px 26px 0 0;
+                animation: sheetUp .38s cubic-bezier(.32,.72,0,1) both;
+            }
+            .sheet-grab { display: block; }
+            .sheet-head { padding: 10px 18px 14px; }
+            .sheet-head .cr-av { width: 56px; height: 56px; }
+            .sheet-body { padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+            .sheet-stats { grid-template-columns: repeat(2, 1fr); }
+            .acc-row { grid-template-columns: 84px 1fr 82px; font-size: 12px; }
+            .sheet-overlay.closing .sheet { animation: sheetDown .26s cubic-bezier(.4,0,1,1) both; }
+        }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+        @keyframes sheetDown { to { transform: translateY(100%); } }
+        .sheet-overlay.closing { animation: fadeOut .26s ease forwards; }
+        @keyframes fadeOut { to { opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+            .cr-card, .sheet, .sheet-overlay, .tab-pane { animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <header class="global-header">
+        <div class="header-left"><div class="brand"><i class="fa-solid fa-graduation-cap"></i><span>RootRy</span></div></div>
+        <div class="header-center">
+            <div class="user-info">
+                <img src="" alt="Аватар" id="headerAvatar" class="avatar">
+                <span id="headerUsername" class="username">Загрузка...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="balance-box"><i class="fa-solid fa-coins"></i><span id="userBalance">0</span> <small>монет</small></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="app-window" id="app">
+            <div class="cr-empty"><i class="fa-solid fa-circle-notch fa-spin"></i> Загружаем классрум…</div>
+        </section>
+    </main>
+
+    <div class="sheet-overlay" id="sheet" role="dialog" aria-modal="true">
+        <div class="sheet">
+            <div class="sheet-grab"></div>
+            <div class="sheet-head" id="sheetHead"></div>
+            <div class="sheet-body" id="sheetBody"></div>
+        </div>
+    </div>
+
+    <nav class="bottom-tabbar">
+        <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
+        <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
+        <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
+        <a href="profile.html" class="tab-item active"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
+        <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
+    </nav>
+
+    <script src="api.js?v=20261022"></script>
+    <script>
+    initHeader();
+
+    const GAME_TITLES = {
+        comma_ninja: 'Запятая-ниндзя', spelling: 'Запятая-ниндзя',
+        word_alchemist: 'Алхимик слов', vocabulary: 'Алхимик слов',
+        stress_space: 'Ударный космос', stress: 'Ударный космос',
+        detective_case: 'Детектив Падеж', detective: 'Детектив Падеж',
+        minefield: 'Минное поле', grammar: 'Минное поле',
+        paronym: 'Дуэль паронимов', syntax: 'Строитель предложений',
+        dash: 'Мастер тире', phraseology: 'Фразеологический архив', style: 'Стилист',
+        direct_speech: 'Прямая речь', slitno: 'Слитно или раздельно',
+        complex_sentence: 'Сложное предложение',
+        norm_runner: 'Норма-раннер', ortho_storm: 'Орфо-шторм',
+    };
+    const SOURCE_LABEL = { lesson: 'Урок', game: 'Игра', kspoya: 'КСПОЯ', review: 'Повтор' };
+
+    let state = { me: '', admin: false, members: [], total: 74, sort: 'xp', q: '' };
+
+    const level = xp => Math.floor((xp || 0) / 200) + 1;
+    const pct = (a, b) => b ? Math.round(a * 100 / b) : 0;
+
+    async function load() {
+        const r = await API.get('/api/classroom');
+        if (r.status === 403) return renderGate(r.data && r.data.error);
+        if (!r.ok) {
+            app().innerHTML = `<div class="cr-empty">Не удалось загрузить классрум. Попробуй обновить страницу.</div>`;
+            return;
+        }
+        state.me = r.data.me; state.admin = r.data.is_admin;
+        state.members = r.data.members || []; state.total = r.data.total_topics || 74;
+        renderMain();
+        // Глубокая ссылка: classroom.html#u=логин открывает карточку.
+        const m = location.hash.match(/u=([^&]+)/);
+        if (m) openStudent(decodeURIComponent(m[1]));
+    }
+    const app = () => document.getElementById('app');
+
+    function renderGate(msg) {
+        app().innerHTML = `
+            <h1>Классрум</h1>
+            <div class="cr-gate">
+                <h2><i class="fa-solid fa-lock" style="color:#0099cc"></i> Вход для участников исследования</h2>
+                <p>В классруме ученики видят друг друга: уровень, серию, значки и прогресс по темам.
+                   Попасть сюда может тот, кто согласился на участие в исследовании RootRy.
+                   Согласие можно отозвать в профиле в любой момент — тогда ты исчезнешь из классрума.</p>
+                <button class="cr-btn" id="joinBtn"><i class="fa-solid fa-flask"></i> Участвовать и войти</button>
+                <p class="muted" style="margin:14px 0 0">${esc(msg || '')}</p>
+            </div>`;
+        document.getElementById('joinBtn').onclick = async () => {
+            const r = await API.post('/api/research/consent', { agree: true });
+            if (!r.ok) return showToast('Не удалось сохранить согласие', 'error');
+            showToast('Добро пожаловать в классрум!', 'success');
+            load();
+        };
+    }
+
+    function sorted() {
+        const key = { xp: m => m.xp, streak: m => m.streak, topics: m => m.topics_done, kspoya: m => m.kspoya_score }[state.sort];
+        const q = state.q.trim().toLowerCase();
+        return state.members
+            .map((m, i) => ({ ...m, _xpRank: i + 1 }))
+            .filter(m => !q || m.nickname.toLowerCase().includes(q) || m.username.toLowerCase().includes(q))
+            .sort((a, b) => key(b) - key(a) || a.username.localeCompare(b.username));
+    }
+
+    function renderMain() {
+        const meIdx = state.members.findIndex(m => m.username === state.me);
+        app().innerHTML = `
+            <div class="cr-hero">
+                <h1><i class="fa-solid fa-people-group"></i> Классрум ${state.admin ? '<span class="cr-admin-tag"><i class="fa-solid fa-shield"></i> админ</span>' : ''}</h1>
+                <p>${state.admin
+                    ? 'Все участники исследования. Нажми на ученика — откроется полная картина: темы, ошибки в уроках, играх и КСПОЯ.'
+                    : 'Все, кто участвует в исследовании RootRy. Нажми на ученика, чтобы открыть его профиль.'}</p>
+                <div class="cr-hero-stats">
+                    <div class="cr-pill"><b>${state.members.length}</b> участников</div>
+                    ${meIdx >= 0 ? `<div class="cr-pill"><b>#${meIdx + 1}</b> твоё место по XP</div>` : ''}
+                </div>
+            </div>
+            <div class="cr-tools">
+                <div class="cr-search"><i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="crQ" placeholder="Найти ученика…" value="${esc(state.q)}" autocomplete="off"></div>
+                <div class="cr-sort" id="crSort">
+                    ${[['xp','По опыту'],['streak','По серии'],['topics','По темам'],['kspoya','По КСПОЯ']]
+                        .map(([k, l]) => `<button data-k="${k}" class="${state.sort === k ? 'on' : ''}">${l}</button>`).join('')}
+                </div>
+            </div>
+            <div class="cr-grid" id="crGrid"></div>`;
+        document.getElementById('crQ').oninput = e => { state.q = e.target.value; renderGrid(); };
+        document.getElementById('crSort').onclick = e => {
+            const b = e.target.closest('button'); if (!b) return;
+            state.sort = b.dataset.k;
+            document.querySelectorAll('#crSort button').forEach(x => x.classList.toggle('on', x === b));
+            renderGrid();
+        };
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const list = sorted();
+        const grid = document.getElementById('crGrid');
+        if (!list.length) {
+            grid.innerHTML = `<div class="cr-empty" style="grid-column:1/-1">${state.members.length
+                ? 'Никого не нашли' : 'Пока в классруме никого нет. Позови друзей поставить галочку в профиле!'}</div>`;
+            return;
+        }
+        grid.innerHTML = list.map((m, i) => `
+            <button class="cr-card ${m.username === state.me ? 'me' : ''}" data-u="${esc(m.username)}" style="animation-delay:${Math.min(i, 12) * 35}ms">
+                <div class="cr-top">
+                    <div class="cr-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i + 1}</div>
+                    <img class="cr-av" src="${avatarSrc(m)}" alt="">
+                    <div class="cr-name">
+                        <div class="cr-nick">${esc(m.nickname || m.username)}</div>
+                        <div class="cr-user">@${esc(m.username)}</div>
+                    </div>
+                    <div class="cr-lvl">Ур. ${level(m.xp)}</div>
+                </div>
+                <div class="cr-meta">
+                    <div class="cr-m"><b>${m.xp}</b><span>XP</span></div>
+                    <div class="cr-m"><b>${m.streak}</b><span>серия</span></div>
+                    <div class="cr-m"><b>${m.kspoya_level || '—'}</b><span>КСПОЯ</span></div>
+                </div>
+                <div>
+                    <div class="cr-user" style="margin-bottom:5px">Тем пройдено: ${m.topics_done} из ${state.total}</div>
+                    <div class="cr-bar"><i style="width:${pct(m.topics_done, state.total)}%"></i></div>
+                </div>
+            </button>`).join('');
+        grid.onclick = e => { const c = e.target.closest('.cr-card'); if (c) openStudent(c.dataset.u); };
+    }
+
+    // ── Карточка ученика ──
+    async function openStudent(username) {
+        const sheet = document.getElementById('sheet');
+        document.getElementById('sheetHead').innerHTML = '';
+        document.getElementById('sheetBody').innerHTML = '<div class="muted"><i class="fa-solid fa-circle-notch fa-spin"></i> Загружаем…</div>';
+        sheet.classList.add('show');
+        history.replaceState(null, '', '#u=' + encodeURIComponent(username));
+
+        const r = await API.get('/api/classroom/student?u=' + encodeURIComponent(username));
+        if (!r.ok) {
+            document.getElementById('sheetBody').innerHTML = `<div class="muted">${esc((r.data && r.data.error) || 'Не удалось открыть профиль')}</div>`;
+            return;
+        }
+        const m = r.data.member, total = r.data.total_topics;
+        document.getElementById('sheetHead').innerHTML = `
+            <img class="cr-av" src="${avatarSrc(m)}" alt="">
+            <div style="min-width:0">
+                <h3>${esc(m.nickname || m.username)}</h3>
+                <div class="cr-user">@${esc(m.username)} · с нами с ${esc(m.joined_at)}</div>
+            </div>
+            <button class="sheet-close" aria-label="Закрыть" onclick="closeStudent()"><i class="fa-solid fa-xmark"></i></button>`;
+
+        const pub = `
+            <div class="sheet-stats">
+                <div class="cr-m"><b>${level(m.xp)}</b><span>уровень</span></div>
+                <div class="cr-m"><b>${m.xp}</b><span>XP</span></div>
+                <div class="cr-m"><b>${m.streak}</b><span>дней подряд</span></div>
+                <div class="cr-m"><b>${m.kspoya_level ? m.kspoya_score + ' · ' + m.kspoya_level : '—'}</b><span>КСПОЯ</span></div>
+            </div>
+            <div class="cr-user" style="margin-bottom:6px">Тем пройдено: ${m.topics_done} из ${total}</div>
+            <div class="cr-bar"><i style="width:${pct(m.topics_done, total)}%"></i></div>
+            <div class="sec-title"><i class="fa-solid fa-award"></i> Значки · ${m.badges.length}</div>
+            <div class="badges-row">${m.badges.length
+                ? m.badges.map(b => `<img src="${badgeImg(b)}" title="${esc(badgeLabel(b))}" alt="${esc(badgeLabel(b))}">`).join('')
+                : '<span class="muted">Значков пока нет</span>'}</div>
+            ${m.last_active ? `<div class="muted" style="margin-top:14px">Последняя активность: ${esc(m.last_active)}</div>` : ''}`;
+
+        document.getElementById('sheetBody').innerHTML = r.data.report ? pub + adminReport(r.data.report) : pub;
+        if (r.data.report) wireTabs();
+    }
+
+    function closeStudent() {
+        const sheet = document.getElementById('sheet');
+        history.replaceState(null, '', location.pathname);
+        const narrow = matchMedia('(max-width: 600px)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!narrow) return sheet.classList.remove('show');
+        sheet.classList.add('closing');
+        setTimeout(() => sheet.classList.remove('show', 'closing'), 260);
+    }
+    document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeStudent(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStudent(); });
+
+    // ── Полная картина для администратора ──
+    function adminReport(rep) {
+        const title = id => rep.topic_titles[id] || id;
+        const bar = (c, t) => {
+            const p = pct(c, t);
+            return `<div class="cr-bar ${p < 50 ? 'acc-bad' : p < 75 ? 'acc-mid' : ''}"><i style="width:${p}%"></i></div>`;
+        };
+
+        const overview = `
+            <div class="sheet-stats">
+                <div class="cr-m"><b>${rep.total_answers}</b><span>ответов</span></div>
+                <div class="cr-m"><b>${rep.active_days}</b><span>дней занятий</span></div>
+                <div class="cr-m"><b>${rep.open_mistakes}</b><span>в тетради ошибок</span></div>
+                <div class="cr-m"><b>${rep.tree.filter(t => t.done).length}/${rep.tree.length}</b><span>тем пройдено</span></div>
+            </div>
+            <div class="sec-title"><i class="fa-solid fa-bullseye"></i> Точность по источникам</div>
+            ${rep.sources.length ? rep.sources.map(s => `
+                <div class="acc-row"><span>${SOURCE_LABEL[s.source] || s.source}</span>${bar(s.correct, s.total)}
+                <span class="pct">${s.correct}/${s.total} · ${pct(s.correct, s.total)}%</span></div>`).join('')
+                : '<div class="muted">Ответов пока нет</div>'}
+            <div class="sec-title"><i class="fa-solid fa-triangle-exclamation"></i> Самые слабые темы</div>
+            ${rep.topics.filter(t => t.total >= 2).slice(0, 8).map(t => `
+                <div class="acc-row"><span title="${esc(title(t.topic_id))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(title(t.topic_id))}</span>
+                ${bar(t.correct, t.total)}<span class="pct">${pct(t.correct, t.total)}%</span></div>`).join('')
+                || '<div class="muted">Недостаточно данных</div>'}`;
+
+        let sec = '';
+        const tree = rep.tree.map(t => {
+            const head = t.section !== sec ? `${sec ? '</div>' : ''}<div class="topic-sec">${esc(t.section)}</div><div class="topic-chips">` : '';
+            sec = t.section;
+            return head + `<span class="tchip ${t.done ? 'done' : ''}">${t.done ? '<i class="fa-solid fa-check"></i> ' : ''}${esc(t.title)}</span>`;
+        }).join('') + '</div>';
+        const acc = rep.topics.length ? `
+            <div class="sec-title"><i class="fa-solid fa-chart-column"></i> Точность по темам</div>
+            ${rep.topics.map(t => `
+                <div class="acc-row"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(title(t.topic_id))}">${esc(title(t.topic_id))}</span>
+                ${bar(t.correct, t.total)}<span class="pct">${t.correct}/${t.total}</span></div>`).join('')}` : '';
+
+        const wrong = rep.recent_wrong.length ? `<div class="list">${rep.recent_wrong.map(w => `
+            <div class="li"><div class="li-top"><span>${esc(title(w.topic_id))}</span>
+                <span class="src src-${w.source}">${SOURCE_LABEL[w.source] || w.source}</span></div>
+                <div class="li-sub">${esc(describeItem(w.item_id))} · ${esc(w.at)}</div></div>`).join('')}</div>`
+            : '<div class="muted">Ошибок пока нет</div>';
+
+        const games = rep.games.length ? `
+            <table class="gt"><tr><th>Игра</th><th>Партий</th><th>Лучший</th><th>Средний</th><th>Монет</th></tr>
+            ${rep.games.map(g => `<tr><td>${esc(GAME_TITLES[g.game_type] || g.game_type)}</td><td>${g.played}</td>
+                <td>${g.best_score}</td><td>${g.avg_score}</td><td>${g.coins}</td></tr>`).join('')}</table>
+            <div class="muted" style="margin-top:10px">Ошибки внутри игр видны во вкладке «Ошибки» с пометкой «Игра».</div>`
+            : '<div class="muted">В игры ещё не играл</div>';
+
+        const kspoya = rep.kspoya.length ? rep.kspoya.map((k, i) => `
+            <div class="li" style="margin-bottom:10px">
+                <div class="li-top"><span>${k.score} из ${k.total} · уровень ${esc(k.level)}</span>
+                    <span class="muted">${new Date(k.finished_at).toLocaleDateString('ru-RU')}</span></div>
+                ${i < 3 ? (k.mistakes.length ? `<details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Ошибки: ${k.mistakes.length}</summary>
+                    ${k.mistakes.map(q => `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e2eaf0">
+                        <div style="font-weight:700">${esc(q.text)}</div>
+                        <div class="li-sub">${esc(q.topic)} · ${esc(q.level)}</div>
+                        <div style="margin-top:5px">Ответ: <span class="q-wrong">${esc(q.given)}</span> · Верно: <span class="q-right">${esc(q.correct)}</span></div>
+                        ${q.explain ? `<div class="q-explain">${esc(q.explain)}</div>` : ''}</div>`).join('')}</details>`
+                    : '<div class="li-sub" style="color:#10b981">Без ошибок</div>') : ''}
+            </div>`).join('') : '<div class="muted">КСПОЯ ещё не сдавал</div>';
+
+        return `
+            <div class="sec-title"><i class="fa-solid fa-shield-halved"></i> Полная картина · только для админа</div>
+            <div class="tabs" id="tabs">
+                <button data-t="ov" class="on">Обзор</button><button data-t="tp">Темы</button>
+                <button data-t="er">Ошибки · ${rep.recent_wrong.length}</button>
+                <button data-t="gm">Игры</button><button data-t="ks">КСПОЯ</button>
+            </div>
+            <div class="tab-pane on" data-p="ov">${overview}</div>
+            <div class="tab-pane" data-p="tp">${tree}${acc}</div>
+            <div class="tab-pane" data-p="er">${wrong}</div>
+            <div class="tab-pane" data-p="gm">${games}</div>
+            <div class="tab-pane" data-p="ks">${kspoya}</div>`;
+    }
+
+    // «orf-n-nn#3» → «задание 3 урока», «…#g-minefield-…» → «игра „Минное поле“»
+    function describeItem(id) {
+        const tail = String(id).split('#')[1] || '';
+        if (tail.startsWith('g-')) {
+            const game = tail.slice(2).split('-')[0];
+            const key = Object.keys(GAME_TITLES).find(k => tail.slice(2).startsWith(k));
+            return 'игра «' + (GAME_TITLES[key] || game) + '»';
+        }
+        if (/^\d+$/.test(tail)) return 'задание ' + (Number(tail) + 1) + ' урока';
+        return tail || id;
+    }
+
+    function wireTabs() {
+        document.getElementById('tabs').onclick = e => {
+            const b = e.target.closest('button'); if (!b) return;
+            document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('on', p.dataset.p === b.dataset.t));
+        };
+    }
+
+    load();
+    </script>
+</body>
+</html>
