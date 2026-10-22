@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="Фразеологический архив">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b2008"/>
+      <stop offset="1" stop-color="#a67c1e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.74" cy="0.32" r="0.55">
+      <stop offset="0" stop-color="#f0b429" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f0b429" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#glow)"/>
+  <text x="452" y="232" font-size="150" text-anchor="middle" opacity="0.95">📜</text>
+  <g font-family="Montserrat, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" fill="#ffffff">
+    <text x="44" y="168" font-size="46" font-weight="800" letter-spacing="-1">Архив</text>
+    <text x="44" y="216" font-size="46" font-weight="800" letter-spacing="-1" fill="#f0b429">фразеологизмов</text>
+    <text x="46" y="270" font-size="17" font-weight="600" opacity="0.72" letter-spacing="3">ROOTRY</text>
+  </g>
+  <rect x="0" y="355" width="640" height="5" fill="#f0b429" opacity="0.8"/>
+</svg>

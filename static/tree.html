@@ -4,16 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Дерево</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
+    <!-- d3 лежит рядом, а не на CDN. Дерево грамматики — главный экран
+         проекта, и без библиотеки это пустая страница; на защите интернет
+         в зале бывает всякий. Локальная копия ещё и грузится синхронно,
+         поэтому код ниже гарантированно видит d3. -->
+    <script src="vendor/d3.min.js"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-/* padding:0 — общий home-style.css даёт body отступы под шапку и таббар
-   (120/100px), а дерево сдвигает себя само через margin-top. Отступы
-   складывались: полоса прогресса уезжала вниз, и вся страница начинала
-   прокручиваться поверх области, которую двигают пальцем. */
+/* padding:0 — общий home-style.css даёт body отступы под шапку и таббар,
+   а дерево сдвигает себя само через margin-top. Отступы складывались,
+   и вся страница прокручивалась поверх области, которую двигают пальцем. */
 body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 50% 0%,#eef5fb 0%,#e6eef6 55%,#dfe9f3 100%); padding:0; overflow:hidden; }
 
 /* ===== HEADER ===== */
@@ -59,7 +63,6 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     width:100%;
     margin-top:64px;
     height:calc(100vh - 64px);
-    height:calc(100dvh - 64px); /* на телефоне 100vh выше видимой области */
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -100,7 +103,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 .node-box:active { transform:translateY(0) scale(.97); }
 .node-label { overflow:hidden; text-overflow:ellipsis; }
 
-.node-root { background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff; font-size:14px; font-weight:700; letter-spacing:0; padding:0 8px; gap:4px; box-shadow:0 8px 22px rgba(2,62,80,0.3); }
+.node-root { background:linear-gradient(160deg,#0c5470,#023e50); border-color:#023e50; color:#fff; font-size:16px; font-weight:700; letter-spacing:.3px; box-shadow:0 8px 22px rgba(2,62,80,0.3); }
 .node-l1 { background:linear-gradient(160deg,#e6f6ff,#dcf0fd); border-color:#7dd3fc; color:#0c4a6e; font-weight:700; }
 .node-l2 { background:#f0f9ff; border-color:#bae6fd; color:#075985; }
 .node-l3 { background:#f8fafc; border-color:#e2e8f0; color:#334155; }
@@ -122,7 +125,13 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
    Нажатие на неё открывает урок, нажатие на остальную часть узла —
    по-прежнему раскрывает ветку. */
 .node-box.has-lesson { border-color:#0ea5e9; }
-.node-box.lesson-done { background:#ecfdf5 !important; border-color:#34d399 !important; color:#065f46 !important; }
+/* Четыре состояния темы. Раньше их было два — «пройдено» и «нет», —
+   и зелёная галочка стояла вечно, даже когда тема давно забылась.
+   Теперь цвет узла показывает, что система реально знает о теме:
+   изучается, освоена или пора возвращаться. */
+.node-box.lesson-learning { background:#eff6ff !important; border-color:#60a5fa !important; color:#1e40af !important; }
+.node-box.lesson-done     { background:#ecfdf5 !important; border-color:#34d399 !important; color:#065f46 !important; }
+.node-box.lesson-due      { background:#fffbeb !important; border-color:#f59e0b !important; color:#92400e !important; }
 
 .lesson-btn {
   flex-shrink:0; width:22px; height:22px; border-radius:8px;
@@ -133,7 +142,9 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
   box-shadow:0 2px 6px rgba(0,153,204,.35);
 }
 .lesson-btn:hover { transform:scale(1.14); box-shadow:0 3px 10px rgba(0,153,204,.5); }
-.lesson-done .lesson-btn { background:linear-gradient(135deg,#059669,#34d399); box-shadow:0 2px 6px rgba(52,211,153,.4); }
+.lesson-done .lesson-btn     { background:linear-gradient(135deg,#059669,#34d399); box-shadow:0 2px 6px rgba(52,211,153,.4); }
+.lesson-learning .lesson-btn { background:linear-gradient(135deg,#2563eb,#60a5fa); box-shadow:0 2px 6px rgba(96,165,250,.4); }
+.lesson-due .lesson-btn      { background:linear-gradient(135deg,#d97706,#f59e0b); box-shadow:0 2px 6px rgba(245,158,11,.45); }
 
 /* ===== ПОЛОСА ПРОГРЕССА ПО ДЕРЕВУ ===== */
 #lesson-progress {
@@ -145,42 +156,20 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 #lp-fill { height:100%; width:0%; background:linear-gradient(90deg,#0099cc,#22c55e); border-radius:8px; transition:width .5s cubic-bezier(.4,0,.2,1); }
 #lp-text { font-size:12px; font-weight:700; color:#37576b; white-space:nowrap; }
 #lp-label { font-size:12px; color:#8095a3; white-space:nowrap; }
+#lp-legend { display:flex; gap:11px; font-size:11px; color:#8095a3; white-space:nowrap; }
+#lp-legend b { font-weight:700; }
+#lp-legend .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+#lp-legend .dot.learning { background:#60a5fa; }
+#lp-legend .dot.mastered { background:#34d399; }
+#lp-legend .dot.due      { background:#f59e0b; }
+@media (max-width:860px) { #lp-legend { display:none; } }
 #lp-continue {
   border:none; background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
   border-radius:11px; padding:6px 13px; font-size:12px; font-weight:700;
   cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:inherit;
 }
 #lp-continue:hover { filter:brightness(1.08); }
-#lp-label i { color:#0099cc; margin-right:5px; }
 @media (max-width:560px) { #lp-label { display:none; } }
-
-/* ===== ТЕЛЕФОН ===== */
-@media (max-width:600px) {
-  /* семь вкладок с боковыми отступами по 8px не помещались, и подписи
-     обрезались до «Мага…», «Проф…» */
-  .tab-item { padding:6px 0; min-width:0; flex:1; }
-  .header-center { min-width:0; }
-  .header-center .username { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:30vw; }
-  .header-right .balance-box small { display:none; }
-  #lp-continue { padding:9px 14px; font-size:13px; border-radius:12px; }
-  #search-bar input { font-size:16px; }
-  #search-bar button { padding:9px 12px; font-size:12px; }
-  .lesson-btn { width:28px; height:28px; font-size:12px; }
-}
-
-.tooltip .tt-lesson {
-  margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.16);
-  color:#7dd3fc; font-size:12px; display:flex; align-items:center; gap:6px;
-}
-
-/* Кнопка урока на узле: лёгкая пульсация у непройденных тем, чтобы
-   было видно, где вообще есть чему учиться. */
-.node-box.has-lesson:not(.lesson-done) .lesson-btn { animation:lessonPulse 2.6s ease-in-out infinite; }
-@keyframes lessonPulse {
-  0%,72%,100% { box-shadow:0 2px 6px rgba(0,153,204,.35); }
-  86%         { box-shadow:0 2px 6px rgba(0,153,204,.35), 0 0 0 6px rgba(0,153,204,.14); }
-}
-@media (prefers-reduced-motion:reduce) { .lesson-btn { animation:none !important; } }
 
 /* ===== ZOOM HINT / CONTROLS (минимальные, не мешают) ===== */
 #treeHint {
@@ -236,7 +225,7 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
     <div class="header-left"><div class="brand"><i class="fa-solid fa-graduation-cap"></i><span>RootRy</span></div></div>
     <div class="header-center">
         <div class="user-info">
-            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4" alt="Аватар" id="headerAvatar" class="avatar">
+            <img src="img/avatars/cat.png" alt="Аватар" id="headerAvatar" class="avatar">
             <span id="headerUsername" class="username">Загрузка...</span>
         </div>
     </div>
@@ -247,9 +236,14 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 
 <div id="tree-root">
   <div id="lesson-progress">
-    <span id="lp-label"><i class="fa-solid fa-graduation-cap"></i> Пройдено тем</span>
+    <span id="lp-label">Дерево грамматики</span>
     <div id="lp-bar"><div id="lp-fill"></div></div>
     <span id="lp-text">0 / 0</span>
+    <span id="lp-legend">
+      <span><span class="dot learning"></span><b id="lp-learning">0</b> изучается</span>
+      <span><span class="dot mastered"></span><b id="lp-mastered">0</b> освоено</span>
+      <span><span class="dot due"></span><b id="lp-due">0</b> повторить</span>
+    </span>
     <button id="lp-continue">Продолжить</button>
   </div>
   <div id="search-bar">
@@ -277,15 +271,17 @@ body { font-family:'Segoe UI',sans-serif; background:radial-gradient(circle at 5
 <!-- BOTTOM TAB BAR -->
 <nav class="bottom-tabbar">
     <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+    <a href="tree.html" class="tab-item active"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+    <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+    <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
     <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
     <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
     <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-    <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-    <a href="tree.html" class="tab-item active"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
     <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
 </nav>
 
-<script src="api.js?v=20261022"></script>
+<script src="icons.js"></script>
+    <script src="api.js?v=20261022"></script>
 <script src="lessons/index.js"></script>
 <script>
 // Init header if api.js available
@@ -803,14 +799,46 @@ let searchQuery = '';
 
 let completedTopics = new Set();
 
+// Состояние тем из модели знаний: id → { status, box, overdue_days }.
+// Пока /api/progress не ответил, карта пуста и дерево рисуется по
+// completed_topics — как раньше.
+let topicState = new Map();
+
 function lessonFor(d) { return lessonForNode(d.data); }
 function isDone(id)   { return completedTopics.has(id); }
+
+/* Подпись состояния в подсказке к узлу. Иконок здесь нет намеренно:
+   подсказка рисуется поверх дерева и должна читаться одной строкой. */
+const TOOLTIP_STATE = {
+  new:      l => 'есть урок · +' + l.xp + ' XP',
+  learning: l => 'изучается · +' + l.xp + ' XP за прохождение',
+  mastered: () => 'освоено — повторение пока не нужно',
+  due:      () => 'пора повторить',
+};
+
+/* Состояние темы для окраски узла.
+
+   new       — тему не открывали;
+   learning  — изучается, подтверждений в разные дни ещё мало;
+   mastered  — освоена, повторение пока не требуется;
+   due       — пора повторить.
+
+   Если модель знаний ещё не загрузилась, откатываемся на старую логику:
+   пройденная тема считается освоенной. */
+function statusOf(id) {
+  const st = topicState.get(id);
+  if (st) return st.status;
+  return completedTopics.has(id) ? 'mastered' : 'new';
+}
 
 function openLesson(d) {
   const lesson = lessonFor(d);
   if (!lesson) return;
   if (typeof Sound !== 'undefined') Sound.click();
-  location.href = 'lesson.html?id=' + encodeURIComponent(lesson.id);
+  // Просроченная тема открывается как повторение: ответы помечаются
+  // источником review, и в исследовании их видно отдельно от изучения.
+  const review = statusOf(lesson.id) === 'due' ? '&review=1' : '';
+  location.href = 'lesson.html?id=' + encodeURIComponent(lesson.id) + review;
 }
 
 function renderProgress() {
@@ -821,9 +849,34 @@ function renderProgress() {
   document.getElementById('lp-fill').style.width = pct + '%';
   document.getElementById('lp-text').textContent = `${done} / ${total}`;
 
-  // Кнопка ведёт к первой непройденной теме по порядку дерева.
+  const counts = { learning: 0, mastered: 0, due: 0 };
+  for (const l of LESSON_INDEX) {
+    const st = statusOf(l.id);
+    if (counts[st] !== undefined) counts[st]++;
+  }
+  document.getElementById('lp-learning').textContent = counts.learning;
+  document.getElementById('lp-mastered').textContent = counts.mastered;
+  document.getElementById('lp-due').textContent = counts.due;
+
+  const btn = document.getElementById('lp-continue');
+
+  // Просроченное важнее нового: сначала возвращаем ученика к тому, что
+  // начало забываться, и только потом ведём дальше по дереву. Иначе
+  // прогресс растёт вширь, а знания сзади осыпаются.
+  const due = LESSON_INDEX
+    .filter(l => statusOf(l.id) === 'due')
+    .sort((a, b) => (topicState.get(b.id)?.overdue_days || 0)
+                  - (topicState.get(a.id)?.overdue_days || 0));
+
+  if (due.length) {
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Повторить (${due.length})`;
+    btn.onclick = () => {
+      location.href = 'lesson.html?id=' + encodeURIComponent(due[0].id) + '&review=1';
+    };
+    return;
+  }
+
   const next = LESSON_INDEX.find(l => !completedTopics.has(l.id));
-  const btn  = document.getElementById('lp-continue');
   if (next) {
     btn.textContent = done ? 'Продолжить' : 'Начать';
     btn.onclick = () => { location.href = 'lesson.html?id=' + encodeURIComponent(next.id); };
@@ -839,12 +892,22 @@ async function loadProgress() {
   completedTopics = new Set(cached);
   renderProgress();
 
-  const fresh = await API.refreshUser({ force: true }).catch(() => null);
+  // Список пройденных тем и модель знаний тянем параллельно: это два
+  // разных вопроса — «что открывал» и «что помнит».
+  const [fresh, progress] = await Promise.all([
+    API.refreshUser({ force: true }).catch(() => null),
+    API.get('/api/progress').catch(() => null),
+  ]);
+
   if (fresh && Array.isArray(fresh.completed_topics)) {
     completedTopics = new Set(fresh.completed_topics);
-    renderProgress();
-    update(root);   // перерисовываем галочки на узлах
   }
+  if (progress && progress.ok && Array.isArray(progress.data.topics)) {
+    topicState = new Map(progress.data.topics.map(t => [t.topic_id, t]));
+  }
+
+  renderProgress();
+  update(root);   // перерисовываем состояния на узлах
 }
 
 function toggle(d) {
@@ -885,9 +948,8 @@ function update(source) {
         const lesson = lessonFor(d);
         if (!def && !lesson) return;
         tooltip.innerHTML = `<strong>${d.data.label}</strong>${def || ''}` +
-          (lesson ? `<div class="tt-lesson">${isDone(lesson.id)
-                       ? '<i class="fa-solid fa-circle-check"></i> урок пройден'
-                       : `<i class="fa-solid ${lesson.icon}"></i> есть урок · +${lesson.xp} XP`}
+          (lesson ? `<div style="margin-top:6px;color:#7dd3fc;font-size:12px">
+                       ${TOOLTIP_STATE[statusOf(lesson.id)](lesson)}
                      </div>` : '');
         tooltip.classList.add('show');
       })
@@ -911,13 +973,19 @@ function update(source) {
       .classed('has-children', d => !!(d.children || d._children))
       .classed('expanded', d => !!d.children)
       .classed('has-lesson', d => !!lessonFor(d))
-      .classed('lesson-done', d => { const l = lessonFor(d); return !!l && isDone(l.id); })
+      .classed('lesson-learning', d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'learning'; })
+      .classed('lesson-done',     d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'mastered'; })
+      .classed('lesson-due',      d => { const l = lessonFor(d); return !!l && statusOf(l.id) === 'due'; })
       .classed('search-match', d => !!searchQuery && d.data.label.toLowerCase().includes(searchQuery));
 
+  const STATUS_ICON = {
+    mastered: '<i class="fa-solid fa-check"></i>',
+    due:      '<i class="fa-solid fa-rotate-right"></i>',
+    learning: '<i class="fa-solid fa-play"></i>',
+    new:      '<i class="fa-solid fa-play"></i>',
+  };
   nodeMerge.select('.lesson-btn')
-      .html(d => isDone(lessonFor(d).id)
-        ? '<i class="fa-solid fa-check"></i>'
-        : '<i class="fa-solid fa-play"></i>');
+      .html(d => STATUS_ICON[statusOf(lessonFor(d).id)] || STATUS_ICON.new);
 
   nodeMerge.transition().duration(380)
       .attr('transform', d => `translate(${d.x},${d.y})`)

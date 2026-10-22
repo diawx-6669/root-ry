@@ -89,6 +89,19 @@ func getUsernameFromCtx(r *http.Request) string {
 	return ""
 }
 
+// selfView — копия пользователя для ответа ему самому.
+//
+// Из неё убрана группа эксперимента. Ученик, узнавший, что он в контрольной
+// группе, перестаёт быть участником эксперимента и становится его
+// наблюдателем: он либо начинает стараться сильнее, либо машет рукой — и в
+// обоих случаях посттест уже ничего не измеряет. Группа видна только в
+// админке, где её и назначают.
+func selfView(u *models.User) models.User {
+	v := *u
+	v.StudyGroup = ""
+	return v
+}
+
 // POST /api/register
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -136,7 +149,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, _ := middleware.GenerateToken(user.ID, user.Username, user.IsAdmin)
-	writeJSON(w, http.StatusCreated, models.LoginResponse{Token: token, User: *user})
+	writeJSON(w, http.StatusCreated, models.LoginResponse{Token: token, User: selfView(user)})
 }
 
 // POST /api/login
@@ -164,7 +177,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, _ := middleware.GenerateToken(user.ID, user.Username, user.IsAdmin)
-	writeJSON(w, http.StatusOK, models.LoginResponse{Token: token, User: *user})
+	writeJSON(w, http.StatusOK, models.LoginResponse{Token: token, User: selfView(user)})
 }
 
 // GET /api/me
@@ -185,7 +198,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "User not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(w, http.StatusOK, selfView(user))
 }
 
 // PUT /api/profile/avatar — выбор активной аватарки.
@@ -213,15 +226,20 @@ func (h *Handler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Вкладка могла остаться открытой с прошлой версии страницы и
+	// прислать эмодзи вместо идентификатора — приводим к новому виду
+	// до проверки, иначе выбор своей же аватарки отклонялся бы.
+	avatar := store.NormalizeAvatar(req.Avatar)
+
 	// Ставить можно только ту аватарку, которая уже есть в инвентаре.
-	if !store.HasAvatar(user.Avatars, req.Avatar) {
+	if !store.HasAvatar(user.Avatars, avatar) {
 		writeError(w, http.StatusBadRequest, "Эта аватарка вам не принадлежит")
 		return
 	}
 
-	user.ActiveAvatar = req.Avatar
+	user.ActiveAvatar = avatar
 	h.store.UpdateUser(user)
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(w, http.StatusOK, selfView(user))
 }
 
 // GET /api/leaderboard
@@ -396,9 +414,9 @@ func (h *Handler) GameSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	badgeEarned := ""
-	if isWin && req.Score >= 90 && !store.HasBadge(user.Badges, "🏆") {
-		user.Badges = append(user.Badges, "🏆")
-		badgeEarned = "🏆"
+	if isWin && req.Score >= 90 && !store.HasBadge(user.Badges, gameMasterBadge) {
+		user.Badges = append(user.Badges, gameMasterBadge)
+		badgeEarned = gameMasterBadge
 	}
 
 	h.store.UpdateUser(user)
@@ -453,24 +471,32 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, t := range user.CompletedTopics {
-		if t == topic.ID {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"already_done":    true,
-				"xp_earned":       0,
-				"coins_earned":    0,
-				"new_xp":          user.XP,
-				"new_balance":     user.Balance,
-				"completed_count": len(user.CompletedTopics),
-				"total_topics":    topics.Count(),
-			})
-			return
-		}
+	// Награду назначает интервал повторения, а не факт открытия урока.
+	// Первое прохождение оплачивается полностью, повторение просроченной
+	// темы — частично, повторение «свежей» темы не оплачивается вовсе.
+	now := timeutil.Now()
+	kind, nextReward, err := h.store.ClaimTopicReward(user.ID, topic.ID, now)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Не удалось засчитать тему")
+		return
 	}
 
-	user.CompletedTopics = append(user.CompletedTopics, topic.ID)
-	user.XP += topic.XP
-	user.Balance += topic.Coins
+	var xpEarned, coinsEarned int
+	switch kind {
+	case store.RewardFirst:
+		xpEarned, coinsEarned = topic.XP, topic.Coins
+	case store.RewardReview:
+		xpEarned, coinsEarned = topics.ReviewReward(topic)
+	}
+
+	// completed_topics остаётся источником правды для «сколько тем пройдено»:
+	// на него смотрят профиль, дерево и значок за всё дерево.
+	firstTime := !contains(user.CompletedTopics, topic.ID)
+	if firstTime {
+		user.CompletedTopics = append(user.CompletedTopics, topic.ID)
+	}
+	user.XP += xpEarned
+	user.Balance += coinsEarned
 
 	// Значок за прохождение всего дерева.
 	badgeEarned := ""
@@ -479,14 +505,21 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 		badgeEarned = treeMasterBadge
 	}
 
-	h.store.UpdateUser(user)
+	if xpEarned > 0 || coinsEarned > 0 || firstTime || badgeEarned != "" {
+		h.store.UpdateUser(user)
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"xp_earned":       topic.XP,
-		"coins_earned":    topic.Coins,
+		// already_done оставлен для старых сборок фронта, которые на него
+		// смотрят. Новый признак — reward.
+		"already_done":    kind != store.RewardFirst,
+		"reward":          kind,
+		"xp_earned":       xpEarned,
+		"coins_earned":    coinsEarned,
 		"new_xp":          user.XP,
 		"new_balance":     user.Balance,
 		"badge_earned":    badgeEarned,
+		"next_reward_on":  nextReward.Format("2006-01-02"),
 		"completed_count": len(user.CompletedTopics),
 		"total_topics":    topics.Count(),
 	})
@@ -494,7 +527,10 @@ func (h *Handler) TopicComplete(w http.ResponseWriter, r *http.Request) {
 
 // treeMasterBadge — значок за пройденное дерево грамматики целиком.
 // Не пересекается ни с пулом магазина, ни со значками КСПОЯ.
-const treeMasterBadge = "🌳"
+const treeMasterBadge = "tree"
+
+// gameMasterBadge — значок за результат 90+ в мини-игре.
+const gameMasterBadge = "trophy"
 
 // POST /api/case/open — server-side roll
 func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
@@ -648,7 +684,7 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 	user.Nickname = nick
 	user.LastNickChange = timeutil.Today()
 	h.store.UpdateUser(user)
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(w, http.StatusOK, selfView(user))
 }
 
 // GET /api/admin/users
@@ -765,11 +801,19 @@ func (h *Handler) UpdateFavorites(w http.ResponseWriter, r *http.Request) {
 
 // knownGames — идентификаторы мини-игр, совпадают с game_type в /api/game/submit.
 var knownGames = map[string]bool{
-	"comma_ninja":    true,
-	"stress_space":   true,
-	"word_alchemist": true,
-	"minefield":      true,
-	"detective_case": true,
+	"comma_ninja":      true,
+	"stress_space":     true,
+	"word_alchemist":   true,
+	"minefield":        true,
+	"detective_case":   true,
+	"paronym":          true,
+	"syntax":           true,
+	"dash":             true,
+	"phraseology":      true,
+	"style":            true,
+	"direct_speech":    true,
+	"slitno":           true,
+	"complex_sentence": true,
 }
 
 // legacyGameTypes — старые названия, под которыми страницы игр отправляли

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | О проекте и Авторы</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css?v=20261022">
     
@@ -56,6 +57,14 @@
             border: 3px solid var(--primary-color, #0099cc);
             margin-bottom: 12px;
         }
+        .about-list {
+            padding-left: 20px; line-height: 1.65; color: #33424e;
+            margin: 0 0 4px; font-size: 14.5px;
+        }
+        .about-list li { margin-bottom: 10px; }
+        .repo-link { color: #0099cc; font-weight: 700; text-decoration: none; }
+        .repo-link:hover { text-decoration: underline; }
+
         .member-name {
             font-size: 1.1rem;
             font-weight: bold;
@@ -82,12 +91,6 @@
             color: #888;
             margin-bottom: 60px; /* Отступ для нижнего таббара */
         }
-    
-        @media (max-width: 600px) {
-            .about-card, .team-card, .leader-card { padding: 20px 16px; }
-            .section-header { font-size: 1.15rem; align-items: flex-start; }
-            .section-header h2 { font-size: 1.15rem; line-height: 1.3; min-width: 0; overflow-wrap: anywhere; }
-        }
     </style>
 </head>
 <body>
@@ -100,7 +103,7 @@
         </div>
         <div class="header-center">
             <div class="user-info">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=RootRyUser" alt="Аватарка" id="headerAvatar" class="avatar">
+                <img src="img/avatars/cat.png" alt="Аватарка" id="headerAvatar" class="avatar">
                 <span id="headerUsername" class="username">Загрузка...</span>
             </div>
         </div>
@@ -118,37 +121,69 @@
             
            <div class="about-card">
                 <div class="section-header">
-                    <i class="fa-solid fa-rocket"></i>
-                    <h2>Философия и миссия RootRy</h2>
+                    <i class="fa-solid fa-flask"></i>
+                    <h2>Зачем мы это сделали</h2>
                 </div>
-                <p class="about-text"><strong>RootRy</strong> — это не просто образовательная платформа, это инновационный подход к изучению русского языка. Мы разрушаем стереотип о том, что учеба должна быть скучной и монотонной. Наша главная миссия — создать цифровую среду, где пользователи осваивают сложную грамматику и орфографию через игру, здоровую конкуренцию и визуально понятный прогресс.</p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p class="about-text">RootRy — школьный научный проект. Мы взялись за него,
+                    потому что заметили одну вещь по себе и по одноклассникам: правило,
+                    разобранное на уроке, через две недели помнят единицы. Не потому что
+                    его плохо объяснили, — просто к нему больше не возвращались.</p>
+                <p class="about-text">Поэтому платформа устроена вокруг повторения, а не
+                    вокруг объяснения. Тема, которую ты прошёл, сама вернётся: через день,
+                    потом через три, потом через неделю. Задание, в котором ты ошибся,
+                    попадёт в тетрадь ошибок и не уйдёт оттуда, пока не ответишь верно
+                    дважды в разные дни. Ответ сразу после разбора не считается: это
+                    память о только что прочитанном, а не знание.</p>
+
+                <hr style="border: none; border-top: 1px solid #eee; margin: 22px 0;">
 
                 <div class="section-header">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    <h2>Ключевые возможности</h2>
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <h2>Что внутри</h2>
                 </div>
-                <ul style="padding-left: 20px; line-height: 1.6; color: var(--text-color, #333); margin-bottom: 20px;">
-                    <li style="margin-bottom: 8px;"><strong>Интерактивное древо навыков:</strong> Наглядная карта вашего обучения. Пользователь открывает новые темы шаг за шагом — от базовых правил к сложным синтаксическим конструкциям.</li>
-                    <li style="margin-bottom: 8px;"><strong>Экономика и мотивация:</strong> Выполняйте задания, зарабатывайте внутреннюю валюту (монеты) и соревнуйтесь с другими учениками в глобальных таблицах лидеров.</li>
-                    <li style="margin-bottom: 8px;"><strong>Симуляторы экзаменов:</strong> Строгие, но справедливые тесты для проверки знаний и подготовки к реальным экзаменам с подробным разбором ошибок.</li>
-                    <li style="margin-bottom: 8px;"><strong>Мини-игры:</strong> Увлекательные механики для быстрого запоминания словарных слов, ударений и исключений из правил.</li>
+                <ul class="about-list">
+                    <li><strong>Дерево грамматики, 74 темы.</strong> Двенадцать разделов
+                        от фонетики до текстоведения. В каждой теме теория короткими
+                        блоками и задания, где надо не выбрать из готового, а собрать
+                        ответ самому.</li>
+                    <li><strong>Диагностика КСПОЯ.</strong> Банк из 200 вопросов, тест
+                        берёт 40 случайных, по шесть вариантов ответа — угадать сложнее,
+                        чем при четырёх. По результату выдаётся уровень от A1 до C2 и,
+                        главное, маршрут: с каких тем начинать и почему именно с них.</li>
+                    <li><strong>Тетрадь ошибок и план повторения.</strong> Считает не
+                        сайт, а модель знаний на схеме Лейтнера: у каждой темы своя
+                        коробка, интервал растёт, пока тема держится в памяти.</li>
+                    <li><strong>Семь мини-игр.</strong> Ударения, паронимы, запятые,
+                        сборка предложений. Короткие, на две минуты, — чтобы возвращаться
+                        было не в тягость.</li>
+                    <li><strong>ИИ-ассистент.</strong> Разговорная практика: пишешь
+                        по-русски о чём угодно, он отвечает как собеседник и отдельно
+                        разбирает, что стоит поправить.</li>
+                    <li><strong>Кабинет учителя.</strong> Класс по коду, карта активности,
+                        выгрузка результатов.</li>
                 </ul>
 
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <hr style="border: none; border-top: 1px solid #eee; margin: 22px 0;">
 
                 <div class="section-header">
-                    <i class="fa-brands fa-github"></i>
-                    <h2>Технологии и Open Source</h2>
+                    <i class="fa-solid fa-code"></i>
+                    <h2>Как это сделано</h2>
                 </div>
-                <p class="about-text">RootRy разрабатывается с упором на высокую производительность и масштабируемость. Мы открыты к сообществу, и вы можете следить за ходом разработки, обновлениями кодовой базы и архитектурными решениями в нашем репозитории: <a href="https://github.com/diawx-6669/--------------" target="_blank" style="color: var(--primary-color, #0099cc); text-decoration: none; font-weight: bold;">GitHub проекта</a>.</p>
-                
+                <p class="about-text">Сервер на Go, база PostgreSQL, фронтенд без
+                    фреймворков — обычный JavaScript. Так вышло не из принципа: проект
+                    надо показывать в школьном актовом зале, где интернет может не
+                    работать вовсе, и всё, что можно, лежит рядом с сайтом. Аватарки,
+                    значки и иконки — свои SVG, а не эмодзи: эмодзи рисует шрифт
+                    операционной системы, и на чужом компьютере экран выглядел бы иначе.</p>
+                <p class="about-text">Код открыт:
+                    <a href="https://github.com/diawx-6669/root-ry" target="_blank"
+                       rel="noopener" class="repo-link">github.com/diawx-6669/root-ry</a>.</p>
+
                 <div class="tech-stack-tagbox" style="margin-top: 16px;">
-                    <span class="tech-tag"><i class="fa-brands fa-html5"></i> HTML5 & CSS3</span>
-                    <span class="tech-tag"><i class="fa-brands fa-js"></i> Vanilla JS (Frontend)</span>
-                    <span class="tech-tag"><i class="fa-brands fa-golang"></i> Go (Backend API)</span>
-                    <span class="tech-tag"><i class="fa-solid fa-database"></i> Базы данных & Аналитика</span>
+                    <span class="tech-tag"><i class="fa-brands fa-golang"></i> Go</span>
+                    <span class="tech-tag"><i class="fa-solid fa-database"></i> PostgreSQL</span>
+                    <span class="tech-tag"><i class="fa-brands fa-js"></i> JavaScript без фреймворков</span>
+                    <span class="tech-tag"><i class="fa-brands fa-html5"></i> HTML и CSS</span>
                 </div>
             </div>
 
@@ -166,11 +201,6 @@
                     <div class="team-member">
                         <img src="default-avatar.webp" alt=""  class="member-photo">
                         <div class="member-name">Еркін Ералы</div>
-                        <div class="member-role">CEO of RootRy</div>
-                    </div>
-                    <div class="team-member">
-                        <img src="default-avatar.webp" alt=""  class="member-photo">
-                        <div class="member-name">Биданов Мансур</div>
                         <div class="member-role">CEO of RootRy</div>
                     </div>
                 </div>
@@ -198,29 +228,17 @@
     </main>
 
     <nav class="bottom-tabbar">
-        <a href="games.html" class="tab-item">
-            <i class="fa-solid fa-gamepad"></i><span>Игры</span>
-        </a>
-        <a href="shop.html" class="tab-item">
-            <i class="fa-solid fa-store"></i><span>Магазин</span>
-        </a>
-        <a href="leaderboard.html" class="tab-item">
-            <i class="fa-solid fa-trophy"></i><span>Топы</span>
-        </a>
-        <a href="profile.html" class="tab-item">
-            <i class="fa-solid fa-user"></i><span>Профиль</span>
-        </a>
-        <a href="tests.html" class="tab-item">
-            <i class="fa-solid fa-file-invoice"></i><span>Тесты</span>
-        </a>
-        <a href="tree.html" class="tab-item">
-            <i class="fa-solid fa-diagram-project"></i><span>Дерево</span>
-        </a>
-        <a href="authors.html" class="tab-item active">
-            <i class="fa-solid fa-users"></i><span>Авторы</span>
-        </a>
+        <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
+        <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
+        <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
+        <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
+        <a href="authors.html" class="tab-item active"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js?v=20261022"></script>
     <script>if (typeof initHeader === 'function') initHeader();</script>
 </body>

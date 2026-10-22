@@ -488,79 +488,81 @@ h1 {
     margin-top: 5px;
     color: #7f8c8d !important;
 }
-/* ══════════════════════════════════════════════════════════════════════
-   ТЕЛЕФОН
-   Раньше медиазапросов здесь не было вовсе: шапка с отступами по 40px не
-   помещалась в 375px, баланс уезжал за край, а таббар из семи вкладок
-   сжимался в нечитаемые подписи.
-   ══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   Телефон.
+
+   До этого в общей вёрстке не было ни одного медиазапроса: отступы в
+   40px, задуманные под десктоп, на экране в 390px съедали десятую
+   часть ширины, карточки вылезали за край, а восемь подписей нижней
+   панели слипались в «АссистентМагазин».
+
+   Правила лежат здесь, а не в каждой странице отдельно: шапка, панель
+   и рабочая область одни на весь сайт.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+    .global-header { padding: 0 14px; height: 64px; }
+    .global-header .brand span { font-size: 18px; }
+    .header-center .user-info { padding: 4px 10px 4px 4px; }
+    .header-center .username {
+        max-width: 92px; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+    .balance-box { padding: 6px 12px; font-size: 13px; }
+
+    .main-content { padding: 0 14px; }
+    body { padding-top: 78px; padding-bottom: 82px; }
+
+    h1 { font-size: 23px; }
+    h2 { font-size: 19px; }
+
+    /* Карточки страниц свёрстаны под широкий экран: на телефоне у них
+       остаются десктопные отступы, и содержимое уезжает за край. */
+    .profile-card, .about-card, .team-card, .leader-card,
+    .app-window > section, .shop-section {
+        padding-left: 18px; padding-right: 18px;
+        border-radius: 20px;
+    }
+
+    /* Нижняя панель: восемь вкладок помещаются только с мелкой подписью
+       и без боковых отступов. Иконка остаётся крупной — по ней и
+       попадают пальцем. */
+    .bottom-tabbar { height: 62px; padding: 0 2px; }
+    .tab-item { font-size: 9px; gap: 3px; min-width: 0; letter-spacing: -.01em; }
+    .tab-item i { font-size: 18px; }
+    .tab-item span {
+        max-width: 100%; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+}
+
+@media (max-width: 380px) {
+    /* На самых узких экранах подпись уже не читается — оставляем иконки,
+       а название активной вкладки и так подсвечено цветом. */
+    .tab-item span { display: none; }
+    .tab-item i { font-size: 21px; }
+    .bottom-tabbar { height: 56px; }
+}
+
+
+/* ── ТЕЛЕФОН — дополнения ─────────────────────────────────────────────
+   Ховер-подъёмы «залипают» после касания, поля меньше 16px заставляют
+   iOS увеличивать страницу при фокусе, а «монет» рядом с иконкой монет
+   выталкивало баланс за край шапки. */
 @media (hover: none) {
     .promo-btn:hover, .admin-enter-btn:hover { transform: none; box-shadow: none; }
 }
-
 @media (max-width: 600px) {
-    body {
-        padding-top: calc(76px + env(safe-area-inset-top, 0px));
-        padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-        -webkit-text-size-adjust: 100%;
-        overflow-x: hidden;
-    }
-
-    .global-header {
-        height: calc(60px + env(safe-area-inset-top, 0px));
-        padding: env(safe-area-inset-top, 0px) 12px 0;
-        gap: 8px;
-    }
-    .global-header .brand { font-size: 18px; gap: 6px; flex-shrink: 0; }
-    .global-header .brand i { font-size: 20px; }
+    body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+    .global-header { padding-top: env(safe-area-inset-top, 0px); }
+    .bottom-tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .header-center { min-width: 0; flex: 1; display: flex; justify-content: center; }
-    .user-info { padding: 4px 10px 4px 4px; gap: 8px; min-width: 0; max-width: 100%; }
-    .avatar { width: 30px; height: 30px; flex-shrink: 0; }
-    .username { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-    .header-right { flex-shrink: 0; }
-    .balance-box { padding: 6px 12px; border-radius: 12px; font-size: 14px; gap: 6px; }
-    .balance-box i { font-size: 15px; }
-    /* «монет» рядом с иконкой монет — лишнее слово на узком экране */
+    .global-header .brand, .header-right { flex-shrink: 0; }
     .balance-box small { display: none; }
-
-    .main-content { padding: 0 16px; }
-    h1 { font-size: 26px; margin-bottom: 16px; }
-
-    .card { border-radius: 24px; }
-    .empty-games-placeholder,
-    .shop-grid-placeholder,
-    .leaderboard-placeholder,
-    .profile-placeholder,
-    .tests-placeholder,
-    .tree-placeholder,
-    .authors-placeholder { padding: 24px 20px; }
-    .promo-section { padding: 24px 20px; }
-
-    .search-box { margin-bottom: 16px; }
-    .search-box input { height: 50px; font-size: 16px; border-radius: 16px; }
-
-    /* 16px в полях ввода — иначе iOS увеличивает страницу при фокусе */
     input, select, textarea { font-size: 16px; }
-
+    .search-box input { height: 50px; }
     .promo-form-box { flex-wrap: wrap; }
     .promo-form-box input { min-width: 0; flex-basis: 180px; }
-    .promo-btn { flex: 1 1 auto; }
-
-    .tree-stats-preview { flex-wrap: wrap; gap: 10px; }
-
-    .bottom-tabbar {
-        height: calc(64px + env(safe-area-inset-bottom, 0px));
-        padding: 0 2px env(safe-area-inset-bottom, 0px);
-        justify-content: space-between;
-    }
-    .tab-item { font-size: 10px; gap: 3px; min-width: 0; padding: 8px 0; letter-spacing: -0.1px; }
-    .tab-item i { font-size: 19px; }
-    .tab-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-}
-
-/* Совсем узкие телефоны (iPhone SE и меньше): прячем имя, остаётся аватар. */
-@media (max-width: 360px) {
-    .global-header .brand span { display: none; }
-    .username { display: none; }
-    .user-info { padding: 3px; }
+    .tree-stats-preview { flex-wrap: wrap; }
 }

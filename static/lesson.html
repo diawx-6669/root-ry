@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Урок</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css?v=20261022">
 <style>
@@ -15,82 +16,52 @@ body {
     min-height:100vh;
 }
 
-/* ═════════ ВЕРХНЯЯ ПАНЕЛЬ ═════════ */
+/* ═════ ВЕРХНЯЯ ПАНЕЛЬ УРОКА ═════ */
 .lesson-top {
     position:fixed; top:0; left:0; right:0; z-index:900;
     height:60px; background:#fff;
     display:flex; align-items:center; gap:14px; padding:0 16px;
-    box-shadow:0 2px 14px rgba(2,62,80,.08);
+    box-shadow:0 2px 14px rgba(2,62,80,0.08);
 }
 .lt-close {
     border:none; background:#f1f5f9; color:#64748b;
     width:36px; height:36px; border-radius:12px; cursor:pointer;
     font-size:15px; flex-shrink:0; transition:.15s;
 }
-.lt-close:hover { background:#e2e8f0; color:#0f172a; transform:rotate(90deg); }
-
-.lt-bar { flex:1; height:14px; background:#e9eff5; border-radius:10px; overflow:hidden; position:relative; }
+.lt-close:hover { background:#e2e8f0; color:#0f172a; }
+.lt-bar { flex:1; height:14px; background:#e9eff5; border-radius:10px; overflow:hidden; }
 .lt-fill {
-    height:100%; width:0%; border-radius:10px;
+    height:100%; width:0%;
     background:linear-gradient(90deg,#0099cc,#22c55e);
-    transition:width .45s cubic-bezier(.34,1.2,.64,1);
-    position:relative; overflow:hidden;
+    border-radius:10px; transition:width .35s cubic-bezier(.4,0,.2,1);
 }
-/* бегущий блик — видно, что полоса «живая» */
-.lt-fill::after {
-    content:''; position:absolute; inset:0;
-    background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.55) 50%,transparent 80%);
-    transform:translateX(-100%); animation:sheen 2.4s ease-in-out infinite;
-}
-@keyframes sheen { 0%,60%{transform:translateX(-100%)} 100%{transform:translateX(220%)} }
-
-.lt-hearts { display:flex; gap:5px; font-size:15px; flex-shrink:0; color:#ef4444; }
-.lt-hearts .heart { transition:.3s; }
-.lt-hearts .heart.lost { color:#cbd5e1; transform:scale(.82); }
-.lt-hearts .heart.breaking { animation:heartBreak .5s cubic-bezier(.36,.07,.19,.97); }
-@keyframes heartBreak {
-    0%{transform:scale(1)} 25%{transform:scale(1.45) rotate(-12deg)}
-    55%{transform:scale(.75) rotate(10deg)} 100%{transform:scale(.82)}
-}
-
+.lt-hearts { display:flex; gap:4px; flex-shrink:0; line-height:0; }
+.lt-hearts .heart.lost { opacity:.22; filter:grayscale(1); }
 .lt-combo {
-    flex-shrink:0; display:flex; align-items:center; gap:4px;
-    font-weight:800; font-size:13px; color:#f59e0b;
-    opacity:0; transform:scale(.6); transition:.25s cubic-bezier(.34,1.56,.64,1);
+    flex-shrink:0; font-weight:800; font-size:13px; color:#f59e0b;
+    display:flex; align-items:center; gap:4px; justify-content:flex-end;
+    opacity:0; transform:scale(.8); transition:.25s; min-width:34px; text-align:right;
 }
 .lt-combo.on { opacity:1; transform:scale(1); }
-.lt-combo.pop { animation:comboPop .42s cubic-bezier(.34,1.56,.64,1); }
-@keyframes comboPop { 0%{transform:scale(1)} 40%{transform:scale(1.42)} 100%{transform:scale(1)} }
 
-/* ═════════ КАРКАС ═════════ */
-.wrap { max-width:720px; margin:0 auto; padding:84px 16px 150px; }
-.phase { display:none; }
-.phase.on { display:block; animation:phaseIn .34s cubic-bezier(.4,0,.2,1); }
-@keyframes phaseIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+/* ═════ ОБЩИЙ КАРКАС ═════ */
+.wrap { max-width:720px; margin:0 auto; padding:84px 16px 140px; }
+.phase { display:none; animation:fadeUp .32s cubic-bezier(.4,0,.2,1); }
+.phase.on { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
 
 .card {
     background:#fff; border-radius:22px; padding:22px;
     box-shadow:0 6px 26px rgba(2,62,80,.07); margin-bottom:16px;
 }
 
-/* появление списков и строк таблицы «лесенкой» */
-.stagger > * { opacity:0; animation:riseIn .4s cubic-bezier(.4,0,.2,1) forwards; }
-@keyframes riseIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-.stagger > *:nth-child(1){animation-delay:.04s} .stagger > *:nth-child(2){animation-delay:.09s}
-.stagger > *:nth-child(3){animation-delay:.14s} .stagger > *:nth-child(4){animation-delay:.19s}
-.stagger > *:nth-child(5){animation-delay:.24s} .stagger > *:nth-child(6){animation-delay:.29s}
-.stagger > *:nth-child(7){animation-delay:.34s} .stagger > *:nth-child(n+8){animation-delay:.38s}
-
-/* ═════════ ЗАСТАВКА ═════════ */
+/* ═════ ЗАСТАВКА ═════ */
 .hero { text-align:center; padding:34px 22px; }
-.hero .icon-ring {
-    width:84px; height:84px; margin:0 auto 16px; border-radius:26px;
-    background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:34px;
-    box-shadow:0 10px 26px rgba(0,153,204,.32);
-    animation:ringIn .5s cubic-bezier(.34,1.56,.64,1);
+.hero .icon {
+    width:56px; height:56px; margin:0 auto 12px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    background:#eaf7fc; color:#036389; font-size:24px; font-weight:800;
 }
-@keyframes ringIn { from{opacity:0;transform:scale(.6) rotate(-12deg)} to{opacity:1;transform:none} }
 .hero .sect {
     display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em;
     color:#0099cc; background:#e0f2fe; border-radius:20px; padding:5px 13px; margin-bottom:12px;
@@ -99,18 +70,15 @@ body {
 .hero .intro { font-size:15px; color:#546e7a; line-height:1.62; max-width:520px; margin:0 auto; }
 .hero-meta { display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap; }
 .chip {
-    display:flex; align-items:center; gap:7px;
-    background:#f1f7fb; border-radius:14px; padding:9px 14px;
+    background:#f1f7fb; border-radius:14px; padding:8px 14px;
     font-size:13px; font-weight:700; color:#37576b;
 }
-.chip i { color:#0099cc; font-size:12px; }
 .chip.done { background:#dcfce7; color:#15803d; }
-.chip.done i { color:#16a34a; }
 
-/* ═════════ ТЕОРИЯ ═════════ */
-.step-h { display:flex; align-items:center; gap:11px; margin-bottom:13px; }
+/* ═════ ТЕОРИЯ ═════ */
+.step-h { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .step-num {
-    width:32px; height:32px; border-radius:11px; flex-shrink:0;
+    width:30px; height:30px; border-radius:10px; flex-shrink:0;
     background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
 }
@@ -118,60 +86,55 @@ body {
 .step-t { font-size:15px; color:#41596a; line-height:1.7; }
 .step-t b { color:#023e50; }
 
-.ex-list { list-style:none; margin-top:15px; display:flex; flex-direction:column; gap:8px; }
+.ex-list { list-style:none; margin-top:14px; display:flex; flex-direction:column; gap:8px; }
 .ex-list li {
     background:#f4f9fc; border-left:3px solid #7dd3fc; border-radius:0 12px 12px 0;
-    padding:11px 14px; font-size:14px; color:#37576b; line-height:1.55; white-space:pre-line;
+    padding:10px 14px; font-size:14px; color:#37576b; line-height:1.55; white-space:pre-line;
 }
 .ex-list li b { color:#023e50; }
 
-.tbl-scroll { overflow-x:auto; margin-top:15px; border-radius:14px; border:1px solid #eef3f7; }
-.tbl { width:100%; border-collapse:collapse; font-size:14px; }
+.tbl { width:100%; border-collapse:collapse; margin-top:14px; font-size:14px; }
+.tbl-scroll { overflow-x:auto; margin-top:14px; }
+.tbl-scroll .tbl { margin-top:0; }
 .tbl th {
     background:#f1f7fb; color:#37576b; font-size:11px; text-transform:uppercase;
-    letter-spacing:.05em; padding:10px 12px; text-align:left; font-weight:800;
+    letter-spacing:.05em; padding:9px 11px; text-align:left; font-weight:800;
 }
-.tbl td { padding:11px 12px; border-top:1px solid #eef3f7; color:#41596a; line-height:1.5; }
-.tbl tbody tr { transition:background .15s; }
-.tbl tbody tr:hover { background:#f9fcfe; }
-.tbl td:first-child { font-weight:700; color:#023e50; }
+.tbl td { padding:10px 11px; border-top:1px solid #eef3f7; color:#41596a; line-height:1.5; }
+.tbl td:first-child { font-weight:700; color:#023e50; white-space:nowrap; }
 .tbl td b { color:#023e50; }
 
 .rule-card {
     background:linear-gradient(135deg,#023e50,#0099cc); color:#fff;
     border-radius:22px; padding:22px; margin-bottom:16px;
     box-shadow:0 8px 26px rgba(0,153,204,.26);
-    animation:phaseIn .4s cubic-bezier(.4,0,.2,1);
 }
-.rule-card .lbl {
-    display:flex; align-items:center; gap:8px;
-    font-size:11px; letter-spacing:.1em; opacity:.85; font-weight:800; margin-bottom:9px;
-}
+.rule-card .lbl { font-size:11px; letter-spacing:.1em; opacity:.8; font-weight:800; margin-bottom:8px; }
 .rule-card .txt { font-size:16px; line-height:1.6; font-weight:600; }
 
-.trap { display:flex; gap:12px; padding:14px 0; border-top:1px solid #f1f5f9; }
-.trap:first-of-type { border-top:none; padding-top:2px; }
-.trap .ic { flex-shrink:0; color:#f59e0b; font-size:15px; margin-top:2px; }
+.trap { display:flex; gap:12px; padding:13px 0; border-top:1px solid #f1f5f9; }
+.trap:first-of-type { border-top:none; padding-top:4px; }
+.trap .ic { flex-shrink:0; line-height:0; }
 .trap .q { font-weight:800; color:#023e50; font-size:14px; margin-bottom:4px; }
 .trap .a { font-size:14px; color:#546e7a; line-height:1.6; }
 .trap .a b { color:#023e50; }
 
 .link-row {
-    display:flex; align-items:center; gap:13px; width:100%; text-align:left;
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
     background:#f7fbfd; border:1px solid #e6eef4; border-radius:15px;
-    padding:13px 15px; margin-bottom:9px; cursor:pointer; transition:.16s;
+    padding:13px 15px; margin-bottom:9px; cursor:pointer; transition:.15s;
     font-family:inherit;
 }
-.link-row:hover { background:#eef7fc; border-color:#7dd3fc; transform:translateX(4px); }
+.link-row:hover { background:#eef7fc; border-color:#7dd3fc; transform:translateX(3px); }
 .link-row .li {
-    width:34px; height:34px; border-radius:11px; flex-shrink:0;
-    background:#e0f2fe; color:#0284c7;
-    display:flex; align-items:center; justify-content:center; font-size:14px;
+    flex-shrink:0; width:26px; height:26px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:#eaf7fc; color:#036389; font-size:12px; font-weight:800;
 }
-.link-row .lt { flex:1; min-width:0; }
-.link-row .ln { font-weight:800; color:#023e50; font-size:14px; display:block; }
-.link-row .lw { font-size:12.5px; color:#8095a3; margin-top:2px; line-height:1.45; display:block; }
-.link-row .lc { color:#b6c6d2; flex-shrink:0; font-size:12px; }
+.link-row .lt { flex:1; }
+.link-row .ln { font-weight:800; color:#023e50; font-size:14px; }
+.link-row .lw { font-size:12.5px; color:#8095a3; margin-top:2px; line-height:1.45; }
+.link-row .lc { color:#b6c6d2; flex-shrink:0; }
 
 .sec-title {
     display:flex; align-items:center; gap:8px;
@@ -179,77 +142,118 @@ body {
     color:#8095a3; margin:22px 4px 11px;
 }
 
-/* ═════════ ПРАКТИКА ═════════ */
-.q-meta { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding:0 4px; }
-.q-dots { display:flex; gap:5px; flex:1; flex-wrap:wrap; }
-.q-dot {
-    width:9px; height:9px; border-radius:50%; background:#dbe4ec; transition:.3s;
-}
-.q-dot.now { background:#0099cc; transform:scale(1.5); box-shadow:0 0 0 3px rgba(0,153,204,.18); }
-.q-dot.ok  { background:#22c55e; }
-.q-dot.bad { background:#ef4444; }
-
-.rule-toggle {
-    border:1px solid #e6eef4; background:#fff; color:#37576b;
-    border-radius:11px; padding:6px 12px; font-size:12px; font-weight:700;
-    cursor:pointer; display:flex; align-items:center; gap:6px; flex-shrink:0; font-family:inherit;
-    transition:.15s;
-}
-.rule-toggle:hover { border-color:#7dd3fc; color:#0284c7; }
-.rule-toggle i { color:#f59e0b; }
-.rule-peek {
-    max-height:0; overflow:hidden; transition:max-height .3s ease, margin .3s ease;
-    background:#fffbeb; border-radius:14px; margin-bottom:0;
-    font-size:14px; color:#78350f; line-height:1.6;
-}
-.rule-peek.open { max-height:260px; margin-bottom:14px; }
-.rule-peek .inner { padding:14px 16px; border-left:3px solid #fbbf24; }
-
+/* ═════ ПРАКТИКА ═════ */
 .q-kind {
-    display:flex; align-items:center; gap:8px;
     font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-    color:#0099cc; margin-bottom:10px;
+    color:#0099cc; margin-bottom:9px;
 }
-.q-text { font-size:19px; color:#023e50; line-height:1.5; font-weight:700; margin-bottom:20px; }
+.q-text { font-size:19px; color:#023e50; line-height:1.45; font-weight:700; margin-bottom:20px; }
 .q-text .gap {
     display:inline-block; min-width:62px; border-bottom:3px solid #0099cc;
-    text-align:center; color:#0099cc; font-weight:800; transition:.2s;
+    text-align:center; color:#0099cc; font-weight:800;
 }
+/* пропуск буквы внутри слова — узкий, чтобы слово не разъезжалось */
 .q-text .gap.narrow { min-width:24px; }
-.q-text .gap.filled { background:#e0f2fe; border-radius:6px 6px 0 0; }
 
 .opts { display:flex; flex-direction:column; gap:10px; }
+/* ── Задания без готовых вариантов ─────────────────────────────────
+   Узнать верный вариант из шести и написать без ошибок — разные
+   навыки. Эти задания тренируют второй, поэтому правильного ответа на
+   экране нет вообще. */
+.wr-line { font-size:19px; line-height:2.1; color:#0f2b3a; }
+.wr-in {
+    width:2.6em; text-align:center; font-family:inherit; font-size:18px; font-weight:700;
+    color:#0099cc; border:none; border-bottom:2px solid #0099cc; background:#f7fcff;
+    border-radius:5px 5px 0 0; padding:1px 2px; margin:0 2px; outline:none;
+}
+.wr-in:focus { background:#eff9ff; border-bottom-color:#0077aa; }
+.wr-in.ok  { color:#15803d; border-bottom-color:#22c55e; background:#f0fdf4; }
+.wr-in.bad { color:#b91c1c; border-bottom-color:#ef4444; background:#fef2f2; }
+
+.find-text { font-size:18px; line-height:2.05; color:#0f2b3a; }
+.find-w {
+    cursor:pointer; padding:2px 3px; border-radius:5px; border-bottom:2px dashed transparent;
+    transition:.14s;
+}
+.find-w:hover { background:#f0f9ff; border-bottom-color:#7dd3fc; }
+.find-w.sel  { background:#eff9ff; border-bottom-color:#0099cc; font-weight:700; color:#036389; }
+.find-w.ok   { background:#f0fdf4; border-bottom-color:#22c55e; color:#15803d; font-weight:700; }
+.find-w.bad  { background:#fef2f2; border-bottom-color:#ef4444; color:#b91c1c; font-weight:700; }
+.find-w.miss { background:#fffbeb; border-bottom-color:#f59e0b; color:#92400e; font-weight:700; }
+.find-note { margin-top:12px; font-size:13px; color:#8095a3; }
+
+.ex-area, .dict-area {
+    width:100%; min-height:110px; resize:vertical; font-family:inherit; font-size:16px;
+    line-height:1.6; color:#0f2b3a; border:2px solid #e3edf3; border-radius:12px;
+    padding:13px 15px; outline:none; background:#fff;
+}
+.ex-area:focus, .dict-area:focus { border-color:#0099cc; }
+.ex-area.ok, .dict-area.ok  { border-color:#22c55e; background:#f7fef9; }
+.ex-area.bad, .dict-area.bad { border-color:#ef4444; background:#fffafa; }
+.ex-hint { margin-top:9px; font-size:13px; color:#8095a3; }
+.ex-check { margin-top:14px; }
+.ex-check-title { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#8095a3; margin-bottom:7px; }
+.ex-item { display:flex; gap:9px; align-items:flex-start; font-size:14px; line-height:1.5; padding:5px 0; color:#37576b; }
+.ex-item i { margin-top:3px; font-size:12px; }
+.ex-item.hit i  { color:#22c55e; }
+.ex-item.miss i { color:#cbd7de; }
+
+.dict-play {
+    display:inline-flex; align-items:center; gap:9px; border:none; border-radius:11px;
+    background:#0099cc; color:#fff; font-family:inherit; font-size:14px; font-weight:700;
+    padding:11px 18px; cursor:pointer; margin-bottom:13px; transition:background .16s;
+}
+.dict-play:hover { background:#0077aa; }
+.dict-play:disabled { background:#c3d4dc; cursor:default; }
+.dict-diff { margin-top:12px; font-size:15px; line-height:1.8; }
+.dict-diff b { background:#fee2e2; color:#b91c1c; border-radius:3px; padding:0 2px; }
+
+/* ── Подсказки ─────────────────────────────────────────────────────
+   Три ступени: намёк, правило, разбор. Ступень ничего не отнимает —
+   она меняет статус ответа: после разбора верный ответ перестаёт
+   подтверждать знание темы. */
+.hints { margin-top:18px; }
+.hint-btn {
+    display:inline-flex; align-items:center; gap:8px; border:1.5px solid #dbe7ee;
+    background:#fff; color:#37576b; font-family:inherit; font-size:13.5px; font-weight:600;
+    border-radius:10px; padding:9px 15px; cursor:pointer; transition:.16s;
+}
+.hint-btn:hover:not(:disabled) { border-color:#0099cc; color:#036389; }
+.hint-btn:disabled { opacity:.5; cursor:default; }
+.hint-btn .lvl { font-size:11px; color:#8095a3; font-weight:700; }
+.hint-card {
+    margin-top:10px; border:1px solid #e3edf3; border-left:3px solid #0099cc;
+    border-radius:10px; padding:12px 15px; background:#fafdff; font-size:14px;
+    line-height:1.6; color:#37576b;
+}
+.hint-card.reveal { border-left-color:#f59e0b; background:#fffdf8; }
+.hint-label {
+    font-size:10.5px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+    color:#0099cc; margin-bottom:5px;
+}
+.hint-card.reveal .hint-label { color:#b26a24; }
+.hint-warn { margin-top:9px; font-size:12.5px; color:#b26a24; }
+
 .opt {
     display:flex; align-items:center; gap:12px;
     background:#fff; border:2px solid #e6eef4; border-radius:16px;
-    padding:14px 16px; cursor:pointer;
+    padding:14px 16px; cursor:pointer; transition:.14s;
     font-size:15px; color:#37576b; font-family:inherit; text-align:left; width:100%;
-    font-weight:600; transition:border-color .14s, background .14s, transform .1s;
-    opacity:0; animation:riseIn .34s cubic-bezier(.4,0,.2,1) forwards;
+    font-weight:600;
 }
-.opt:nth-child(1){animation-delay:.03s} .opt:nth-child(2){animation-delay:.07s}
-.opt:nth-child(3){animation-delay:.11s} .opt:nth-child(4){animation-delay:.15s}
-.opt:nth-child(5){animation-delay:.19s} .opt:nth-child(6){animation-delay:.23s}
 .opt:hover:not(:disabled) { border-color:#7dd3fc; background:#f7fcff; }
-.opt:active:not(:disabled) { transform:scale(.985); }
 .opt .key {
-    width:27px; height:27px; border-radius:9px; background:#f1f5f9; color:#8095a3;
+    width:26px; height:26px; border-radius:8px; background:#f1f5f9; color:#8095a3;
     display:flex; align-items:center; justify-content:center;
     font-size:12px; font-weight:800; flex-shrink:0; transition:.14s;
 }
-.opt .txt { flex:1; }
-.opt .mark { flex-shrink:0; font-size:15px; opacity:0; transition:.2s; }
 .opt.sel { border-color:#0099cc; background:#eff9ff; }
 .opt.sel .key { background:#0099cc; color:#fff; }
-.opt.ok  { border-color:#22c55e; background:#f0fdf4; animation:okPulse .5s ease; }
+.opt.ok { border-color:#22c55e; background:#f0fdf4; }
 .opt.ok .key { background:#22c55e; color:#fff; }
-.opt.ok .mark { opacity:1; color:#16a34a; }
-.opt.bad { border-color:#ef4444; background:#fef2f2; animation:shake .4s cubic-bezier(.36,.07,.19,.97); }
+.opt.bad { border-color:#ef4444; background:#fef2f2; }
 .opt.bad .key { background:#ef4444; color:#fff; }
-.opt.bad .mark { opacity:1; color:#dc2626; }
 .opt:disabled { cursor:default; }
-@keyframes okPulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.45)} 100%{box-shadow:0 0 0 12px rgba(34,197,94,0)} }
-@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
 
 .opts.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .opts.grid2 .opt { justify-content:center; font-size:16px; font-weight:800; }
@@ -259,144 +263,92 @@ body {
 .match-col { display:flex; flex-direction:column; gap:9px; }
 .mtile {
     background:#fff; border:2px solid #e6eef4; border-radius:14px;
-    padding:13px 12px; cursor:pointer;
+    padding:13px 12px; cursor:pointer; transition:.14s;
     font-size:14px; color:#37576b; font-weight:600; font-family:inherit;
     text-align:left; line-height:1.4;
-    transition:border-color .14s, background .14s, transform .1s;
-    opacity:0; animation:riseIn .32s cubic-bezier(.4,0,.2,1) forwards;
 }
-.match-col .mtile:nth-child(1){animation-delay:.03s} .match-col .mtile:nth-child(2){animation-delay:.08s}
-.match-col .mtile:nth-child(3){animation-delay:.13s} .match-col .mtile:nth-child(4){animation-delay:.18s}
 .mtile:hover:not(:disabled) { border-color:#7dd3fc; }
-.mtile.sel { border-color:#0099cc; background:#eff9ff; transform:scale(1.02); }
-.mtile.done { border-color:#22c55e; background:#f0fdf4; color:#15803d; animation:okPulse .5s ease; }
-.mtile.miss { border-color:#ef4444; background:#fef2f2; animation:shake .4s; }
-.mtile:disabled { cursor:default; opacity:.6; }
+.mtile.sel { border-color:#0099cc; background:#eff9ff; }
+.mtile.done { border-color:#22c55e; background:#f0fdf4; color:#15803d; }
+.mtile.miss { border-color:#ef4444; background:#fef2f2; animation:shake .35s; }
+.mtile:disabled { cursor:default; opacity:.55; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 
 /* порядок */
 .order-slots {
-    min-height:58px; border:2px dashed #cbd9e3; border-radius:16px;
+    min-height:56px; border:2px dashed #cbd9e3; border-radius:16px;
     padding:10px; display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;
-    background:#fbfdfe; transition:border-color .2s;
+    background:#fbfdfe;
 }
-.order-slots:not(:empty) { border-color:#7dd3fc; border-style:solid; }
 .order-slots:empty::after {
     content:'Нажимай на варианты в правильном порядке';
     color:#b6c6d2; font-size:13px; padding:6px;
 }
 .otile {
     background:#fff; border:2px solid #e6eef4; border-radius:12px;
-    padding:10px 13px; font-size:14px; color:#37576b; font-weight:700;
-    cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px;
-    transition:border-color .14s, background .14s, opacity .2s, transform .1s;
+    padding:9px 13px; font-size:14px; color:#37576b; font-weight:700;
+    cursor:pointer; transition:.14s; font-family:inherit;
 }
 .otile:hover:not(:disabled) { border-color:#7dd3fc; }
-.otile:active:not(:disabled) { transform:scale(.96); }
-.otile .pos {
-    width:18px; height:18px; border-radius:6px; background:#0099cc; color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0;
-}
-.otile.placed { background:#eff9ff; border-color:#0099cc; color:#0369a1; animation:riseIn .25s; }
-.otile.used { opacity:.22; pointer-events:none; }
-.otile.ok  { border-color:#22c55e; background:#f0fdf4; }
-.otile.ok .pos { background:#22c55e; }
-.otile.bad { border-color:#ef4444; background:#fef2f2; }
-.otile.bad .pos { background:#ef4444; }
+.otile.placed { background:#eff9ff; border-color:#0099cc; color:#0369a1; }
+.otile.used { opacity:.25; pointer-events:none; }
 .otile:disabled { cursor:default; }
 .order-pool { display:flex; flex-wrap:wrap; gap:8px; }
 
-/* ═════════ НИЖНЯЯ ПАНЕЛЬ ═════════ */
+/* ═════ НИЖНЯЯ ПАНЕЛЬ ═════ */
 .footbar {
     position:fixed; bottom:0; left:0; right:0; z-index:900;
     background:#fff; border-top:1px solid #e9eff5;
     box-shadow:0 -4px 22px rgba(2,62,80,.07);
     padding:14px 16px calc(14px + env(safe-area-inset-bottom));
 }
-.footbar.good { background:#f0fdf4; border-top-color:#bbf7d0; }
-.footbar.bad  { background:#fef2f2; border-top-color:#fecaca; }
 .footbar-in { max-width:720px; margin:0 auto; }
 .fb-msg { display:none; margin-bottom:12px; }
-.fb-msg.on { display:block; animation:riseIn .28s cubic-bezier(.4,0,.2,1); }
-.fb-title { display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; margin-bottom:6px; }
+.fb-msg.on { display:block; animation:fadeUp .22s; }
+.fb-title { display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; margin-bottom:5px; }
 .fb-msg.good .fb-title { color:#15803d; }
 .fb-msg.bad  .fb-title { color:#b91c1c; }
-.fb-answer {
-    font-size:14px; margin-bottom:6px; color:#41596a; line-height:1.55;
-}
-.fb-answer b { color:#15803d; }
 .fb-why { font-size:14px; color:#546e7a; line-height:1.6; }
 .fb-why b { color:#023e50; }
 
 .btn {
     width:100%; border:none; border-radius:16px; padding:16px;
     font-size:16px; font-weight:800; cursor:pointer; font-family:inherit;
-    transition:transform .14s, box-shadow .14s, background .2s; color:#fff;
+    transition:.16s; color:#fff;
 }
-.btn:disabled { background:#e2e8f0 !important; color:#94a3b8 !important; cursor:default; box-shadow:none !important; }
+.btn:disabled { background:#e2e8f0 !important; color:#94a3b8 !important; cursor:default; box-shadow:none; }
 .btn-primary { background:linear-gradient(135deg,#023e50,#0099cc); box-shadow:0 6px 18px rgba(0,153,204,.3); }
+.btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 9px 24px rgba(0,153,204,.38); }
 .btn-good { background:linear-gradient(135deg,#16a34a,#22c55e); box-shadow:0 6px 18px rgba(34,197,94,.3); }
 .btn-bad  { background:linear-gradient(135deg,#dc2626,#ef4444); box-shadow:0 6px 18px rgba(239,68,68,.3); }
-.btn:hover:not(:disabled) { transform:translateY(-2px); }
 .btn-ghost { background:#f1f5f9; color:#546e7a; box-shadow:none; margin-top:9px; }
 .btn-ghost:hover { background:#e2e8f0; }
 
-/* ═════════ РЕЗУЛЬТАТ ═════════ */
+/* ═════ РЕЗУЛЬТАТ ═════ */
 .result { text-align:center; padding:30px 22px; }
-.result .medal {
-    width:92px; height:92px; margin:0 auto 16px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; font-size:38px; color:#fff;
-    animation:ringIn .55s cubic-bezier(.34,1.56,.64,1);
-}
-.result .medal.win  { background:linear-gradient(135deg,#16a34a,#4ade80); box-shadow:0 12px 30px rgba(34,197,94,.35); }
-.result .medal.miss { background:linear-gradient(135deg,#f59e0b,#fbbf24); box-shadow:0 12px 30px rgba(245,158,11,.32); }
+.result .big { line-height:0; margin-bottom:14px; }
 .result h2 { font-size:25px; color:#023e50; margin-bottom:8px; }
 .result .sub { font-size:15px; color:#546e7a; line-height:1.6; margin-bottom:22px; }
-.res-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
-.res-box { background:#f7fbfd; border-radius:16px; padding:15px 6px; }
-.res-box .v { font-size:21px; font-weight:800; color:#023e50; }
-.res-box .l { font-size:10px; color:#8095a3; font-weight:700; margin-top:4px; letter-spacing:.03em; }
-
+.res-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px; }
+.res-box { background:#f7fbfd; border-radius:16px; padding:15px 8px; }
+.res-box .v { font-size:23px; font-weight:800; color:#023e50; }
+.res-box .l { font-size:11px; color:#8095a3; font-weight:700; margin-top:3px; }
 .reward-line {
-    display:flex; align-items:center; justify-content:center; gap:9px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
     background:#fffbeb; border:1px solid #fde68a; border-radius:14px;
-    padding:13px; margin-top:12px; font-weight:800; color:#92400e; font-size:15px;
-    animation:riseIn .4s cubic-bezier(.4,0,.2,1) both;
+    padding:12px; margin-top:14px; font-weight:800; color:#92400e; font-size:15px;
 }
-.reward-line.info { background:#f0f9ff; border-color:#bae6fd; color:#0369a1; }
-.reward-line.mute { background:#f8fafc; border-color:#e2e8f0; color:#64748b; font-weight:700; }
-.reward-line:nth-of-type(2){animation-delay:.1s} .reward-line:nth-of-type(3){animation-delay:.2s}
-
-/* разбор ошибок */
-.review-item { border-top:1px solid #f1f5f9; padding:15px 0; }
-.review-item:first-child { border-top:none; padding-top:2px; }
-.ri-q { font-weight:800; color:#023e50; font-size:14.5px; margin-bottom:9px; line-height:1.45; }
-.ri-q .num {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:21px; height:21px; border-radius:7px; background:#fee2e2; color:#b91c1c;
-    font-size:11px; margin-right:7px;
-}
-.ri-line { display:flex; gap:9px; font-size:13.5px; margin-bottom:5px; line-height:1.5; }
-.ri-lbl { flex-shrink:0; width:88px; color:#8095a3; font-weight:700; font-size:12px; padding-top:1px; }
-.ri-bad { color:#b91c1c; text-decoration:line-through; text-decoration-color:#fca5a5; }
-.ri-ok  { color:#15803d; font-weight:700; }
-.ri-why { font-size:13.5px; color:#546e7a; line-height:1.6; margin-top:7px; padding-left:97px; }
 
 .loading { text-align:center; padding:70px 20px; color:#8095a3; font-size:15px; }
-.loading i { font-size:28px; color:#0099cc; margin-bottom:14px; display:block; }
+.loading i { font-size:28px; color:#0099cc; margin-bottom:12px; display:block; }
 
 @media (max-width:520px) {
-    .wrap { padding:76px 12px 160px; }
+    .wrap { padding:76px 12px 150px; }
     .hero h1 { font-size:23px; }
     .q-text { font-size:17px; }
+    .match-wrap { gap:8px; }
     .mtile { font-size:13px; padding:11px 10px; }
-    .res-grid { grid-template-columns:repeat(2,1fr); }
-    .ri-line { flex-direction:column; gap:2px; }
-    .ri-lbl { width:auto; }
-    .ri-why { padding-left:0; }
-}
-@media (prefers-reduced-motion:reduce) {
-    *, *::after { animation:none !important; transition-duration:.01ms !important; }
-    .opt, .mtile, .stagger > * { opacity:1 !important; }
+    .res-grid { gap:7px; }
 }
 </style>
 </head>
@@ -406,15 +358,16 @@ body {
     <button class="lt-close" id="closeBtn" title="Выйти"><i class="fa-solid fa-xmark"></i></button>
     <div class="lt-bar"><div class="lt-fill" id="progFill"></div></div>
     <div class="lt-hearts" id="hearts"></div>
-    <div class="lt-combo" id="combo"><i class="fa-solid fa-fire"></i><span id="comboNum"></span></div>
+    <div class="lt-combo" id="combo"></div>
 </div>
 
 <div class="wrap">
     <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i>Загружаем урок…</div>
 
+    <!-- ЗАСТАВКА -->
     <section class="phase" id="phaseIntro">
         <div class="card hero">
-            <div class="icon-ring"><i class="fa-solid fa-book" id="hIcon"></i></div>
+            <div class="icon" id="hIcon"></div>
             <div class="sect" id="hSect"></div>
             <h1 id="hTitle"></h1>
             <p class="intro" id="hIntro"></p>
@@ -422,21 +375,27 @@ body {
         </div>
     </section>
 
+    <!-- ТЕОРИЯ -->
     <section class="phase" id="phaseTheory"><div id="theoryBody"></div></section>
 
+    <!-- ПРАКТИКА -->
     <section class="phase" id="phasePractice">
-        <div class="q-meta">
-            <div class="q-dots" id="qDots"></div>
-            <button class="rule-toggle" id="ruleToggle"><i class="fa-solid fa-lightbulb"></i> Правило</button>
-        </div>
-        <div class="rule-peek" id="rulePeek"><div class="inner" id="rulePeekText"></div></div>
         <div class="card">
             <div class="q-kind" id="qKind"></div>
             <div class="q-text" id="qText"></div>
             <div id="qBody"></div>
+            <div class="hints" id="hints">
+                <button class="hint-btn" id="hintBtn" type="button">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span id="hintBtnText">Подсказка</span>
+                    <span class="lvl" id="hintBtnLvl"></span>
+                </button>
+                <div id="hintList"></div>
+            </div>
         </div>
     </section>
 
+    <!-- РЕЗУЛЬТАТ -->
     <section class="phase" id="phaseResult"><div id="resultBody"></div></section>
 </div>
 
@@ -444,7 +403,6 @@ body {
     <div class="footbar-in">
         <div class="fb-msg" id="fbMsg">
             <div class="fb-title" id="fbTitle"></div>
-            <div class="fb-answer" id="fbAnswer"></div>
             <div class="fb-why" id="fbWhy"></div>
         </div>
         <button class="btn btn-primary" id="mainBtn">Начать</button>
@@ -452,56 +410,81 @@ body {
     </div>
 </div>
 
-<script src="api.js?v=20261022"></script>
+<script src="icons.js"></script>
+    <script src="api.js?v=20261022"></script>
+    <script src="practice.js"></script>
 <script src="lessons/index.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    Плеер урока: заставка → теория → практика → результат.
 
-   Устройство намеренно без фреймворка: одно состояние `S` и по одному
-   рендеру на фазу. Ответы проверяются на клиенте, а награду за
-   пройденную тему выдаёт сервер по её идентификатору — накрутить XP,
-   подделав ответы, нельзя: за тему платят один раз.
+   Устройство простое и намеренно без фреймворка: одно состояние `S`,
+   один рендер на фазу. Ответы проверяются на клиенте, а награду за
+   пройденную тему выдаёт сервер по идентификатору темы — накрутить XP,
+   подделав ответы, нельзя: за одну тему награда даётся один раз.
    ═══════════════════════════════════════════════════════════════════ */
 
 if (!requireAuth()) throw new Error('redirect');
 
 const MAX_HEARTS = 3;
-const PASS_RATIO = 0.7;   // доля решённых заданий, при которой тема засчитывается
+const PASS_RATIO = 0.7;   // сколько нужно решить, чтобы тема засчиталась
 
 const S = {
     lesson: null,
-    phase: 'intro',
-    stepIdx: 0,
-    qIdx: 0,
+    phase: 'intro',        // intro | theory | practice | result
+    stepIdx: 0,            // текущий блок теории
+    qIdx: 0,               // текущее задание
     hearts: MAX_HEARTS,
     correct: 0,
     streak: 0,
     bestStreak: 0,
-    answered: false,
-    pick: null,
-    matchLeft: null,
+    answered: false,       // ответ на текущее задание уже проверен
+    pick: null,            // выбранный вариант / массив / порядок
+    matchLeft: null,       // выбранная плитка слева в «сопоставь»
     matchDone: [],
-    matchErrors: 0,
+    matchErrors: 0,        // ошибки внутри текущего «сопоставь»
     order: [],
-    results: [],       // по одному разбору на каждое задание — для итогового экрана
-    startedAt: 0,
     saving: false,
-    saved: null,
+    saved: null,           // ответ сервера о начислении
+    qStartedAt: 0,         // когда показали текущее задание
+    reviewMode: false,     // урок открыт из плана повторения
+
+    // Ответы в заданиях без готовых вариантов.
+    written: [],           // буквы, вписанные в пропуски
+    found: [],             // слова, отмеченные как ошибочные
+    text: '',              // свободный ответ и диктант
+
+    // Подсказки: сколько ступеней открыто и добрался ли ученик до разбора.
+    hintLevels: [],
+    hintsOpened: 0,
+    revealed: false
 };
 
 const $ = id => document.getElementById(id);
-const ico = (name, cls) => `<i class="fa-solid ${name}${cls ? ' ' + cls : ''}"></i>`;
 
 /* ── Загрузка ──────────────────────────────────────────────────── */
 (async function boot() {
-    const id = new URLSearchParams(location.search).get('id');
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    // Повторение отличается от первого прохождения только тем, что ответы
+    // помечаются источником «review»: в исследовании важно уметь отделить
+    // изучение новой темы от возврата к старой.
+    S.reviewMode = params.get('review') === '1';
     const lesson = id ? await loadLesson(id).catch(() => null) : null;
 
     if (!lesson) {
-        $('loading').innerHTML = ico('fa-triangle-exclamation') + 'Урок не найден.' +
+        $('loading').innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i>Урок не найден.' +
             '<br><br><a href="tree.html" style="color:#0099cc;font-weight:700">Вернуться к дереву</a>';
         return;
+    }
+
+    // Диктант держится на встроенном в браузер синтезе речи. Если его нет
+    // (старый браузер, отключённая озвучка), задание убирается из урока:
+    // показать текст, который надо записать на слух, значит превратить
+    // диктант в списывание.
+    if (!dictationAvailable() && Array.isArray(lesson.practice)) {
+        lesson.practice = lesson.practice.filter(q => q.type !== 'dictation');
     }
 
     S.lesson = lesson;
@@ -514,33 +497,30 @@ const ico = (name, cls) => `<i class="fa-solid ${name}${cls ? ' ' + cls : ''}"><
 })();
 
 $('closeBtn').onclick = () => {
-    if (S.phase === 'practice' && !S.saved &&
-        !confirm('Выйти из урока? Прогресс практики не сохранится.')) return;
+    if (S.phase === 'practice' && !S.saved) {
+        if (!confirm('Выйти из урока? Прогресс практики не сохранится.')) return;
+    }
     location.href = 'tree.html';
-};
-
-$('ruleToggle').onclick = () => {
-    $('rulePeek').classList.toggle('open');
-    Sound.click();
 };
 
 /* ── Заставка ──────────────────────────────────────────────────── */
 function renderIntro() {
     S.phase = 'intro';
     const L = S.lesson;
-    const pos = lessonPosition(L.id);
-
-    $('hIcon').className = 'fa-solid ' + L.icon;
-    $('hSect').textContent = `${L.section} · тема ${pos.index} из ${pos.total}`;
+    // Номер раздела вместо эмодзи: у каждой из 74 тем была своя картинка
+    // из шрифта операционной системы, и одна и та же тема выглядела
+    // по-разному на разных компьютерах.
+    $('hIcon').textContent = sectionNo(L.section);
+    $('hSect').textContent = L.section;
     $('hTitle').textContent = L.title;
     $('hIntro').textContent = L.intro;
 
     const done = (API.user()?.completed_topics || []).includes(L.id);
     $('hMeta').innerHTML =
-        `<span class="chip">${ico('fa-book-open')} ${L.steps.length} блока теории</span>` +
-        `<span class="chip">${ico('fa-pen-to-square')} ${L.practice.length} заданий</span>` +
-        (done ? `<span class="chip done">${ico('fa-circle-check')} Уже пройдено</span>`
-              : `<span class="chip">${ico('fa-bolt')} +${L.xp} XP</span>`);
+        `<span class="chip">${svgIcon('book', { size: 13 })} ${L.steps.length} блока теории</span>` +
+        `<span class="chip">${svgIcon('pen', { size: 13 })} ${L.practice.length} заданий</span>` +
+        (done ? `<span class="chip done">${svgIcon('check', { size: 13 })} Уже пройдено</span>`
+              : `<span class="chip">${svgIcon('bolt', { size: 13 })} +${L.xp} XP</span>`);
 
     showPhase('phaseIntro');
     setProgress(0);
@@ -550,13 +530,17 @@ function renderIntro() {
 }
 
 /* ── Теория ────────────────────────────────────────────────────── */
-function startTheory() { S.phase = 'theory'; S.stepIdx = 0; renderTheory(); }
+function startTheory() {
+    S.phase = 'theory';
+    S.stepIdx = 0;
+    renderTheory();
+}
 
 function renderTheory() {
     const L = S.lesson;
-    const total = L.steps.length + 1;               // +1 — итоговый экран с правилом
+    const total = L.steps.length + 1;               // +1 — итоговый экран
     const isSummary = S.stepIdx >= L.steps.length;
-    setProgress((S.stepIdx / total) * 40);          // на теорию отведено 40% полосы
+    setProgress((S.stepIdx / total) * 40);          // теория занимает 40% полосы
 
     if (!isSummary) {
         const st = L.steps[S.stepIdx];
@@ -567,36 +551,33 @@ function renderTheory() {
                     <h2>${esc(st.h)}</h2>
                 </div>
                 <div class="step-t">${st.t}</div>
-                ${st.ex ? `<ul class="ex-list stagger">${st.ex.map(e => `<li>${e}</li>`).join('')}</ul>` : ''}
+                ${st.ex ? `<ul class="ex-list">${st.ex.map(e => `<li>${e}</li>`).join('')}</ul>` : ''}
                 ${st.table ? renderTable(st) : ''}
             </div>`;
         setMain(S.stepIdx === L.steps.length - 1 ? 'К правилу' : 'Дальше', 'btn-primary', () => {
             S.stepIdx++; renderTheory(); window.scrollTo({ top: 0, behavior: 'smooth' });
         });
-        showGhost('Назад', () => {
-            if (S.stepIdx === 0) { renderIntro(); return; }
-            S.stepIdx--; renderTheory(); window.scrollTo({ top: 0 });
-        });
+        hideGhost();
     } else {
         $('theoryBody').innerHTML = `
             <div class="rule-card">
-                <div class="lbl">${ico('fa-lightbulb')} ЗАПОМНИ</div>
+                <div class="lbl">ЗАПОМНИ</div>
                 <div class="txt">${esc(L.rule)}</div>
             </div>
             ${L.traps?.length ? `
-            <div class="sec-title">${ico('fa-triangle-exclamation')} Частые ошибки</div>
-            <div class="card stagger">
+            <div class="sec-title"><i class="fa-solid fa-triangle-exclamation"></i> Частые ошибки</div>
+            <div class="card">
                 ${L.traps.map(t => `
                     <div class="trap">
-                        <div class="ic">${ico('fa-circle-exclamation')}</div>
+                        <div class="ic">${svgIcon('warn', { size: 17, color: '#d97706' })}</div>
                         <div><div class="q">${esc(t.q)}</div><div class="a">${t.a}</div></div>
                     </div>`).join('')}
             </div>` : ''}
             ${L.links?.length ? `
-            <div class="sec-title">${ico('fa-diagram-project')} Связано с темами</div>
-            <div class="card stagger" style="padding:14px">${renderLinks(L.links)}</div>` : ''}`;
+            <div class="sec-title"><i class="fa-solid fa-diagram-project"></i> Связано с темами</div>
+            <div class="card" style="padding:14px">${renderLinks(L.links)}</div>` : ''}`;
         bindLinks();
-        setMain('Перейти к практике', 'btn-primary', startPractice);
+        setMain('Перейти к практике →', 'btn-primary', startPractice);
         showGhost('Повторить теорию', () => { S.stepIdx = 0; renderTheory(); window.scrollTo({ top: 0 }); });
     }
     showPhase('phaseTheory');
@@ -609,14 +590,20 @@ function renderTable(st) {
     return `<div class="tbl-scroll"><table class="tbl">${head}<tbody>${body}</tbody></table></div>`;
 }
 
+// Номер раздела из его названия: «3. ОРФОГРАФИЯ» → «3».
+function sectionNo(section) {
+    const m = /^\s*(\d+)/.exec(String(section || ''));
+    return m ? m[1] : '·';
+}
+
 function renderLinks(links) {
     return links.map(l => {
         const meta = LESSON_BY_ID[l.id];
         if (!meta) return '';
         return `<button class="link-row" data-goto="${esc(meta.id)}">
-            <span class="li">${ico(meta.icon)}</span>
+            <span class="li">${sectionNo(meta.section)}</span>
             <span class="lt"><span class="ln">${esc(meta.title)}</span><span class="lw">${esc(l.why)}</span></span>
-            <span class="lc">${ico('fa-chevron-right')}</span>
+            <span class="lc"><i class="fa-solid fa-chevron-right"></i></span>
         </button>`;
     }).join('');
 }
@@ -631,39 +618,38 @@ function bindLinks() {
 function startPractice() {
     S.phase = 'practice';
     S.qIdx = 0; S.hearts = MAX_HEARTS; S.correct = 0;
-    S.streak = 0; S.bestStreak = 0; S.results = [];
-    S.startedAt = Date.now();
-    $('rulePeekText').textContent = S.lesson.rule;
+    S.streak = 0; S.bestStreak = 0;
     renderHearts();
     renderQuestion();
     window.scrollTo({ top: 0 });
 }
 
-const KIND = {
-    choice:{ l:'Выбери ответ',        i:'fa-circle-dot' },
-    fill:  { l:'Вставь пропущенное',  i:'fa-pen' },
-    tf:    { l:'Верно или неверно',   i:'fa-scale-balanced' },
-    multi: { l:'Выбери все верные',   i:'fa-list-check' },
-    match: { l:'Сопоставь пары',      i:'fa-shuffle' },
-    order: { l:'Расставь по порядку', i:'fa-arrow-down-1-9' },
-};
+// Названия типов заданий общие с тетрадью ошибок — см. practice.js.
+const KIND_LABEL = PRACTICE_KINDS;
 
 function renderQuestion() {
-    const L = S.lesson, q = L.practice[S.qIdx];
+    const L = S.lesson;
+    const q = L.practice[S.qIdx];
 
     S.answered = false; S.pick = null;
     S.matchLeft = null; S.matchDone = []; S.matchErrors = 0; S.order = [];
+    S.written = []; S.found = []; S.text = '';
+    S.hintLevels = PracticeHints.levels(q, L);
+    S.hintsOpened = 0; S.revealed = false;
+    renderHints();
+    // Время на задание уходит в журнал ответов: по нему видно разницу
+    // между «знал» и «долго перебирал варианты».
+    S.qStartedAt = Date.now();
 
     setProgress(40 + (S.qIdx / L.practice.length) * 60);
-    renderDots();
-
-    const k = KIND[q.type] || KIND.choice;
-    $('qKind').innerHTML = `${ico(k.i)} ${k.l} · ${S.qIdx + 1} из ${L.practice.length}`;
+    $('qKind').textContent = `${KIND_LABEL[q.type] || 'Задание'} · ${S.qIdx + 1} из ${L.practice.length}`;
     $('qText').innerHTML = formatGap(q.q);
     $('qBody').innerHTML = '';
 
     ({ choice:renderChoice, fill:renderChoice, tf:renderTF,
-       multi:renderMulti, match:renderMatch, order:renderOrder }[q.type] || renderChoice)(q);
+       multi:renderMulti, match:renderMatch, order:renderOrder,
+       write:renderWrite, find:renderFind,
+       explain:renderExplain, dictation:renderDictation }[q.type] || renderChoice)(q);
 
     hideFeedback();
     showPhase('phasePractice');
@@ -672,16 +658,8 @@ function renderQuestion() {
     hideGhost();
 }
 
-function renderDots() {
-    $('qDots').innerHTML = S.lesson.practice.map((_, i) => {
-        const r = S.results[i];
-        const cls = i === S.qIdx ? 'now' : r ? (r.ok ? 'ok' : 'bad') : '';
-        return `<span class="q-dot ${cls}"></span>`;
-    }).join('');
-}
-
-// Пропуск бывает двух видов: целое слово («___») и буква внутри слова
-// («предл_гает»). Первый рисуем широким, второй — узким, чтобы слово
+// Пропуск в задании бывает двух видов: целое слово («___») и буква внутри
+// слова («предл_гает»). Первый рисуем широким, второй — узким, чтобы слово
 // не разъезжалось. Заполняется всегда первый пропуск в тексте.
 function formatGap(text) {
     let first = true;
@@ -694,21 +672,16 @@ function formatGap(text) {
 }
 function fillGap(txt) {
     const slot = $('gapSlot');
-    if (!slot) return;
-    slot.textContent = txt;
-    slot.classList.add('filled');
+    if (slot) slot.textContent = txt;
 }
 
 const LETTERS = ['А','Б','В','Г','Д','Е'];
-const optRow = (i, text) =>
-    `<button class="opt" data-i="${i}">
-        <span class="key">${LETTERS[i] || i + 1}</span>
-        <span class="txt">${esc(text)}</span>
-        <span class="mark"></span>
-    </button>`;
 
 function renderChoice(q) {
-    $('qBody').innerHTML = `<div class="opts">${q.options.map((o, i) => optRow(i, o)).join('')}</div>`;
+    $('qBody').innerHTML = `<div class="opts">${
+        q.options.map((o, i) =>
+            `<button class="opt" data-i="${i}"><span class="key">${LETTERS[i] || i + 1}</span><span>${esc(o)}</span></button>`
+        ).join('')}</div>`;
     document.querySelectorAll('.opt').forEach(b => {
         b.onclick = () => {
             if (S.answered) return;
@@ -724,8 +697,8 @@ function renderChoice(q) {
 
 function renderTF(q) {
     $('qBody').innerHTML = `<div class="opts grid2">
-        <button class="opt" data-i="1"><span class="txt">${ico('fa-check')} Верно</span><span class="mark"></span></button>
-        <button class="opt" data-i="0"><span class="txt">${ico('fa-xmark')} Неверно</span><span class="mark"></span></button>
+        <button class="opt" data-i="1"><span>Верно</span></button>
+        <button class="opt" data-i="0"><span>Неверно</span></button>
     </div>`;
     document.querySelectorAll('.opt').forEach(b => {
         b.onclick = () => {
@@ -741,11 +714,15 @@ function renderTF(q) {
 
 function renderMulti(q) {
     S.pick = [];
-    $('qBody').innerHTML = `<div class="opts">${q.options.map((o, i) => optRow(i, o)).join('')}</div>`;
+    $('qBody').innerHTML = `<div class="opts">${
+        q.options.map((o, i) =>
+            `<button class="opt" data-i="${i}"><span class="key">${LETTERS[i] || i + 1}</span><span>${esc(o)}</span></button>`
+        ).join('')}</div>`;
     document.querySelectorAll('.opt').forEach(b => {
         b.onclick = () => {
             if (S.answered) return;
-            const i = +b.dataset.i, at = S.pick.indexOf(i);
+            const i = +b.dataset.i;
+            const at = S.pick.indexOf(i);
             if (at >= 0) { S.pick.splice(at, 1); b.classList.remove('sel'); }
             else { S.pick.push(i); b.classList.add('sel'); }
             $('mainBtn').disabled = S.pick.length === 0;
@@ -788,13 +765,13 @@ function renderMatch(q) {
                 if (S.matchDone.length === q.pairs.length) { $('mainBtn').disabled = false; checkAnswer(); }
             } else {
                 t.classList.add('miss');
-                setTimeout(() => t.classList.remove('miss'), 400);
+                setTimeout(() => t.classList.remove('miss'), 350);
                 leftEl.classList.remove('sel');
                 S.matchLeft = null;
                 S.matchErrors++;
                 Sound.wrong();
                 loseHeart();
-                // Жизни кончились посреди сопоставления — закрываем задание.
+                // Жизни кончились прямо посреди сопоставления — закрываем задание.
                 if (S.hearts <= 0) { $('mainBtn').disabled = false; checkAnswer(); }
             }
         };
@@ -821,13 +798,12 @@ function renderOrder(q) {
 
 function redrawSlots(q) {
     $('orderSlots').innerHTML = S.order.map((idx, pos) =>
-        `<button class="otile placed" data-pos="${pos}">
-            <span class="pos">${pos + 1}</span>${esc(q.items[idx])}
-        </button>`).join('');
+        `<button class="otile placed" data-pos="${pos}">${esc(q.items[idx])}</button>`).join('');
     document.querySelectorAll('#orderSlots .otile').forEach(b => {
         b.onclick = () => {
             if (S.answered) return;
-            const removed = S.order.splice(+b.dataset.pos, 1)[0];
+            const pos = +b.dataset.pos;
+            const removed = S.order.splice(pos, 1)[0];
             document.querySelector(`#orderPool .otile[data-i="${removed}"]`)?.classList.remove('used');
             redrawSlots(q);
         };
@@ -836,40 +812,11 @@ function redrawSlots(q) {
 }
 
 /* ── Проверка ──────────────────────────────────────────────────── */
+// Проверка вынесена в practice.js: то же самое задание решается ещё и в
+// тетради ошибок, и «верно» обязано означать там ровно то же самое.
+// Состояние S уже содержит все поля, которые ждёт practiceIsCorrect.
 function isCorrect(q) {
-    switch (q.type) {
-        case 'tf':    return S.pick === q.correct;
-        case 'multi': {
-            const a = [...(S.pick || [])].sort().join(','), b = [...q.correct].sort().join(',');
-            return a === b && a !== '';
-        }
-        // Пары в итоге сходятся всегда — решённым считается только то
-        // сопоставление, которое собрано без единой ошибки.
-        case 'match': return S.matchDone.length === q.pairs.length && S.matchErrors === 0;
-        case 'order': return S.order.join(',') === q.correct.join(',');
-        default:      return S.pick === q.correct;
-    }
-}
-
-// Текст ответа ученика и правильного ответа — для подсказки в футере
-// и для разбора ошибок на итоговом экране.
-function answerText(q) {
-    switch (q.type) {
-        case 'tf':    return S.pick === null ? '—' : (S.pick ? 'Верно' : 'Неверно');
-        case 'multi': return (S.pick || []).length ? S.pick.slice().sort().map(i => q.options[i]).join(', ') : '—';
-        case 'match': return `собрано с ${S.matchErrors} ошибками`;
-        case 'order': return S.order.map(i => q.items[i]).join(' → ');
-        default:      return S.pick === null ? '—' : q.options[S.pick];
-    }
-}
-function correctText(q) {
-    switch (q.type) {
-        case 'tf':    return q.correct ? 'Верно' : 'Неверно';
-        case 'multi': return q.correct.slice().sort().map(i => q.options[i]).join(', ');
-        case 'match': return q.pairs.map(p => `${p[0]} — ${p[1]}`).join('; ');
-        case 'order': return q.correct.map(i => q.items[i]).join(' → ');
-        default:      return q.options[q.correct];
-    }
+    return practiceIsCorrect(q, S);
 }
 
 function checkAnswer() {
@@ -878,9 +825,23 @@ function checkAnswer() {
     const ok = isCorrect(q);
     S.answered = true;
 
-    S.results[S.qIdx] = { ok, given: answerText(q), right: correctText(q), q };
+    // Ответ уходит в модель знаний до отрисовки разбора: очередь ничего не
+    // ждёт, а ученик не должен смотреть на спиннер ради статистики.
+    Attempts.record({
+        topic: S.lesson.id,
+        item: `${S.lesson.id}#${S.qIdx}`,
+        source: S.reviewMode ? 'review' : 'lesson',
+        correct: ok,
+        // Сервер смотрит на уровень подсказки: ответ с открытым разбором
+        // не подтверждает знание темы, хотя и не наказывается.
+        hints: PracticeHints.report(S.hintsOpened, S.revealed),
+        timeMs: S.qStartedAt ? Date.now() - S.qStartedAt : 0,
+    });
+
+    // После ответа лестница закрывается: разбор ученик и так сейчас увидит.
+    $('hintBtn').disabled = true;
+
     markAnswers(q, ok);
-    renderDots();
 
     if (ok) {
         S.correct++;
@@ -888,27 +849,121 @@ function checkAnswer() {
         S.bestStreak = Math.max(S.bestStreak, S.streak);
         showCombo();
         Sound.correct();
+        showFeedback(true, q.why);
     } else {
         S.streak = 0;
         hideCombo();
         if (q.type !== 'match') loseHeart();   // в «сопоставь» жизнь снимается на месте
         Sound.wrong();
+        showFeedback(false, q.why);
     }
-    showFeedback(ok, q);
 
     const last = S.qIdx === S.lesson.practice.length - 1;
-    if (S.hearts <= 0)      setMain('Посмотреть результат', 'btn-bad', finish);
-    else if (last)          setMain('Завершить', ok ? 'btn-good' : 'btn-primary', finish);
-    else                    setMain('Продолжить', ok ? 'btn-good' : 'btn-primary', nextQuestion);
+    if (S.hearts <= 0) {
+        setMain('Посмотреть результат', 'btn-bad', finish);
+    } else {
+        setMain(last ? 'Завершить' : 'Продолжить', ok ? 'btn-good' : 'btn-primary',
+                last ? finish : nextQuestion);
+    }
     $('mainBtn').disabled = false;
 }
 
+
+/* Разметка ответа в заданиях без готовых вариантов. */
+function markProductive(q, ok) {
+    switch (q.type) {
+        case 'write': {
+            const want = q.answers || [];
+            document.querySelectorAll('.wr-in').forEach((el, i) => {
+                el.disabled = true;
+                const right = normalizeLetters(el.value) === normalizeLetters(want[i]);
+                el.classList.add(right ? 'ok' : 'bad');
+                // Пустое или неверное поле показывает правильную букву:
+                // ученик должен уйти с задания, зная ответ.
+                if (!right) el.value = want[i] ?? '';
+            });
+            break;
+        }
+        case 'find': {
+            const wrong = new Set((q.wrong || []).map(normalizeLetters));
+            document.querySelectorAll('.find-w').forEach(el => {
+                const word = normalizeLetters(bareWord(el.textContent));
+                const picked = el.classList.contains('sel');
+                el.classList.remove('sel');
+                el.onclick = null;
+                if (wrong.has(word)) {
+                    // Отмеченная ошибка — верно; пропущенная — подсвечена
+                    // отдельным цветом, это не то же самое, что промах.
+                    el.classList.add(picked ? 'ok' : 'miss');
+                } else if (picked) {
+                    el.classList.add('bad');
+                }
+            });
+            break;
+        }
+        case 'explain': {
+            const area = $('exArea');
+            if (area) { area.disabled = true; area.classList.add(ok ? 'ok' : 'bad'); }
+            renderExplainChecklist(q);
+            break;
+        }
+        case 'dictation': {
+            const area = $('dictArea');
+            if (area) { area.disabled = true; area.classList.add(ok ? 'ok' : 'bad'); }
+            const play = $('dictPlay');
+            if (play) play.disabled = true;
+            if (!ok) {
+                const box = document.createElement('div');
+                box.className = 'dict-diff';
+                box.innerHTML =
+                    '<div class="ex-check-title">Что записано</div>' +
+                    dictationDiff(S.text, q.answer) +
+                    '<div class="ex-check-title" style="margin-top:10px">Как правильно</div>' +
+                    esc(q.answer || '');
+                $('qBody').appendChild(box);
+            }
+            break;
+        }
+    }
+}
+
+/* Чек-лист опорных понятий: что ученик назвал, а что упустил.
+
+   Показывается после ответа, а не вместо проверки: сама проверка
+   автоматическая, а чек-лист объясняет её решение. */
+function renderExplainChecklist(q) {
+    const groups = q.keywords || [];
+    if (!groups.length) return;
+    const text = normalizeLetters(S.text || '');
+
+    const rows = groups.map((g, i) => {
+        const variants = Array.isArray(g) ? g : [g];
+        const hit = variants.some(k => text.includes(normalizeLetters(k)));
+        const label = (q.checklist && q.checklist[i]) || variants[0];
+        return `<div class="ex-item ${hit ? 'hit' : 'miss'}">
+                    <i class="fa-solid ${hit ? 'fa-circle-check' : 'fa-circle'}"></i>
+                    <span>${esc(label)}</span>
+                </div>`;
+    }).join('');
+
+    const box = document.createElement('div');
+    box.className = 'ex-check';
+    box.innerHTML = '<div class="ex-check-title">Что нужно было назвать</div>' + rows +
+        (q.sample ? `<div class="ex-hint" style="margin-top:10px">
+            <b>Образец:</b> ${esc(q.sample)}</div>` : '');
+    $('qBody').appendChild(box);
+}
+
 function markAnswers(q, ok) {
+    // Задания без готовых вариантов размечаются по-своему: показать надо
+    // не «какой вариант был верным», а что именно ученик написал не так.
+    if (PRODUCTIVE_KINDS.has(q.type)) { markProductive(q, ok); return; }
+
     if (q.type === 'match' || q.type === 'order') {
         document.querySelectorAll('.mtile, .otile').forEach(t => t.disabled = true);
         if (q.type === 'order') {
             document.querySelectorAll('#orderSlots .otile').forEach((el, pos) => {
-                el.classList.add(S.order[pos] === q.correct[pos] ? 'ok' : 'bad');
+                el.classList.add(S.order[pos] === q.correct[pos] ? 'placed' : 'used');
             });
         }
         return;
@@ -916,15 +971,206 @@ function markAnswers(q, ok) {
     document.querySelectorAll('.opt').forEach(b => {
         b.disabled = true;
         const i = +b.dataset.i;
-        const right = q.type === 'tf'    ? (i === 1) === q.correct
+        const right = q.type === 'tf' ? (i === 1) === q.correct
                     : q.type === 'multi' ? q.correct.includes(i)
                     : i === q.correct;
-        const mark = b.querySelector('.mark');
-        if (right) { b.classList.add('ok'); mark.innerHTML = ico('fa-check'); }
-        else if (b.classList.contains('sel')) { b.classList.add('bad'); mark.innerHTML = ico('fa-xmark'); }
+        if (right) b.classList.add('ok');
+        else if (b.classList.contains('sel')) b.classList.add('bad');
         b.classList.remove('sel');
     });
     if (q.type === 'fill' && !ok) fillGap(q.options[q.correct]);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Задания без готовых вариантов.
+
+   Во всех остальных типах правильный ответ уже лежит на экране, и
+   ученик тренирует узнавание. Здесь ответ надо произвести самому —
+   именно этот навык работает на диктанте и в сочинении.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Впиши буквы: каждый «_» в тексте становится полем ввода. */
+function renderWrite(q) {
+    // Предложение с пропусками лежит в text, а q — это инструкция.
+    // Если бы оно было в q, плеер печатал бы его дважды: один раз в
+    // заголовке задания, второй раз здесь с полями ввода.
+    const parts = String(q.text ?? '').split('_');
+    let html = '<div class="wr-line">';
+    parts.forEach((part, i) => {
+        html += esc(part);
+        if (i < parts.length - 1) {
+            html += `<input class="wr-in" data-i="${i}" maxlength="3" autocomplete="off"
+                       inputmode="text" aria-label="Пропуск ${i + 1}">`;
+        }
+    });
+    html += '</div>';
+    $('qBody').innerHTML = html;
+
+    const inputs = [...document.querySelectorAll('.wr-in')];
+    S.written = inputs.map(() => '');
+    inputs.forEach((el, i) => {
+        el.oninput = () => {
+            if (S.answered) return;
+            S.written[i] = el.value;
+            // Кнопка «Проверить» ждёт, пока заполнены все пропуски: иначе
+            // ученик отправит полупустой ответ и получит «неверно» за то,
+            // что просто не дописал.
+            $('mainBtn').disabled = S.written.some(v => !String(v).trim());
+            // Заполнил — прыгаем в следующее поле, как в бумажном бланке.
+            if (el.value.length >= el.maxLength && inputs[i + 1]) inputs[i + 1].focus();
+        };
+        el.onkeydown = e => {
+            if (e.key === 'Enter' && !$('mainBtn').disabled) { e.preventDefault(); checkAnswer(); }
+            if (e.key === 'Backspace' && !el.value && inputs[i - 1]) inputs[i - 1].focus();
+        };
+    });
+    if (inputs[0]) inputs[0].focus();
+}
+
+/* Найди ошибки: слова текста кликабельны, отмечаются написанные неверно. */
+function renderFind(q) {
+    const words = String(q.text ?? '').split(/(\s+)/);
+    let html = '<div class="find-text">';
+    words.forEach((w, i) => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { html += w.replace(/\n/g, '<br>'); return; }
+        html += `<span class="find-w" data-i="${i}">${esc(w)}</span>`;
+    });
+    html += '</div><div class="find-note">Отметь все слова с ошибкой. ' +
+            'Лишнее отмеченное слово тоже считается ошибкой.</div>';
+    $('qBody').innerHTML = html;
+
+    document.querySelectorAll('.find-w').forEach(el => {
+        el.onclick = () => {
+            if (S.answered) return;
+            el.classList.toggle('sel');
+            // Хранится сам текст слова без знаков препинания: в данных
+            // задания ошибочные слова заданы словами, а не индексами.
+            S.found = [...document.querySelectorAll('.find-w.sel')]
+                .map(x => bareWord(x.textContent));
+            $('mainBtn').disabled = S.found.length === 0;
+            Sound.click();
+        };
+    });
+}
+
+/* Слово без обрамляющих знаков препинания. */
+function bareWord(w) {
+    return String(w ?? '').replace(/^[^0-9A-Za-zА-Яа-яЁё-]+|[^0-9A-Za-zА-Яа-яЁё-]+$/g, '');
+}
+
+/* Объясни правило: свободный ответ, проверяется по опорным понятиям. */
+function renderExplain(q) {
+    $('qBody').innerHTML =
+        '<textarea class="ex-area" id="exArea" rows="4" ' +
+        'placeholder="Сформулируй правило своими словами..."></textarea>' +
+        '<div class="ex-hint">Не переписывай учебник — важно, чтобы ты назвал главные ' +
+        'условия. Ответ засчитывается, если основные из них в нём есть.</div>';
+    const area = $('exArea');
+    area.oninput = () => {
+        if (S.answered) return;
+        S.text = area.value;
+        // Порог в 15 символов отсекает случайное нажатие, но не мешает
+        // короткой точной формулировке.
+        $('mainBtn').disabled = area.value.trim().length < 15;
+    };
+    area.focus();
+}
+
+/* Диктант: текст читает браузер, ученик записывает. */
+function renderDictation(q) {
+    $('qBody').innerHTML =
+        '<button class="dict-play" id="dictPlay" type="button">' +
+        '<i class="fa-solid fa-volume-high"></i> Прослушать</button>' +
+        '<textarea class="dict-area" id="dictArea" rows="3" ' +
+        'placeholder="Запиши услышанное со знаками препинания..."></textarea>' +
+        '<div class="ex-hint">Слушать можно сколько угодно раз. Знаки препинания важны — ' +
+        'в диктанте они и есть предмет проверки.</div>';
+
+    $('dictPlay').onclick = () => speakDictation(q.say || q.answer);
+    const area = $('dictArea');
+    area.oninput = () => {
+        if (S.answered) return;
+        S.text = area.value;
+        $('mainBtn').disabled = area.value.trim().length < 3;
+    };
+    // Первое прочтение сразу: ученик пришёл слушать, а не нажимать.
+    speakDictation(q.say || q.answer);
+}
+
+/* Озвучка встроена в браузер — ничего скачивать и оплачивать не нужно. */
+function speakDictation(text) {
+    if (!dictationAvailable() || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = 'ru-RU';
+    // Медленнее обычного: это диктант, а не новостная лента.
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+}
+
+function dictationAvailable() {
+    return typeof window.speechSynthesis !== 'undefined'
+        && typeof window.SpeechSynthesisUtterance !== 'undefined';
+}
+
+/* Пословное сравнение для разбора диктанта: ученик должен увидеть, где
+   именно разошлось, а не просто «неверно». */
+function dictationDiff(got, want) {
+    const g = String(got ?? '').trim().split(/\s+/);
+    const w = String(want ?? '').trim().split(/\s+/);
+    const norm = v => String(v ?? '').toLowerCase().replace(/ё/g, 'е');
+    const out = [];
+    for (let i = 0; i < Math.max(g.length, w.length); i++) {
+        const a = g[i], b = w[i];
+        if (a === undefined) { out.push('<b>' + esc(b) + '</b>'); continue; }
+        out.push(b !== undefined && norm(a) === norm(b) ? esc(a) : '<b>' + esc(a) + '</b>');
+    }
+    return out.join(' ');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Подсказки.
+
+   Три ступени: намёк, правило, разбор. Ступень ничего не отнимает —
+   она меняет статус ответа: после разбора верный ответ перестаёт
+   подтверждать знание темы (см. internal/mastery.Answer).
+   ═══════════════════════════════════════════════════════════════════ */
+
+function renderHints() {
+    const box = $('hints');
+    $('hintList').innerHTML = '';
+    if (!S.hintLevels.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    updateHintButton();
+    $('hintBtn').onclick = openNextHint;
+}
+
+function updateHintButton() {
+    const btn = $('hintBtn');
+    const left = S.hintLevels.length - S.hintsOpened;
+    btn.disabled = left <= 0;
+    $('hintBtnText').textContent = S.hintsOpened === 0 ? 'Подсказка' : 'Ещё подсказка';
+    $('hintBtnLvl').textContent = left > 0 ? 'осталось ' + left : 'все открыты';
+}
+
+function openNextHint() {
+    const level = S.hintLevels[S.hintsOpened];
+    if (!level) return;
+    S.hintsOpened++;
+    if (level.reveals) S.revealed = true;
+
+    const card = document.createElement('div');
+    card.className = 'hint-card' + (level.reveals ? ' reveal' : '');
+    card.innerHTML =
+        '<div class="hint-label">' + esc(level.label) + '</div>' + esc(level.text) +
+        (level.reveals
+            ? '<div class="hint-warn"><i class="fa-solid fa-circle-info"></i> ' +
+              'Разбор открыт — этот ответ не засчитается как подтверждение темы.</div>'
+            : '');
+    $('hintList').appendChild(card);
+    updateHintButton();
+    Sound.click();
 }
 
 function nextQuestion() {
@@ -935,24 +1181,19 @@ function nextQuestion() {
 
 /* ── Жизни и комбо ─────────────────────────────────────────────── */
 function loseHeart() {
-    if (S.hearts <= 0) return;
-    const el = $('hearts').children[S.hearts - 1];
-    S.hearts--;
-    if (el) {
-        el.classList.add('breaking');
-        setTimeout(() => { el.classList.add('lost'); el.classList.remove('breaking'); }, 260);
-    }
+    S.hearts = Math.max(0, S.hearts - 1);
+    renderHearts();
 }
 function renderHearts() {
     $('hearts').innerHTML = Array.from({ length: MAX_HEARTS },
-        (_, i) => `<span class="heart${i < S.hearts ? '' : ' lost'}">${ico('fa-heart')}</span>`).join('');
+        (_, i) => `<span class="heart${i < S.hearts ? '' : ' lost'}">`
+            + svgIcon('heart', { size: 16, color: '#e11d48' }) + '</span>').join('');
 }
 function showCombo() {
     const el = $('combo');
     if (S.streak < 2) { hideCombo(); return; }
-    $('comboNum').textContent = S.streak;
+    el.innerHTML = svgIcon('fire', { size: 15, color: '#ef5b3c' }) + ' ' + S.streak;
     el.classList.add('on');
-    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
 }
 function hideCombo() { $('combo').classList.remove('on'); }
 
@@ -969,47 +1210,31 @@ async function finish() {
     const passed = S.hearts > 0 && ratio >= PASS_RATIO;
     const percent = Math.round(ratio * 100);
     const already = (API.user()?.completed_topics || []).includes(L.id);
-    const seconds = Math.max(1, Math.round((Date.now() - S.startedAt) / 1000));
-    const mistakes = S.results.filter(r => r && !r.ok);
 
     $('resultBody').innerHTML = `
         <div class="card result">
-            <div class="medal ${passed ? 'win' : 'miss'}">
-                ${ico(passed ? 'fa-trophy' : 'fa-arrow-rotate-left')}
-            </div>
-            <h2>${passed ? 'Тема пройдена' : 'Почти получилось'}</h2>
+            <div class="big">${passed
+                ? svgIcon('trophy', { size: 56, color: '#f0b429' })
+                : svgIcon('refresh', { size: 56, color: '#0099cc' })}</div>
+            <h2>${passed ? 'Тема пройдена!' : 'Почти получилось'}</h2>
             <p class="sub">${passed
                 ? 'Ты разобрался с темой «' + esc(L.title) + '».'
-                : `Чтобы засчитать тему, нужно решить не меньше ${Math.round(PASS_RATIO * 100)}% заданий и не потерять все жизни. Повтори теорию и попробуй снова.`}</p>
+                : 'Нужно решить не меньше 70% заданий и не потерять все жизни. Повтори теорию и попробуй снова.'}</p>
             <div class="res-grid">
-                <div class="res-box"><div class="v" data-count="${S.correct}">0</div><div class="l">ИЗ ${total} ВЕРНО</div></div>
-                <div class="res-box"><div class="v" data-count="${percent}" data-suffix="%">0</div><div class="l">ТОЧНОСТЬ</div></div>
-                <div class="res-box"><div class="v" data-count="${S.bestStreak}">0</div><div class="l">СЕРИЯ ПОДРЯД</div></div>
-                <div class="res-box"><div class="v">${fmtTime(seconds)}</div><div class="l">ВРЕМЯ</div></div>
+                <div class="res-box"><div class="v">${S.correct}/${total}</div><div class="l">ВЕРНО</div></div>
+                <div class="res-box"><div class="v">${percent}%</div><div class="l">ТОЧНОСТЬ</div></div>
+                <div class="res-box"><div class="v">${S.bestStreak}</div><div class="l">СЕРИЯ ПОДРЯД</div></div>
             </div>
             <div id="rewardSlot"></div>
         </div>
-
-        ${mistakes.length ? `
-        <div class="sec-title">${ico('fa-list-check')} Разбор ошибок · ${mistakes.length}</div>
-        <div class="card">${S.results.map((r, i) => !r || r.ok ? '' : `
-            <div class="review-item">
-                <div class="ri-q"><span class="num">${i + 1}</span>${esc(stripGaps(r.q.q))}</div>
-                <div class="ri-line"><span class="ri-lbl">Твой ответ</span><span class="ri-bad">${esc(r.given)}</span></div>
-                <div class="ri-line"><span class="ri-lbl">Правильно</span><span class="ri-ok">${esc(r.right)}</span></div>
-                ${r.q.why ? `<div class="ri-why">${r.q.why}</div>` : ''}
-            </div>`).join('')}</div>` : ''}
-
         ${L.links?.length ? `
-        <div class="sec-title">${ico('fa-diagram-project')} Куда двигаться дальше</div>
+        <div class="sec-title"><i class="fa-solid fa-diagram-project"></i> Куда двигаться дальше</div>
         <div class="card" style="padding:14px">${renderLinks(L.links)}</div>` : ''}`;
-
     bindLinks();
     showPhase('phaseResult');
-    countUp();
 
     const next = nextLesson(L.id);
-    setMain(next ? 'Следующая тема' : 'Вернуться к дереву', 'btn-primary',
+    setMain(next ? 'Следующая тема →' : 'Вернуться к дереву', 'btn-primary',
         () => { location.href = next ? 'lesson.html?id=' + encodeURIComponent(next.id) : 'tree.html'; });
     showGhost(passed ? 'К дереву' : 'Пройти заново', () => {
         if (passed) location.href = 'tree.html';
@@ -1018,28 +1243,6 @@ async function finish() {
 
     if (passed) { Sound.levelUp(); await saveProgress(already); }
     else Sound.error();
-}
-
-function stripGaps(text) { return text.replace(/_+/g, '…'); }
-function fmtTime(s) {
-    const m = Math.floor(s / 60);
-    return m ? `${m}:${String(s % 60).padStart(2, '0')}` : `${s} с`;
-}
-
-// Числа на итоговом экране докручиваются — иначе результат появляется
-// слишком буднично для конца урока.
-function countUp() {
-    document.querySelectorAll('[data-count]').forEach(el => {
-        const target = +el.dataset.count, suffix = el.dataset.suffix || '';
-        if (!target) { el.textContent = '0' + suffix; return; }
-        const t0 = performance.now(), dur = 800;
-        const step = now => {
-            const p = Math.min(1, (now - t0) / dur);
-            el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
-            if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-    });
 }
 
 async function saveProgress(already) {
@@ -1057,17 +1260,41 @@ async function saveProgress(already) {
     S.saved = r.data;
     const d = r.data;
 
-    if (d.already_done || already) {
+    // Сервер возвращает вид награды: first — первое прохождение,
+    // review — засчитанное повторение, none — тему уже награждали в этом
+    // интервале, и повторять её ради монет смысла нет.
+    if (d.reward === 'none' || (!d.reward && (d.already_done || already))) {
+        const when = d.next_reward_on ? formatDate(d.next_reward_on) : null;
         $('rewardSlot').innerHTML =
-            `<div class="reward-line mute">${ico('fa-circle-check')} Тема уже была пройдена — награда выдаётся один раз</div>`;
+            '<div class="reward-line"><i class="fa-solid fa-circle-check"></i> Тема свежая — повторять её пока незачем' +
+            (when ? '<br><span style="opacity:.75">Следующее повторение: ' + esc(when) + '</span>' : '') +
+            '</div>';
+        return;
+    }
+
+    if (d.reward === 'review') {
+        $('rewardSlot').innerHTML =
+            `<div class="reward-line"><i class="fa-solid fa-rotate-right"></i> Повторение засчитано &nbsp;·&nbsp; +${d.xp_earned} XP &nbsp;·&nbsp; +${d.coins_earned} монет</div>` +
+            (d.next_reward_on ? `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
+                <i class="fa-solid fa-calendar-day"></i> Вернёмся к теме: ${esc(formatDate(d.next_reward_on))}</div>` : '');
+        const u2 = API.user();
+        if (u2) {
+            u2.xp = d.new_xp; u2.balance = d.new_balance;
+            localStorage.setItem('currentUser', JSON.stringify(u2));
+        }
+        if (d.coins_earned > 0) rewardCoins(d.coins_earned, d.new_balance);
         return;
     }
 
     $('rewardSlot').innerHTML =
-        `<div class="reward-line">${ico('fa-bolt')} +${d.xp_earned} XP` +
-        `<span style="opacity:.4">·</span>${ico('fa-coins')} +${d.coins_earned} монет</div>` +
-        (d.badge_earned ? `<div class="reward-line">${ico('fa-award')} Новый значок: ${esc(d.badge_earned)}</div>` : '') +
-        `<div class="reward-line info">${ico('fa-tree')} Дерево грамматики: ${d.completed_count} из ${d.total_topics} тем</div>`;
+        `<div class="reward-line">${svgIcon('bolt', { size: 14 })} +${d.xp_earned} XP`
+            + ` &nbsp;·&nbsp; ${svgIcon('coin', { size: 14, color: '#f0b429' })} +${d.coins_earned} монет</div>` +
+        (d.badge_earned
+            ? `<div class="reward-line">${svgIcon('medal', { size: 14, color: '#f0b429' })}`
+              + ` Новый значок: ${esc(badgeLabel(d.badge_earned))}</div>`
+            : '') +
+        `<div class="reward-line" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1">
+            ${svgIcon('tree', { size: 14 })} Дерево: ${d.completed_count} из ${d.total_topics} тем</div>`;
 
     const u = API.user();
     if (u) {
@@ -1079,7 +1306,7 @@ async function saveProgress(already) {
     if (d.coins_earned > 0) rewardCoins(d.coins_earned, d.new_balance);
 }
 
-/* ── Помощники интерфейса ──────────────────────────────────────── */
+/* ── Мелкие помощники интерфейса ───────────────────────────────── */
 function showPhase(id) {
     document.querySelectorAll('.phase').forEach(p => p.classList.toggle('on', p.id === id));
 }
@@ -1097,22 +1324,24 @@ function showGhost(text, handler) {
 }
 function hideGhost() { $('ghostBtn').style.display = 'none'; }
 
-function showFeedback(good, q) {
-    $('footbar').className = 'footbar ' + (good ? 'good' : 'bad');
+function showFeedback(good, why) {
     const m = $('fbMsg');
     m.className = 'fb-msg on ' + (good ? 'good' : 'bad');
     $('fbTitle').innerHTML = good
-        ? ico('fa-circle-check') + 'Верно' + (S.streak >= 3 ? `, ${S.streak} подряд` : '')
-        : ico('fa-circle-xmark') + 'Не совсем';
-    // При ошибке правильный ответ называется прямо — не заставляем искать
-    // его глазами среди вариантов.
-    $('fbAnswer').innerHTML = good ? '' : `Правильный ответ: <b>${esc(correctText(q))}</b>`;
-    $('fbWhy').innerHTML = q.why || '';
+        ? '<i class="fa-solid fa-circle-check"></i> Верно'
+        : '<i class="fa-solid fa-circle-xmark"></i> Не совсем';
+
+    let extra = '';
+    // Ответ с открытым разбором честно помечается: ученик должен понимать,
+    // что тема ему пока не засчитана, а не удивляться этому в дереве.
+    if (good && S.revealed) {
+        extra = '<div class="hint-warn" style="margin-top:8px">' +
+                '<i class="fa-solid fa-circle-info"></i> Ответ после разбора — ' +
+                'тема пока не засчитана. Она вернётся, и ты решишь её сам.</div>';
+    }
+    $('fbWhy').innerHTML = (why || '') + extra;
 }
-function hideFeedback() {
-    $('footbar').className = 'footbar';
-    $('fbMsg').className = 'fb-msg';
-}
+function hideFeedback() { $('fbMsg').className = 'fb-msg'; }
 </script>
 </body>
 </html>

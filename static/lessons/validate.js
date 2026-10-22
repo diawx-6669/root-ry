@@ -122,9 +122,74 @@ for (const meta of INDEX) {
         if (sorted !== expect) fail(`${tag}: correct должен быть перестановкой индексов items`);
         break;
       }
+      // ── Задания без готовых вариантов ──────────────────────────
+      case 'write': {
+        if (!q.text) { fail(`${tag}: нет поля text с предложением`); break; }
+        // Пропуски считаются в text, а не в q: q — это инструкция
+        // («Вставь Н или НН»), и подчёркиваний в ней быть не должно.
+        if (/_/.test(q.q)) fail(`${tag}: пропуск «_» в инструкции — он должен быть в text`);
+        const gaps = (q.text.match(/_/g) || []).length;
+        if (!gaps) { fail(`${tag}: в text нет ни одного пропуска «_»`); break; }
+        if (!Array.isArray(q.answers) || !q.answers.length) { fail(`${tag}: нет массива answers`); break; }
+        if (q.answers.length !== gaps)
+          fail(`${tag}: пропусков ${gaps}, а ответов ${q.answers.length}`);
+        if (q.answers.some(a => typeof a !== 'string' || !a.trim()))
+          fail(`${tag}: пустой ответ в answers`);
+        // Подсказка в самом тексте задания обесценивает его целиком.
+        if (q.answers.some(a => a.length > 3))
+          warn(`${tag}: ответ длиннее трёх символов — это уже не «вставь букву»`);
+        break;
+      }
+      case 'find': {
+        if (!q.text) { fail(`${tag}: нет текста для разбора`); break; }
+        if (!Array.isArray(q.wrong) || !q.wrong.length) { fail(`${tag}: нет списка ошибочных слов`); break; }
+        const bare = w => String(w).toLowerCase().replace(/ё/g, 'е')
+          .replace(/^[^0-9a-zа-я-]+|[^0-9a-zа-я-]+$/g, '');
+        const inText = new Set(String(q.text).split(/\s+/).map(bare));
+        // Слово, которого нет в тексте, отметить невозможно — задание
+        // становится нерешаемым, и заметить это глазами почти нельзя.
+        q.wrong.forEach(w => {
+          if (!inText.has(bare(w))) fail(`${tag}: слова «${w}» нет в тексте задания`);
+        });
+        if (q.wrong.length >= inText.size)
+          warn(`${tag}: ошибочны все слова — задание не различает`);
+        break;
+      }
+      case 'explain': {
+        if (!Array.isArray(q.keywords) || !q.keywords.length) {
+          fail(`${tag}: нет keywords — свободный ответ нечем проверять`); break;
+        }
+        q.keywords.forEach((g, gi) => {
+          const variants = Array.isArray(g) ? g : [g];
+          if (!variants.length || variants.some(k => typeof k !== 'string' || !k.trim()))
+            fail(`${tag}: пустая группа опорных понятий №${gi + 1}`);
+        });
+        if (q.minHits !== undefined && (!Number.isInteger(q.minHits) ||
+            q.minHits < 1 || q.minHits > q.keywords.length))
+          fail(`${tag}: minHits=${q.minHits} вне диапазона 1..${q.keywords.length}`);
+        if (q.checklist && q.checklist.length !== q.keywords.length)
+          fail(`${tag}: длина checklist не совпадает с keywords`);
+        if (!q.checklist) warn(`${tag}: нет checklist — ученик не увидит, что упустил`);
+        if (!q.sample) warn(`${tag}: нет образца ответа`);
+        break;
+      }
+      case 'dictation': {
+        if (!q.answer) { fail(`${tag}: нет эталонного текста`); break; }
+        if (q.say && q.say !== q.answer)
+          warn(`${tag}: say и answer различаются — ученик запишет не то, что услышит`);
+        if (!/[.,!?;:—-]/.test(q.answer))
+          warn(`${tag}: в тексте нет знаков препинания — для диктанта это странно`);
+        break;
+      }
+
       default:
         fail(`${tag}: неизвестный тип задания`);
     }
+
+    // Намёк — первая ступень подсказки. Без него лестница начинается
+    // сразу с правила, что для сложного задания слишком резко.
+    if (!q.hint && ['write', 'find', 'explain', 'dictation'].includes(q.type))
+      warn(`${tag}: нет намёка (hint) — подсказка сразу покажет правило`);
   });
 
   (L.links || []).forEach(link => {

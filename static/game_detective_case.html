@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Детектив Падеж | RootRy</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
         body { background: #1a1208; min-height: 100vh; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
@@ -130,13 +131,13 @@
     </div>
 
     <div class="story-panel" id="storyPanel">
-        <div class="case-badge">🕵️ Улика</div>
+        <div class="case-badge"><i class="fa-solid fa-magnifying-glass"></i> Улика</div>
         <div class="detective-name">Детектив Падежов докладывает:</div>
         <div class="story-text" id="storyText"></div>
     </div>
 
     <div class="task-box">
-        <div class="task-label">📋 Поставь в правильную форму</div>
+        <div class="task-label"><i class="fa-solid fa-clipboard-list"></i> Поставь в правильную форму</div>
         <div class="task-word" id="taskWord"></div>
         <div class="task-case" id="taskCase"></div>
     </div>
@@ -149,7 +150,7 @@
 <!-- Start -->
 <div class="overlay show" id="startOverlay">
     <div class="overlay-box">
-        <div style="font-size:56px;margin-bottom:10px;">🕵️</div>
+        <div style="font-size:56px;margin-bottom:10px;color:#f39c12;"><i class="fa-solid fa-magnifying-glass"></i></div>
         <h2>Детектив Падеж</h2>
         <p style="color:#666;font-size:14px;line-height:1.6;margin:12px 0;">Ты — детектив. Вставь слова в правильном падеже, чтобы раскрыть преступление.<br><br>Ошибка пускает следствие по ложному следу!</p>
         <button class="action-btn" onclick="startGame()"><i class="fa-solid fa-magnifying-glass"></i> Начать дело!</button>
@@ -159,7 +160,7 @@
 <!-- End -->
 <div class="overlay" id="endOverlay">
     <div class="overlay-box">
-        <div class="stars" id="endStars">⭐</div>
+        <div class="stars" id="endStars"></div>
         <h2 id="endTitle">Дело закрыто!</h2>
         <div class="big-num" id="endScore">0</div>
         <p style="color:#666;font-size:14px;margin:8px 0 20px;">Улик собрано: <strong id="correctCnt">0</strong> из <strong id="totalCnt">10</strong></p>
@@ -171,7 +172,7 @@
 <!-- Surrender -->
 <div class="overlay" id="surrenderOverlay">
     <div class="overlay-box">
-        <div style="font-size:48px;margin-bottom:10px;">🏳️</div>
+        <div style="font-size:48px;margin-bottom:10px;color:#e74c3c;"><i class="fa-solid fa-flag"></i></div>
         <h2>Закрыть дело?</h2>
         <p style="color:#666;font-size:14px;">Текущий счёт: <strong id="surrenderScore">0</strong></p>
         <button class="action-btn" style="background:linear-gradient(90deg,#c0392b,#e74c3c);" onclick="endGame()">Сдаться</button>
@@ -185,56 +186,68 @@ const CASES = [
     {
         story: 'Подозреваемый был замечен около ___, где пропали деньги.',
         task: 'старый сарай', caseLabel: 'Родительный падеж',
-        correct: 0, options: ['старого сарая','старому сараю','старый сарай','о старом сарае']
+        correct: 0, options: ['старого сарая','старому сараю','старый сарай','о старом сарае'],
+        rule: 'Предлог «около» всегда требует родительного падежа (кого? чего?): около старого сарая.'
     },
     {
         story: 'Свидетель видел мужчину с ___ в руках.',
         task: '563 рубля', caseLabel: 'Творительный падеж',
-        correct: 1, options: ['пятьсот шестьдесят тремя рублями','пятьюстами шестьюдесятью тремя рублями','пятиста шестидесяти трёх рублей','пятьстами шестьдесятью тремя рублями']
+        correct: 1, options: ['пятьсот шестьдесят тремя рублями','пятьюстами шестьюдесятью тремя рублями','пятиста шестидесяти трёх рублей','пятьстами шестьдесятью тремя рублями'],
+        rule: 'Предлог «с» здесь требует творительного падежа (с кем? с чем?). В составном числительном 563 склоняется каждое слово: пятьюстами шестьюдесятью тремя.'
     },
     {
         story: 'Детектив нашёл записку, адресованную ___.',
         task: 'директор школы', caseLabel: 'Дательный падеж',
-        correct: 2, options: ['директора школы','директором школы','директору школы','директора школ']
+        correct: 2, options: ['директора школы','директором школы','директору школы','директора школ'],
+        rule: 'Причастие «адресованную» управляет дательным падежом (адресовать кому?): директору школы. Слово «школы» не меняется — оно уже стоит в родительном падеже как определение.'
     },
     {
         story: 'Улика была спрятана за ___.',
         task: 'большой шкаф', caseLabel: 'Творительный падеж',
-        correct: 3, options: ['большого шкафа','большому шкафу','большой шкаф','большим шкафом']
+        correct: 3, options: ['большого шкафа','большому шкафу','большой шкаф','большим шкафом'],
+        rule: 'Предлог «за» при обозначении места (где?) требует творительного падежа: за большим шкафом.'
     },
     {
         story: 'Преступник скрылся, воспользовавшись ___.',
         task: 'поддельные документы', caseLabel: 'Творительный падеж',
-        correct: 1, options: ['поддельных документов','поддельными документами','поддельные документы','поддельным документам']
+        correct: 1, options: ['поддельных документов','поддельными документами','поддельные документы','поддельным документам'],
+        rule: 'Глагол «воспользоваться» управляет творительным падежом (воспользоваться чем?): поддельными документами.'
     },
     {
         story: 'Показания противоречили ___, найденным на месте.',
         task: 'вещественные доказательства', caseLabel: 'Дательный падеж',
-        correct: 0, options: ['вещественным доказательствам','вещественные доказательства','вещественных доказательств','вещественными доказательствами']
+        correct: 0, options: ['вещественным доказательствам','вещественные доказательства','вещественных доказательств','вещественными доказательствами'],
+        rule: 'Глагол «противоречить» управляет дательным падежом (противоречить чему?): вещественным доказательствам.'
     },
     {
         story: 'В ходе допроса выяснилось, что подозреваемый боится ___.',
         task: 'огонь и вода', caseLabel: 'Родительный падеж',
-        correct: 2, options: ['огню и воде','огнём и водой','огня и воды','огне и воде']
+        correct: 2, options: ['огню и воде','огнём и водой','огня и воды','огне и воде'],
+        rule: 'Глагол «бояться» управляет родительным падежом (бояться кого? чего?): огня и воды.'
     },
     {
         story: 'Следователь составил протокол о ___.',
         task: 'кража имущества', caseLabel: 'Предложный падеж',
-        correct: 1, options: ['кражи имущества','краже имущества','кражу имущества','кражей имущества']
+        correct: 1, options: ['кражи имущества','краже имущества','кражу имущества','кражей имущества'],
+        rule: 'Предлог «о» при рассказе о чём-либо требует предложного падежа (о ком? о чём?): о краже имущества.'
     },
     {
         story: 'Детектив направился к ___ немедленно.',
         task: 'место происшествия', caseLabel: 'Дательный падеж',
-        correct: 0, options: ['месту происшествия','место происшествия','места происшествия','месте происшествия']
+        correct: 0, options: ['месту происшествия','место происшествия','места происшествия','месте происшествия'],
+        rule: 'Предлог «к» при указании направления требует дательного падежа (к кому? к чему?): к месту происшествия. Слово «происшествия» не меняется — оно стоит в родительном падеже как определение.'
     },
     {
         story: 'Дело было раскрыто благодаря ___ детектива.',
         task: 'острая наблюдательность', caseLabel: 'Дательный падеж',
-        correct: 3, options: ['острой наблюдательности','острую наблюдательность','острая наблюдательность','острой наблюдательностью']
+        correct: 3, options: ['острой наблюдательности','острую наблюдательность','острая наблюдательность','острой наблюдательностью'],
+        rule: 'Предлог «благодаря» требует дательного падежа (благодаря кому? чему?): благодаря острой наблюдательности.'
     }
 ];
 
 let score = 0, currentIdx = 0, correctCount = 0, answered = false;
+// Когда показали задание — время на размышление уходит в журнал ответов.
+let qShownAt = 0;
 
 function startGame() {
     hideOverlay('startOverlay'); hideOverlay('endOverlay'); hideOverlay('surrenderOverlay');
@@ -245,6 +258,7 @@ function startGame() {
 function renderQuestion() {
     if (currentIdx >= CASES.length) { endGame(); return; }
     answered = false;
+    qShownAt = Date.now();
     const q = CASES[currentIdx];
 
     document.getElementById('scoreDisplay').textContent = score;
@@ -282,24 +296,31 @@ function answer(idx, btn) {
     const blank = document.getElementById('blankEl');
 
     document.querySelectorAll('.opt-btn').forEach(b => b.onclick = null);
+    // Ответ уходит в модель знаний наравне с ответами в уроке: ошибка в
+    // игре так же роняет тему в первую коробку и вернёт к ней завтра.
+    if (typeof recordGameAnswer === 'function') {
+        recordGameAnswer('detective', q.task || currentIdx, isCorrect,
+            typeof qShownAt !== 'undefined' && qShownAt ? Date.now() - qShownAt : 0);
+    }
+
 
     if (isCorrect) {
         btn.classList.add('correct');
         if (blank) { blank.textContent = q.options[q.correct]; blank.classList.add('filled'); }
         fb.className = 'feedback correct';
-        fb.textContent = '✅ Верно! Улика принята.';
+        fb.innerHTML = `<i class="fa-solid fa-circle-check"></i> Верно! Улика принята.<br><span style="font-weight:500;font-size:12px;opacity:0.9;">${q.rule || ''}</span>`;
         score += 10; correctCount++;
     } else {
         btn.classList.add('wrong');
         if (blank) { blank.textContent = q.options[idx]; blank.classList.add('wrong-fill'); }
         document.querySelectorAll('.opt-btn')[q.correct].classList.add('correct');
         fb.className = 'feedback wrong';
-        fb.textContent = `❌ Неверно. Правильно: «${q.options[q.correct]}»`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Неверно. Правильно: «${q.options[q.correct]}»<br><span style="font-weight:500;font-size:12px;opacity:0.9;">${q.rule || ''}</span>`;
     }
 
     document.getElementById('scoreDisplay').textContent = score;
     currentIdx++;
-    setTimeout(renderQuestion, 1800);
+    setTimeout(renderQuestion, 2800);
 }
 
 function endGame() {
@@ -307,12 +328,15 @@ function endGame() {
     hideOverlay('surrenderOverlay');
 
     const pct = Math.round((correctCount / CASES.length) * 100);
-    document.getElementById('endStars').textContent = pct >= 90 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
-    document.getElementById('endTitle').textContent = pct >= 90 ? '🏆 Мастер-детектив!' : pct >= 60 ? '🕵️ Хороший сыщик!' : '📚 Дело не раскрыто...';
+    let starCount = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
+    document.getElementById('endStars').innerHTML =
+        '<i class="fa-solid fa-star" style="color:#f39c12"></i>'.repeat(starCount) +
+        '<i class="fa-regular fa-star" style="color:#d0d0d0"></i>'.repeat(3 - starCount);
+    document.getElementById('endTitle').innerHTML = pct >= 90 ? '<i class="fa-solid fa-trophy"></i> Мастер-детектив!' : pct >= 60 ? '<i class="fa-solid fa-magnifying-glass"></i> Хороший сыщик!' : '<i class="fa-solid fa-book"></i> Дело не раскрыто...';
     document.getElementById('endScore').textContent = score;
     document.getElementById('correctCnt').textContent = correctCount;
     document.getElementById('totalCnt').textContent = CASES.length;
-    if(typeof submitGameResult==='function')submitGameResult('detective_case', typeof score!=='undefined'?score:0);
+    if(typeof submitGameResult==='function')submitGameResult('detective', typeof score!=='undefined'?score:0);
     showOverlay('endOverlay');
 }
 

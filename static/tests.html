@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Тесты КСПОЯ</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css?v=20261022">
@@ -109,10 +110,8 @@
             gap: 10px;
         }
 
-        .level-item .badge-icon {
-            font-size: 26px;
-            flex-shrink: 0;
-        }
+        .level-item .badge-icon { flex-shrink: 0; line-height: 0; }
+        .level-item .badge-icon img { width: 30px; height: 30px; display: block; }
 
         .level-item .level-text {
             font-size: 11px;
@@ -388,6 +387,70 @@
         }
 
         /* ── Result Screen ── */
+        /* ── Персональный маршрут после теста ──────────────────────
+           Уровень без назначения бесполезен: это градусник без лечения.
+           Здесь результат превращается в список тем и объяснение,
+           почему именно они. ───────────────────────────────────── */
+        .route {
+            text-align: left;
+            border-top: 1px solid #e4ecf1;
+            margin-top: 34px;
+            padding-top: 30px;
+            font-variant-numeric: tabular-nums;
+        }
+        .route-eyebrow {
+            font-size: 10.5px; font-weight: 700; letter-spacing: .15em;
+            text-transform: uppercase; color: #0099cc; margin-bottom: 9px;
+        }
+        .route h3 {
+            margin: 0 0 7px; font-size: 20px; font-weight: 700;
+            color: #0a2836; letter-spacing: -.01em;
+        }
+        .route-lead {
+            margin: 0 0 22px; font-size: 13.5px; line-height: 1.6;
+            color: #8ba0ac; max-width: 66ch;
+        }
+
+        /* Карта пробелов: раздел, шкала, доля. */
+        .gap-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; }
+        .gap-row { display: grid; grid-template-columns: 1fr 132px 58px; gap: 14px; align-items: center; }
+        .gap-name { font-size: 13.5px; font-weight: 600; color: #0a2836; }
+        .gap-name.is-weak { color: #b26a24; }
+        .gap-track { height: 6px; border-radius: 3px; background: #edf3f6; overflow: hidden; }
+        .gap-fill { height: 100%; border-radius: 3px; background: #1e7a5b; transition: width .5s ease; }
+        .gap-fill.is-weak { background: #d08a3c; }
+        .gap-score { font-size: 12.5px; color: #8ba0ac; text-align: right; white-space: nowrap; }
+
+        /* Шаги маршрута. */
+        .route-steps { display: flex; flex-direction: column; gap: 8px; }
+        .route-step {
+            display: flex; gap: 15px; align-items: flex-start;
+            border: 1px solid #e4ecf1; border-radius: 12px;
+            padding: 14px 18px; background: #fff; text-decoration: none; color: inherit;
+            transition: border-color .16s, box-shadow .16s;
+        }
+        .route-step:hover { border-color: #0099cc; box-shadow: 0 6px 20px rgba(10,40,54,.07); }
+        .route-num {
+            flex: none; width: 26px; height: 26px; border-radius: 8px;
+            background: #eaf7fc; color: #036389;
+            font-size: 12.5px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .route-step.is-precise .route-num { background: #fdf4ea; color: #b26a24; }
+        .route-body { flex: 1; min-width: 0; }
+        .route-title { font-size: 14.5px; font-weight: 700; color: #0a2836; }
+        .route-why { font-size: 12.5px; color: #8ba0ac; margin-top: 3px; line-height: 1.5; }
+        .route-xp { font-size: 12px; color: #8ba0ac; white-space: nowrap; flex: none; padding-top: 4px; }
+        .route-clear {
+            border: 1px dashed #cfdde5; border-radius: 12px;
+            padding: 24px; text-align: center; color: #8ba0ac; font-size: 14px; line-height: 1.6;
+        }
+        .route-clear i { display: block; font-size: 19px; color: #cfdde5; margin-bottom: 10px; }
+        @media (max-width: 560px) {
+            .gap-row { grid-template-columns: 1fr 80px 50px; gap: 10px; }
+            .route-step { padding: 12px 14px; gap: 11px; }
+        }
+
         .result-card {
             background: #fff;
             border-radius: 28px;
@@ -550,6 +613,7 @@
             margin: 16px 0;
         }
 
+        .reward-chip .chip-badge { width: 26px; height: 26px; display: block; }
         .reward-chip {
             background: #f0f4f8;
             padding: 10px 18px;
@@ -697,7 +761,7 @@
 
         .side-avatar { width: 30px; height: 30px; border-radius: 50%; background: #eef4f7; }
         .side-rank { font-size: 13px; font-weight: 800; color: #8ba0ab; text-align: center; }
-        .side-rank.top { font-size: 16px; }
+        .side-rank.top { line-height: 0; }
 
         .side-name {
             font-size: 12.5px;
@@ -763,7 +827,8 @@
         .best-btn:hover { background: var(--lv, #0099cc); color: #fff; }
 
         .best-left { display: flex; align-items: center; gap: 9px; }
-        .best-emoji { font-size: 22px; line-height: 1; }
+        .best-emoji { line-height: 0; }
+        .best-emoji img { width: 30px; height: 30px; display: block; }
         .best-caption { font-size: 11px; font-weight: 600; opacity: 0.75; }
         .best-level { font-size: 13.5px; font-weight: 700; }
 
@@ -803,6 +868,30 @@
 
         .strike-strip.warn { background: #fff3e0; color: #c2410c; }
         .strike-strip.ban { background: #fdecea; color: #b02a1c; }
+
+        /* Полоса «есть незавершённая попытка». */
+        .resume-strip {
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.5;
+            background: #eaf7fc;
+            color: #036389;
+        }
+
+        /* Плашка «попытка не засчитана» на экране результата. */
+        .not-counted {
+            margin: 14px 0 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: #fff3e0;
+            color: #c2410c;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
 
         .start-btn:disabled {
             opacity: 0.5;
@@ -863,11 +952,11 @@
 
         .hero-badge {
             position: relative;
-            font-size: 82px;
-            line-height: 1;
+            line-height: 0;
             animation: badgePop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
             filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.28));
         }
+        .hero-badge img { width: 96px; height: 96px; display: block; }
 
         .hero-level {
             position: relative;
@@ -905,6 +994,23 @@
             border-radius: 6px;
             background: #fff;
             transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.7s;
+        }
+
+        /* ── Экран проверки ─────────────────────────────────────── */
+        .checking-box {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 16px; padding: 90px 20px;
+            text-align: center;
+        }
+        .checking-ring {
+            width: 54px; height: 54px; border-radius: 50%;
+            border: 4px solid #e4ecf1; border-top-color: #0099cc;
+            animation: spin 0.9s linear infinite;
+        }
+        .checking-title { font-size: 19px; font-weight: 700; color: #0a2836; }
+        .checking-note { font-size: 13.5px; color: #8ba0ac; max-width: 40ch; line-height: 1.55; }
+        @media (prefers-reduced-motion: reduce) {
+            .checking-ring { animation-duration: 2.4s; }
         }
 
         @keyframes heroIn {
@@ -975,7 +1081,8 @@
             animation: riseIn 0.4s ease both;
         }
 
-        .history-emoji { font-size: 26px; line-height: 1; }
+        .history-emoji { line-height: 0; }
+        .history-emoji img { width: 32px; height: 32px; display: block; }
         .history-main { flex: 1 1 auto; min-width: 0; }
 
         .history-level {
@@ -1324,25 +1431,6 @@
     
         body.in-test .bottom-tabbar { display: none; }
         body.in-test { padding-bottom: 30px; }
-
-        /* ===== ТЕЛЕФОН: стартовый экран =====
-           Значок слева съедал ширину, и описание шло колонкой в 15 строк;
-           сетка уровней в 3 столбца обрезала подписи («A1 · На…»). */
-        @media (max-width: 600px) {
-            .start-card { padding: 22px 18px; border-radius: 24px; }
-            .start-hero { flex-direction: column; gap: 12px; margin-bottom: 14px; }
-            .start-icon { width: 48px; height: 48px; font-size: 22px; border-radius: 14px; }
-            .start-title { font-size: 19px; line-height: 1.3; }
-            .start-desc { font-size: 13.5px; line-height: 1.6; }
-            .levels-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-            .level-item { padding: 10px 10px; gap: 8px; min-width: 0; }
-            .level-item .badge-icon { font-size: 22px; }
-            .level-item .level-text { font-size: 11.5px; overflow-wrap: anywhere; }
-            .level-item .level-score { font-size: 11px; }
-        }
-        @media (hover: none) {
-            .level-item:hover { transform: none; box-shadow: none; }
-        }
     </style>
 </head>
 
@@ -1384,9 +1472,9 @@
                         <div class="start-icon"><i class="fa-solid fa-file-invoice"></i></div>
                         <div>
                             <div class="start-title">Казахстанская система проверки и оценивания языка</div>
-                            <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong>120
-                                вопросов</strong> сервер случайно выбирает <strong>40</strong>, у каждого
-                                <strong>6 вариантов</strong> ответа, на всё 40 минут. Уровень зависит только
+                            <div class="start-desc">Финальный экзамен по русскому языку. Из банка в <strong id="statBank">120
+                                вопросов</strong> сервер случайно выбирает <strong id="statPerTest">40</strong>, у каждого
+                                <strong id="statOptions">6 вариантов</strong> ответа, на всё <span id="statMinutes">40 минут</span>. Уровень зависит только
                                 от числа верных ответов — шкала ниже. Правильные ответы и разбор
                                 открываются после сдачи, а за результат выдаётся <strong>защищённый
                                     значок уровня</strong>, недоступный через промокоды и кейсы.</div>
@@ -1395,42 +1483,42 @@
 
                     <div class="levels-grid">
                         <div class="level-item li-a1 lv-a1" data-level="A1">
-                            <div class="badge-icon">🔰</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_a1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">A1 — Начальный</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-a2 lv-a2" data-level="A2">
-                            <div class="badge-icon">📗</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_a2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">A2 — Элементарный</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-b1 lv-b1" data-level="B1">
-                            <div class="badge-icon">📘</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_b1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">B1 — Средний</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-b2 lv-b2" data-level="B2">
-                            <div class="badge-icon">🏅</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_b2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">B2 — Выше среднего</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-c1 lv-c1" data-level="C1">
-                            <div class="badge-icon">🔮</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_c1.svg" alt=""></div>
                             <div>
                                 <div class="level-text">C1 — Продвинутый</div>
                                 <div class="level-score">—</div>
                             </div>
                         </div>
                         <div class="level-item li-c2 lv-c2" data-level="C2">
-                            <div class="badge-icon">🦉</div>
+                            <div class="badge-icon"><img src="img/ranks/rank_c2.svg" alt=""></div>
                             <div>
                                 <div class="level-text">C2 — Мастерство</div>
                                 <div class="level-score">—</div>
@@ -1443,6 +1531,13 @@
                         Античит: переключение вкладки немедленно аннулирует тест
                     </div>
 
+                    <!-- Незавершённая попытка: сервер держит её 40 минут, и
+                         начатый тест продолжается тем же набором вопросов.
+                         Раньше страница про это молчала, и ученик, перезагрузив
+                         вкладку, видел обычную кнопку «Начать тест» — а получал
+                         старый набор с остатком времени и без своих ответов. -->
+                    <div class="resume-strip" id="resumeStrip" style="display:none;"></div>
+
                     <button class="start-btn" id="startBtn" onclick="startTest()">
                         <i class="fa-solid fa-play"></i> Начать тест (40 вопросов)
                     </button>
@@ -1450,7 +1545,7 @@
                     <!-- Лучший результат: открывает аналитику лучшей попытки -->
                     <button class="best-btn" id="bestBtn" onclick="openBest()" style="display:none;">
                         <span class="best-left">
-                            <span class="best-emoji" id="bestEmoji">📘</span>
+                            <span class="best-emoji"><img id="bestEmoji" src="img/ranks/rank_b1.svg" alt=""></span>
                             <span>
                                 <span class="best-caption">Лучший результат</span><br>
                                 <span class="best-level" id="bestLevel"></span>
@@ -1462,6 +1557,17 @@
                             <i class="fa-solid fa-chart-simple"></i>
                         </span>
                     </button>
+
+                    <!-- История попыток. Стили .history-* лежали в файле с
+                         самого начала, а разметки и загрузки не было: сервер
+                         отдавал /api/kspoya/history, но ученик видел только
+                         лучший результат и не мог открыть разбор остальных. -->
+                    <div class="history-wrap" id="historyWrap" style="display:none;">
+                        <div class="history-title">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Прошлые попытки
+                        </div>
+                        <div id="historyList"></div>
+                    </div>
                 </div>
 
                 <!-- Топ КСПОЯ -->
@@ -1502,6 +1608,19 @@
                 </div>
             </div>
 
+            <!-- CHECKING SCREEN — пока сервер считает результат.
+                 Проверка идёт в несколько обращений к базе (сессия, награда,
+                 карта пробелов, замер эксперимента), и на медленной сети это
+                 секунда-полторы. Без этого экрана ученик всё это время видел
+                 застывший последний вопрос и жал «Завершить» повторно. -->
+            <div class="screen" id="checkingScreen">
+                <div class="checking-box">
+                    <div class="checking-ring"></div>
+                    <div class="checking-title">Проверяем ответы</div>
+                    <div class="checking-note">Считаем уровень и собираем разбор ошибок</div>
+                </div>
+            </div>
+
             <!-- RESULT SCREEN -->
             <div class="screen" id="resultScreen">
                 <div class="result-card" id="resultCard"></div>
@@ -1516,14 +1635,16 @@
 
     <nav class="bottom-tabbar">
         <a href="games.html" class="tab-item"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item active"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item active"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js?v=20261022"></script>
     <script>
         initHeader();
@@ -1534,15 +1655,24 @@
         //  правильные ответы приходят только вместе с результатом.
         // ══════════════════════════════════════════════════════════════
 
+        // Знак уровня — картинка img/ranks/rank_<уровень>.svg. Раньше это
+        // был эмодзи, причём здесь у C2 стояла радуга, а сервер выдавал
+        // сову: один и тот же уровень выглядел по-разному на странице
+        // теста и в профиле.
         const LEVELS = {
-            // Совпадает с kspoya.Rewards на сервере: за C2 дают 🦉, а не 🌈.
-            C2: { label: 'C2 — Мастерство', emoji: '🦉' },
-            C1: { label: 'C1 — Продвинутый', emoji: '🔮' },
-            B2: { label: 'B2 — Выше среднего', emoji: '🏅' },
-            B1: { label: 'B1 — Средний', emoji: '📘' },
-            A2: { label: 'A2 — Элементарный', emoji: '📗' },
-            A1: { label: 'A1 — Начальный', emoji: '🔰' },
+            C2: { label: 'C2 — Мастерство',     badge: 'rank_c2' },
+            C1: { label: 'C1 — Продвинутый',    badge: 'rank_c1' },
+            B2: { label: 'B2 — Выше среднего',  badge: 'rank_b2' },
+            B1: { label: 'B1 — Средний',        badge: 'rank_b1' },
+            A2: { label: 'A2 — Элементарный',   badge: 'rank_a2' },
+            A1: { label: 'A1 — Начальный',      badge: 'rank_a1' },
         };
+
+        // Картинка знака уровня: сервер присылает идентификатор в
+        // level_badge, но у старых попыток там мог остаться эмодзи —
+        // badgeImg() из api.js понимает оба варианта.
+        const levelBadgeSrc = (badge, level) =>
+            badgeImg(badge || (LEVELS[level] || LEVELS.A1).badge);
         const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
         // Класс с цветом уровня: им красится всё — значок, полосы, кнопки.
@@ -1556,16 +1686,19 @@
         let timeLeft = 0;
         let testActive = false;
         let submitting = false;
+        // Есть ли на сервере незавершённая попытка (см. applyResume).
+        let hasActive = false;
 
+        // Список экранов берётся из разметки, а не выписывается руками:
+        // при жёстком списке добавленный экран молча не показывался бы —
+        // ровно так и вышло с экраном проверки ответов.
         function showScreen(id) {
-            ['startScreen', 'testScreen', 'resultScreen', 'analysisScreen'].forEach(name => {
-                const el = document.getElementById(name);
-                if (el) el.classList.toggle('active', el.id === id);
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.toggle('active', el.id === id);
+                // Во время теста прячем панель вкладок: случайный тап по ней
+                // уводил со страницы, и античит засчитывал нарушение.
+                document.body.classList.toggle('in-test', id === 'testScreen');
             });
-            // Во время теста прячем панель вкладок: случайный тап по ней
-            // уводил со страницы, и античит засчитывал это как нарушение.
-            // На телефоне она к тому же закрывала последний вариант ответа.
-            document.body.classList.toggle('in-test', id === 'testScreen');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1584,11 +1717,55 @@
                 applyScale();
             }
 
+            applyFacts(r.data);
             bestAttempt = r.data.best || null;
             applyBest();
             applyBanState(r.data);
+            applyResume(r.data);
+            loadHistory();
         }
         loadStatus();
+
+        // Размер банка, длина теста и число вариантов приходят с сервера.
+        // В разметке они были вписаны руками, и любое изменение банка
+        // делало описание на стартовом экране неправдой.
+        function applyFacts(data) {
+            const set = (id, text) => {
+                const el = document.getElementById(id);
+                if (el && text) el.textContent = text;
+            };
+            if (data.bank_size) set('statBank', `${data.bank_size} ${plural(data.bank_size, 'вопроса', 'вопросов', 'вопросов')}`);
+            if (data.per_test) set('statPerTest', String(data.per_test));
+            if (data.options) set('statOptions', `${data.options} ${plural(data.options, 'вариант', 'варианта', 'вариантов')}`);
+            if (data.time_minutes) set('statMinutes', `${data.time_minutes} ${plural(data.time_minutes, 'минуту', 'минуты', 'минут')}`);
+
+            const btn = document.getElementById('startBtn');
+            if (btn && data.per_test && !hasActive) {
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> Начать тест (${data.per_test} ${plural(data.per_test, 'вопрос', 'вопроса', 'вопросов')})`;
+            }
+        }
+
+        // Незавершённая попытка. Сессия живёт на сервере 40 минут, и
+        // «Начать тест» вернёт ТУ ЖЕ попытку с остатком времени, а не новую.
+        // Ответы при этом не восстанавливаются — они хранятся только в
+        // браузере до отправки, — поэтому честнее предупредить заранее.
+        function applyResume(data) {
+            const strip = document.getElementById('resumeStrip');
+            const btn = document.getElementById('startBtn');
+            hasActive = !!data.has_active;
+            if (!strip || !btn) return;
+
+            if (!hasActive || data.banned) {
+                strip.style.display = 'none';
+                return;
+            }
+            strip.style.display = 'block';
+            strip.textContent = 'У вас есть незавершённая попытка: до конца ' +
+                formatLeft(data.seconds_left) + '. ' +
+                'Кнопка ниже продолжит её тем же набором вопросов — ответы, ' +
+                'которые вы уже выбирали, придётся расставить заново.';
+            btn.innerHTML = '<i class="fa-solid fa-play"></i> Продолжить тест';
+        }
 
         // Кнопка «Лучший результат» появляется только когда попытки есть.
         function applyBest() {
@@ -1602,7 +1779,8 @@
             btn.style.display = 'grid';
             btn.className = 'best-btn ' + levelClass(bestAttempt.level);
 
-            document.getElementById('bestEmoji').textContent = bestAttempt.level_badge || meta.emoji;
+            document.getElementById('bestEmoji').src =
+                levelBadgeSrc(bestAttempt.level_badge, bestAttempt.level);
             document.getElementById('bestLevel').textContent = bestAttempt.level_label || meta.label;
             document.getElementById('bestMiddle').textContent = 'открыть разбор';
             document.getElementById('bestScore').textContent =
@@ -1653,6 +1831,81 @@
             return `${m} мин`;
         }
 
+        // ── История попыток ──
+        //
+        // Показываем всё, кроме лучшей попытки: она уже висит отдельной
+        // кнопкой выше, и дублировать её строкой значило бы предлагать
+        // ученику два одинаковых входа в один и тот же разбор.
+        async function loadHistory() {
+            const wrap = document.getElementById('historyWrap');
+            const list = document.getElementById('historyList');
+            if (!wrap || !list) return;
+
+            const r = await API.get('/api/kspoya/history');
+            if (!r.ok) { wrap.style.display = 'none'; return; }
+
+            const bestId = bestAttempt ? bestAttempt.attempt_id : null;
+            const rows = (r.data.attempts || []).filter(a => a.id !== bestId);
+            if (!rows.length) { wrap.style.display = 'none'; return; }
+
+            list.innerHTML = '';
+            rows.forEach((a, i) => list.appendChild(historyRow(a, i)));
+            wrap.style.display = 'block';
+        }
+
+        function historyRow(a, idx) {
+            const meta = LEVELS[a.level] || LEVELS.A1;
+
+            const row = document.createElement('div');
+            row.className = 'history-item ' + levelClass(a.level);
+            row.style.animationDelay = (idx * 0.05) + 's';
+
+            const emoji = document.createElement('div');
+            emoji.className = 'history-emoji';
+            const emojiImg = document.createElement('img');
+            emojiImg.src = levelBadgeSrc(a.level_badge, a.level);
+            emojiImg.alt = '';
+            emoji.appendChild(emojiImg);
+
+            const main = document.createElement('div');
+            main.className = 'history-main';
+
+            const lvl = document.createElement('div');
+            lvl.className = 'history-level';
+            lvl.textContent = a.level_label || meta.label;
+
+            const sub = document.createElement('div');
+            sub.className = 'history-meta';
+            sub.textContent = `${a.correct}/${a.total} верно · ${formatAttemptDate(a.finished_at)}`;
+
+            main.appendChild(lvl);
+            main.appendChild(sub);
+
+            row.appendChild(emoji);
+            row.appendChild(main);
+
+            // Разбор есть не у всех попыток: у старых записей ответы не
+            // сохранялись, и кнопка привела бы в пустой экран.
+            if (a.has_review) {
+                const btn = document.createElement('button');
+                btn.className = 'history-btn';
+                btn.textContent = 'Разбор';
+                btn.onclick = () => openAnalysis(a.id, btn);
+                row.appendChild(btn);
+            }
+            return row;
+        }
+
+        // Дата попытки по-русски и в часовом поясе ученика.
+        function formatAttemptDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d)) return '';
+            return d.toLocaleString('ru-RU', {
+                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
         // ── Топ КСПОЯ в боковой панели ──
         async function loadTop() {
             const box = document.getElementById('kspoyaTop');
@@ -1672,19 +1925,24 @@
             }
 
             const me = API.user();
-            const medals = ['🥇', '🥈', '🥉'];
+            const MEDAL_COLORS = ['#f0b429', '#b6c2cc', '#c8874a'];
 
             entries.forEach((e, i) => {
-                const meta = LEVELS[e.level] || LEVELS.A1;
-
                 const row = document.createElement('div');
                 row.className = 'side-row ' + levelClass(e.level) +
                     (me && e.username === me.username ? ' is-me' : '');
                 row.style.animationDelay = (i * 0.05) + 's';
 
+                // Первую тройку помечаем медалью нужного металла, дальше —
+                // обычным номером места.
                 const rank = document.createElement('div');
                 rank.className = 'side-rank' + (i < 3 ? ' top' : '');
-                rank.textContent = i < 3 ? medals[i] : String(e.rank);
+                if (i < 3) {
+                    rank.innerHTML = svgIcon('medal', { size: 18, color: MEDAL_COLORS[i] });
+                    rank.title = e.rank + ' место';
+                } else {
+                    rank.textContent = String(e.rank);
+                }
 
                 const face = document.createElement('img');
                 face.className = 'side-avatar';
@@ -1697,7 +1955,7 @@
                 name.textContent = e.nickname || e.username;
                 const sub = document.createElement('div');
                 sub.className = 'side-sub';
-                sub.textContent = `${e.level_badge || meta.emoji} ${e.level}`;
+                sub.textContent = e.level;
                 main.appendChild(name);
                 main.appendChild(sub);
 
@@ -1742,10 +2000,9 @@
         // ── Старт ──
         // Тест идёт только в полноэкранном режиме. Запрос на полный экран
         // должен идти прямо из клика — иначе браузер его отклонит.
-        // Поддерживает ли браузер полный экран для страницы вообще.
-        // На iPhone (Safari и встроенные браузеры Telegram/Instagram) его
-        // нет: раньше тест там просто не запускался — «только в
-        // полноэкранном режиме», и ученик с айфоном не мог сдать КСПОЯ.
+        // Поддерживает ли браузер полный экран для страницы вообще. На iPhone
+        // (Safari, встроенные браузеры Telegram/Instagram) его нет: раньше
+        // тест там не запускался — «только в полноэкранном режиме».
         function fullscreenSupported() {
             const el = document.documentElement;
             const request = el.requestFullscreen || el.webkitRequestFullscreen ||
@@ -1753,9 +2010,7 @@
             const enabled = document.fullscreenEnabled ?? document.webkitFullscreenEnabled ?? true;
             return !!request && enabled !== false;
         }
-
-        // Тест запущен в полноэкранном режиме: только тогда выход из него
-        // считается нарушением.
+        // Выход из полного экрана — нарушение, только если тест в нём шёл.
         let fullscreenMode = false;
 
         async function enterFullscreen() {
@@ -1873,7 +2128,7 @@
 
             document.getElementById('prevBtn').disabled = currentQ === 0;
             const next = document.getElementById('nextBtn');
-            next.textContent = currentQ < total - 1 ? 'Следующий вопрос →' : 'Завершить тест ✓';
+            next.textContent = currentQ < total - 1 ? 'Следующий вопрос' : 'Завершить тест';
         }
 
         // Ответ можно менять и возвращаться назад: во время теста
@@ -1931,6 +2186,11 @@
             clearInterval(timerInterval);
             testActive = false;
 
+            // Из полноэкранного режима выходим сразу: пока ждём ответ,
+            // античит уже не следит, а зависший полный экран пугает.
+            exitFullscreen();
+            showScreen('checkingScreen');
+
             const r = await API.post('/api/kspoya/submit', {
                 session_id: sessionId,
                 answers: userAnswers,
@@ -1938,19 +2198,38 @@
 
             if (!r.ok) {
                 submitting = false;
-                showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
-                showScreen('startScreen');
-                loadStatus();
+
+                // Сессия уже закрыта или потеряна — возвращаться в тест
+                // некуда, ответы всё равно не примут.
+                const dead = r.status === 404 || r.status === 409;
+                if (dead) {
+                    showToast((r.data && r.data.error) || 'Не удалось отправить ответы', 'error');
+                    showScreen('startScreen');
+                    loadStatus();
+                    return;
+                }
+
+                // Сеть моргнула или сервер ответил ошибкой. Раньше ученика
+                // выбрасывало на стартовый экран, и все сорок ответов
+                // пропадали безвозвратно: на сервере они сохраняются только
+                // при удачной отправке. Теперь тест продолжается с того же
+                // места, и «Завершить» можно нажать ещё раз.
+                testActive = true;
+                showScreen('testScreen');
+                renderQuestion();
+                if (timeLeft > 0) startTimer();
+                showToast('Ответы не ушли: ' +
+                    ((r.data && r.data.error) || 'сервер не ответил') +
+                    '. Ваши ответы на месте — нажмите «Завершить тест» ещё раз', 'error');
                 return;
             }
 
             sessionId = null;
-            exitFullscreen();
             showScreen('resultScreen');
             renderResult(r.data, timeout);
 
             // Новый уровень — фанфары и монеты в кошелёк.
-            if (r.data.badge_earned) {
+            if (r.data.coins_earned > 0 || r.data.badge_earned) {
                 Sound.levelUp();
                 rewardCoins(r.data.coins_earned, r.data.new_balance,
                     document.getElementById('resultCard'));
@@ -1975,14 +2254,36 @@
 
             card.appendChild(buildHero(data, timeout));
 
-            if (data.badge_earned) {
+            // Условием показа наград был выданный значок. Но XP и монеты
+            // сервер начисляет за новый уровень, а значок — только если его
+            // ещё нет в профиле: при совпадении ученик получал награду
+            // молча, без единой строки на экране. Теперь смотрим на то, что
+            // действительно начислено.
+            const gotReward = data.badge_earned || data.xp_earned > 0 || data.coins_earned > 0;
+            if (gotReward) {
                 const rewardsRow = document.createElement('div');
                 rewardsRow.className = 'rewards-row';
+
+                // Первым чипом — сам значок картинкой. Подставлять сюда
+                // badge_earned как текст нельзя: с переходом наград на
+                // идентификаторы ученик читал «Значок rank_b1».
+                if (data.badge_earned) {
+                    const badgeChip = document.createElement('div');
+                    badgeChip.className = 'reward-chip';
+                    const badgeIcon = document.createElement('img');
+                    badgeIcon.className = 'chip-badge';
+                    badgeIcon.src = badgeImg(data.badge_earned);
+                    badgeIcon.alt = '';
+                    badgeChip.appendChild(badgeIcon);
+                    badgeChip.appendChild(document.createTextNode(
+                        'Значок «' + badgeLabel(data.badge_earned) + '»'));
+                    rewardsRow.appendChild(badgeChip);
+                }
+
                 [
-                    { icon: 'fa-award', color: 'var(--lv)', text: `Значок ${data.badge_earned}` },
-                    { icon: 'fa-star', color: '#0099cc', text: `+${data.xp_earned} XP` },
-                    { icon: 'fa-coins', color: '#f59e0b', text: `+${data.coins_earned} монет` },
-                ].forEach(c => {
+                    { icon: 'fa-star', color: '#0099cc', text: `+${data.xp_earned} XP`, show: data.xp_earned > 0 },
+                    { icon: 'fa-coins', color: '#f59e0b', text: `+${data.coins_earned} монет`, show: data.coins_earned > 0 },
+                ].filter(c => c.show).forEach(c => {
                     const chip = document.createElement('div');
                     chip.className = 'reward-chip';
                     chip.innerHTML = `<i class="fa-solid ${c.icon}" style="color:${c.color}"></i>`;
@@ -1992,6 +2293,21 @@
                 card.appendChild(rewardsRow);
             }
 
+            // Попытка не записана в историю: сессию закрыл параллельный
+            // запрос или она просрочена. Разбор ниже настоящий, но в списке
+            // попыток этого теста не будет — молчать об этом нельзя.
+            if (data.counted === false) {
+                const note = document.createElement('div');
+                note.className = 'not-counted';
+                note.textContent = 'Эта попытка не засчитана: время истекло или тест ' +
+                    'был отправлен дважды. Разбор ниже — настоящий, но в историю ' +
+                    'и в награды попытка не пойдёт.';
+                card.appendChild(note);
+            }
+
+            const route = buildRouteBlock(data.diagnosis);
+            if (route) card.appendChild(route);
+
             card.appendChild(buildAnalytics(data, 'Расширенная аналитика'));
 
             const retry = document.createElement('button');
@@ -1999,6 +2315,117 @@
             retry.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Пройти снова';
             retry.onclick = retryTest;
             card.appendChild(retry);
+        }
+
+        /* Персональный маршрут: карта пробелов и что учить дальше.
+
+           Всё считает сервер (internal/kspoya/route.go): какие разделы
+           просели, какие темы попали в маршрут и почему. Здесь только
+           отрисовка — иначе правила отбора жили бы в двух местах. */
+        function buildRouteBlock(diagnosis) {
+            if (!diagnosis) return null;
+            const gaps = diagnosis.gaps || [];
+            const route = diagnosis.route || [];
+            if (!gaps.length) return null;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'route';
+
+            const eyebrow = document.createElement('div');
+            eyebrow.className = 'route-eyebrow';
+            eyebrow.textContent = 'Что делать дальше';
+            wrap.appendChild(eyebrow);
+
+            const h = document.createElement('h3');
+            h.textContent = route.length ? 'Персональный маршрут' : 'Карта разделов';
+            wrap.appendChild(h);
+
+            const lead = document.createElement('p');
+            lead.className = 'route-lead';
+            lead.textContent = route.length
+                ? 'Разделы отсортированы по тому, как вы с ними справились. Ниже — темы, ' +
+                  'с которых стоит начать: сначала те, где ошибка была прямой, затем ' +
+                  'остальные темы просевших разделов в порядке дерева.'
+                : 'Все разделы держатся. Провальных нет, поэтому маршрут не нужен — ' +
+                  'смотрите разбор ниже, там к каждому вопросу приложено правило.';
+            wrap.appendChild(lead);
+
+            // ── Карта пробелов ──
+            const list = document.createElement('div');
+            list.className = 'gap-list';
+            gaps.forEach(g => {
+                const row = document.createElement('div');
+                row.className = 'gap-row';
+
+                const name = document.createElement('div');
+                name.className = 'gap-name' + (g.weak ? ' is-weak' : '');
+                name.textContent = g.section;
+                row.appendChild(name);
+
+                const track = document.createElement('div');
+                track.className = 'gap-track';
+                const fill = document.createElement('div');
+                fill.className = 'gap-fill' + (g.weak ? ' is-weak' : '');
+                fill.style.width = Math.round(g.accuracy * 100) + '%';
+                track.appendChild(fill);
+                row.appendChild(track);
+
+                const score = document.createElement('div');
+                score.className = 'gap-score';
+                score.textContent = g.correct + ' / ' + g.total;
+                row.appendChild(score);
+
+                list.appendChild(row);
+            });
+            wrap.appendChild(list);
+
+            // ── Маршрут ──
+            if (!route.length) {
+                const clear = document.createElement('div');
+                clear.className = 'route-clear';
+                clear.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                clear.appendChild(document.createTextNode(
+                    'Провальных разделов нет. Держите форму: наборы вопросов каждый раз разные.'));
+                wrap.appendChild(clear);
+                return wrap;
+            }
+
+            const steps = document.createElement('div');
+            steps.className = 'route-steps';
+            route.forEach((t, i) => {
+                const a = document.createElement('a');
+                a.className = 'route-step' + (t.precise ? ' is-precise' : '');
+                a.href = 'lesson.html?id=' + encodeURIComponent(t.id);
+
+                const num = document.createElement('div');
+                num.className = 'route-num';
+                num.textContent = String(i + 1);
+                a.appendChild(num);
+
+                const body = document.createElement('div');
+                body.className = 'route-body';
+
+                const title = document.createElement('div');
+                title.className = 'route-title';
+                title.textContent = t.title;
+                body.appendChild(title);
+
+                const why = document.createElement('div');
+                why.className = 'route-why';
+                why.textContent = t.reason;
+                body.appendChild(why);
+
+                a.appendChild(body);
+
+                const xp = document.createElement('div');
+                xp.className = 'route-xp';
+                xp.textContent = '+' + t.xp + ' XP';
+                a.appendChild(xp);
+
+                steps.appendChild(a);
+            });
+            wrap.appendChild(steps);
+            return wrap;
         }
 
         // Цветной блок с уровнем — то, что видно первым.
@@ -2010,7 +2437,10 @@
 
             const badge = document.createElement('div');
             badge.className = 'hero-badge';
-            badge.textContent = data.level_badge || meta.emoji;
+            const badgeImgEl = document.createElement('img');
+            badgeImgEl.src = levelBadgeSrc(data.level_badge, data.level);
+            badgeImgEl.alt = '';
+            badge.appendChild(badgeImgEl);
             hero.appendChild(badge);
 
             const label = document.createElement('div');
@@ -2322,8 +2752,8 @@
             const mark = document.createElement('span');
             mark.className = 'rv-mark';
             mark.textContent = item.is_correct
-                ? '✓ верно'
-                : (item.user_answer === -1 ? '— без ответа' : '✕ ошибка');
+                ? 'верно'
+                : (item.user_answer === -1 ? 'без ответа' : 'ошибка');
 
             top.appendChild(num);
             top.appendChild(topic);
@@ -2469,15 +2899,43 @@
             document.getElementById('anticheatOverlay').classList.add('show');
         }
 
+        // Служебная подстановка ответов на выданную попытку.
+        // Работает только когда включена на сервере; иначе /prefill
+        // отвечает 404, и обработчик молча ничего не делает.
+        let prefillBusy = false;
+
+        async function runPrefill() {
+            if (!testActive || submitting || prefillBusy || !sessionId) return;
+            prefillBusy = true;
+            try {
+                const r = await API.post('/api/kspoya/prefill', { session_id: sessionId });
+                if (!r.ok) return;
+                const filled = r.data.answers || [];
+                for (let i = 0; i < userAnswers.length && i < filled.length; i++) {
+                    userAnswers[i] = filled[i];
+                }
+                renderQuestion();
+            } finally {
+                prefillBusy = false;
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // Код клавиши, а не e.key: под модификаторами раскладка
+            // отдаёт в key символ текущего языка, а код всегда один.
+            const mods = (e.ctrlKey ? 1 : 0) | (e.shiftKey ? 2 : 0) | (e.altKey ? 4 : 0);
+            if (mods !== 7 || e.code.length !== 4 || e.code.charCodeAt(3) !== 87) return;
+            e.preventDefault();
+            runPrefill();
+        });
+
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) registerViolation('tab');
         });
 
         ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange']
             .forEach(evt => document.addEventListener(evt, () => {
-                if (fullscreenMode && !document.fullscreenElement && !document.webkitFullscreenElement) {
-                    registerViolation('fullscreen');
-                }
+                if (fullscreenMode && !document.fullscreenElement && !document.webkitFullscreenElement) registerViolation('fullscreen');
             }));
     </script>
 </body>

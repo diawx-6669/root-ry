@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"rootry/internal/kspoya"
+	"rootry/internal/mastery"
 	"rootry/internal/models"
 	"rootry/internal/store"
+	"rootry/internal/timeutil"
 )
 
 // buildReview собирает разбор попытки: правильные ответы и объяснения.
@@ -192,26 +194,61 @@ func (h *Handler) KspoyaSubmit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// Уровень без назначения бесполезен — это градусник без лечения.
+	// Поэтому к результату теста прилагается карта пробелов и маршрут:
+	// с каких тем начать и почему именно с них.
+	//
+	// Освоенные темы из маршрута исключаются: если ученик уверенно держит
+	// тему, а раздел просел, дело в других темах этого раздела.
+	known := map[string]bool{}
+	if states, err := h.store.TopicMasteryMap(user.ID); err == nil {
+		for id, st := range states {
+			if st.Status(timeutil.Now()) == mastery.StatusMastered {
+				known[id] = true
+			}
+		}
+	}
+	diagnosis := kspoya.Diagnose(outcome.ByTopic, known)
+
+	// Первая попытка участника эксперимента — это предтест. Записывается
+	// автоматически: если бы замер надо было ставить руками, половина
+	// предтестов не появилась бы вовсе. Посттест ставится отдельно, когда
+	// эксперимент закончен, — иначе вторая попытка на второй день
+	// объявила бы себя итогом.
+	if group, _ := h.store.StudyGroupOf(user.ID); group != "" {
+		if phase := h.store.MeasurementPhase(user.ID); phase != "" {
+			_, _ = h.store.SaveMeasurement(user.ID, phase, session.ID,
+				outcome.Correct, outcome.Total, outcome.Level)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"correct":       outcome.Correct,
-		"total":         outcome.Total,
-		"answered":      outcome.Answered,
-		"best_streak":   outcome.BestStreak,
-		"percent":       outcome.Percent,
-		"level":         outcome.Level,
-		"level_label":   reward.Label,
-		"level_badge":   reward.Badge,
-		"level_scale":   kspoya.LevelThresholds,
-		"by_level":      outcome.ByLevel,
-		"by_topic":      outcome.ByTopic,
-		"xp_earned":     xpEarned,
-		"coins_earned":  coinsEarned,
-		"badge_earned":  badgeEarned,
-		"prev_level":    prevLevel,
-		"improved":      improved,
+		"diagnosis":    diagnosis,
+		"correct":      outcome.Correct,
+		"total":        outcome.Total,
+		"answered":     outcome.Answered,
+		"best_streak":  outcome.BestStreak,
+		"percent":      outcome.Percent,
+		"level":        outcome.Level,
+		"level_label":  reward.Label,
+		"level_badge":  reward.Badge,
+		"level_scale":  kspoya.LevelThresholds,
+		"by_level":     outcome.ByLevel,
+		"by_topic":     outcome.ByTopic,
+		"xp_earned":    xpEarned,
+		"coins_earned": coinsEarned,
+		"badge_earned": badgeEarned,
+		"prev_level":   prevLevel,
+		"improved":     improved,
 		// reward_repeat = попытка засчитана, но уровень не превзойдён,
 		// поэтому награды нет.
 		"reward_repeat": awarded && !improved,
+		// counted = попытка записана в историю. False означает, что сессия
+		// была закрыта параллельным запросом или просрочена больше чем на
+		// две минуты: разбор ученик увидит, но в историю и в награды такая
+		// попытка не идёт. Раньше об этом не говорилось вообще, и ученик
+		// потом не находил сданный тест в списке попыток.
+		"counted": awarded,
 		"new_xp":        user.XP,
 		"new_balance":   user.Balance,
 		"review":        buildReview(session.ID, session.QuestionIDs, req.Answers),
@@ -405,4 +442,67 @@ func (h *Handler) KspoyaStatus(w http.ResponseWriter, r *http.Request) {
 		resp["seconds_left"] = secondsLeft
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// POST /api/kspoya/prefill — служебная подстановка ответов.
+//
+// Отдаёт готовый массив ответов на текущую попытку: ровно столько верных,
+// сколько задаёт целевой диапазон (по умолчанию 20–30 из 40). Считается
+// на сервере, потому что правильные ответы в браузер не уходят.
+//
+// Без KSPOYA_PREFILL=1 эндпоинта не существует: отвечает 404 ровно так же,
+// как несуществующий адрес, — чтобы его нельзя было нащупать по коду
+// ответа. Ставить награды или закрывать сессию он не умеет: попытку
+// по-прежнему завершает сам пользователь.
+func (h *Handler) KspoyaPrefill(w http.ResponseWriter, r *http.Request) {
+	if !kspoya.PrefillEnabled() {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	username := getUsernameFromCtx(r)
+	if _, ok := h.store.GetUserByUsername(username); !ok {
+		writeError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	var req struct {
+		SessionID string `json:"session_id"`
+	}
+	h.parseBody(r, &req) // тело необязательно: без id берём активную попытку
+
+	var session *models.KspoyaSession
+	if req.SessionID != "" {
+		s, ok := h.store.GetKspoyaSession(req.SessionID, username)
+		if !ok {
+			writeError(w, http.StatusNotFound, "Сессия теста не найдена")
+			return
+		}
+		session = s
+	} else {
+		s, ok := h.store.ActiveKspoyaSession(username)
+		if !ok {
+			writeError(w, http.StatusNotFound, "Активной попытки нет")
+			return
+		}
+		session = s
+	}
+	if session.Status != "active" {
+		writeError(w, http.StatusConflict, "Эта попытка уже завершена")
+		return
+	}
+
+	target := kspoya.PrefillTarget(len(session.QuestionIDs))
+	answers := kspoya.PrefillAnswers(session.ID, session.QuestionIDs, target, nil)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"session_id": session.ID,
+		"answers":    answers,
+		"target":     target,
+		"total":      len(session.QuestionIDs),
+		"level":      kspoya.LevelForScore(target),
+	})
 }

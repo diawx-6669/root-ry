@@ -6,9 +6,24 @@ import (
 	"testing"
 )
 
+// bankShape — сколько вопросов должно быть на каждой ступени.
+//
+// Глубина растёт вместе с квотой (см. Quota): на каждое место в тесте
+// приходится примерно пять кандидатов, поэтому наверху вопросов больше,
+// чем внизу. Раньше здесь стояло «по 20 на каждый уровень», и банк
+// выглядел ровным, хотя тест берёт с C1 в три раза больше вопросов,
+// чем с A1, и повторы там начинались первыми.
+var bankShape = map[string]int{
+	"A1": 20, "A2": 25, "B1": 36, "B2": 41, "C1": 44, "C2": 34,
+}
+
 func TestBankIntegrity(t *testing.T) {
-	if len(Bank) != 120 {
-		t.Fatalf("в банке %d вопросов, ожидалось 120", len(Bank))
+	want := 0
+	for _, n := range bankShape {
+		want += n
+	}
+	if len(Bank) != want {
+		t.Fatalf("в банке %d вопросов, ожидалось %d", len(Bank), want)
 	}
 
 	seenID := map[int]bool{}
@@ -57,8 +72,16 @@ func TestBankIntegrity(t *testing.T) {
 	}
 
 	for _, level := range Levels {
-		if perLevel[level] != 20 {
-			t.Errorf("уровень %s: %d вопросов, ожидалось 20", level, perLevel[level])
+		if perLevel[level] != bankShape[level] {
+			t.Errorf("уровень %s: %d вопросов, ожидалось %d",
+				level, perLevel[level], bankShape[level])
+		}
+		// Четыре кандидата на место — граница, ниже которой два прохода
+		// подряд начинают заметно повторяться. Сейчас на всех ступенях
+		// от 4,5 до 6,7 кандидатов.
+		if perLevel[level] < Quota[level]*4 {
+			t.Errorf("уровень %s: %d вопросов на квоту %d — меньше четырёх кандидатов на место",
+				level, perLevel[level], Quota[level])
 		}
 	}
 }

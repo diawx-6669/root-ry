@@ -81,63 +81,155 @@ const API = {
 };
 
 // ── Аватарки ────────────────────────────────────────────────────────
-// Каталог общий для профиля и шапки: иначе выбранная аватарка
-// показывалась бы в одном месте и не показывалась в другом.
+//
+// Каталог общий для профиля, шапки, рейтинга и магазина: иначе выбранная
+// аватарка показывалась бы в одном месте и не показывалась в другом.
+//
+// Аватарка опознаётся коротким идентификатором (cat, dragon, sunlion), а
+// рисуется файлом img/avatars/<id>.png из этой же папки. Раньше
+// идентификатором был эмодзи, а картинка грузилась с api.dicebear.com:
+// без интернета вместо аватарок появлялись значки битых картинок, а
+// запасной вариант рисовал эмодзи системным шрифтом — на каждом
+// устройстве по-своему. Теперь ни сети, ни эмодзи-шрифта не требуется.
+//
+// Каталог — коллекция "RootRy Modern Avatars v2" (PNG 512×512, пришла на
+// смену старым SVG-иконкам зверей и фэнтези-персонажей).
 const ALL_AVATARS = {
     // Порядок и состав обязаны совпадать с AvatarPool в internal/store/cases.go:
     // выпавшую с сервера аватарку, которой нет в этом каталоге, страница
-    // нарисовать не сможет и подставит робота-заглушку. Так пропала коала.
+    // нарисовать не сможет. Так когда-то пропала коала.
     common: [
-        { emoji:'🐱', label:'Кот',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=cat&backgroundColor=b6e3f4' },
-        { emoji:'🐶', label:'Пёс',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=dog&backgroundColor=ffd5dc' },
-        { emoji:'🦊', label:'Лис',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=fox&backgroundColor=c0aede' },
-        { emoji:'🐼', label:'Панда',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=panda&backgroundColor=d1f4e0' },
-        { emoji:'🐨', label:'Коала',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=koala&backgroundColor=d9f99d' },
-        { emoji:'🐻', label:'Медведь', img:'https://api.dicebear.com/7.x/bottts/svg?seed=bear&backgroundColor=ffd5dc' },
-        { emoji:'🐸', label:'Лягушка', img:'https://api.dicebear.com/7.x/bottts/svg?seed=frog&backgroundColor=d1f4e0' },
-        { emoji:'🦁', label:'Лев',     img:'https://api.dicebear.com/7.x/bottts/svg?seed=lion&backgroundColor=fde68a' },
-        { emoji:'🐯', label:'Тигр',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=tiger&backgroundColor=fed7aa' },
+        { id:'cat',      label:'Чёрный кот' },
+        { id:'corgi',    label:'Корги' },
+        { id:'arcticfox',label:'Песец' },
+        { id:'panda',    label:'Панда' },
+        { id:'shiba',    label:'Шиба-ину' },
+        { id:'parrot',   label:'Попугай' },
+        { id:'robot',    label:'Робот' },
+        { id:'squirrel', label:'Белка' },
+        { id:'frog',     label:'Лягушка' },
     ],
     rare: [
-        { emoji:'🦄', label:'Единорог', img:'https://api.dicebear.com/7.x/bottts/svg?seed=unicorn&backgroundColor=bfdbfe' },
-        { emoji:'🐉', label:'Дракон',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=dragon&backgroundColor=93c5fd' },
-        { emoji:'🦋', label:'Бабочка',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=butterfly&backgroundColor=c4b5fd' },
-        { emoji:'🦚', label:'Павлин',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=peacock&backgroundColor=a5f3fc' },
-        { emoji:'🦜', label:'Попугай',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=parrot&backgroundColor=bbf7d0' },
-        { emoji:'🦩', label:'Фламинго', img:'https://api.dicebear.com/7.x/bottts/svg?seed=flamingo&backgroundColor=fecdd3' },
-        { emoji:'🐬', label:'Дельфин',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=dolphin&backgroundColor=bae6fd' },
+        { id:'moonfox',          label:'Лунный лис' },
+        { id:'dragon',           label:'Ледяной дракон' },
+        { id:'butterfly',        label:'Хрустальная бабочка' },
+        { id:'lynx',             label:'Рысь' },
     ],
     epic: [
-        { emoji:'🧙', label:'Маг',    img:'https://api.dicebear.com/7.x/bottts/svg?seed=wizard&backgroundColor=ddd6fe' },
-        { emoji:'🧛', label:'Вампир', img:'https://api.dicebear.com/7.x/bottts/svg?seed=vampire&backgroundColor=fecdd3' },
-        { emoji:'🦸', label:'Герой',  img:'https://api.dicebear.com/7.x/bottts/svg?seed=hero&backgroundColor=d9f99d' },
-        { emoji:'🧝', label:'Эльф',   img:'https://api.dicebear.com/7.x/bottts/svg?seed=elf&backgroundColor=a7f3d0' },
-        { emoji:'🧜', label:'Русалка',img:'https://api.dicebear.com/7.x/bottts/svg?seed=mermaid&backgroundColor=7dd3fc' },
+        { id:'gecko',        label:'Электрогекон' },
+        { id:'phoenix',      label:'Феникс' },
+        { id:'cloudspirit',  label:'Дух облака' },
+        { id:'seaguardian',  label:'Страж моря' },
+        { id:'owl',          label:'Голографическая сова' },
     ],
     legendary: [
-        { emoji:'👑', label:'Корона', img:'https://api.dicebear.com/7.x/bottts/svg?seed=crown&backgroundColor=fef08a' },
-        { emoji:'🌟', label:'Звезда', img:'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=fde68a' },
-        { emoji:'💫', label:'Комета', img:'https://api.dicebear.com/7.x/bottts/svg?seed=comet&backgroundColor=fef9c3' },
+        { id:'sunlion',        label:'Солнечный лев' },
+        { id:'frostleopard',   label:'Снежный барс' },
+        { id:'obsidiandragon', label:'Обсидиановый дракон' },
     ],
     mythic: [
-        { emoji:'🌈', label:'Радуга', img:'https://api.dicebear.com/7.x/bottts/svg?seed=rainbow&backgroundColor=fbcfe8' },
+        { id:'cosmichummingbird', label:'Космический колибри' },
     ],
 };
 const RARITY_LABELS = { common:'Обычная', rare:'Редкая', epic:'Эпическая', legendary:'Легендарная', mythic:'Мифическая' };
 const RARITY_ORDER = ['common','rare','epic','legendary','mythic'];
 
-// Картинка активной аватарки пользователя.
-// Если аватарка не выбрана или неизвестна — рисуем робота по логину.
-function avatarSrc(user) {
-    const found = user && findAvatarData(user.active_avatar);
-    if (found) return found.img;
-    const seed = (user && user.username) || "guest";
-    return 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(seed);
+// ── Значки ──────────────────────────────────────────────────────────
+//
+// Значки из кейсов, значок за пройденное дерево и знаки уровня КСПОЯ —
+// один каталог: раньше список значков был скопирован в profile.html и в
+// shop.html, а награды КСПОЯ не были описаны нигде, и в профиле уровень
+// показывался пустым квадратом.
+const ALL_BADGES = [
+    { id:'book',     label:'Книга',      rarity:'common' },
+    { id:'pencil',   label:'Карандаш',   rarity:'common' },
+    { id:'notepad',  label:'Блокнот',    rarity:'common' },
+    { id:'backpack', label:'Рюкзак',     rarity:'common' },
+    { id:'star',     label:'Звезда',     rarity:'rare' },
+    { id:'fire',     label:'Огонь',      rarity:'rare' },
+    { id:'bulb',     label:'Лампочка',   rarity:'rare' },
+    { id:'trophy',   label:'Кубок',      rarity:'epic' },
+    { id:'diamond',  label:'Алмаз',      rarity:'epic' },
+    { id:'crown',    label:'Корона',     rarity:'legendary' },
+    // Не выпадает из кейсов: значок выдаётся за пройденное целиком дерево
+    // грамматики. Редкость 'special' держит его вне пулов магазина —
+    // они собираются по RARITY_ORDER.
+    { id:'tree',     label:'Всё дерево', rarity:'special' },
+];
+
+// Знаки уровня КСПОЯ. Состав обязан совпадать с Rewards в
+// internal/kspoya/scoring.go.
+const RANK_BADGES = [
+    { id:'rank_a1', label:'A1' },
+    { id:'rank_a2', label:'A2' },
+    { id:'rank_b1', label:'B1' },
+    { id:'rank_b2', label:'B2' },
+    { id:'rank_c1', label:'C1' },
+    { id:'rank_c2', label:'C2' },
+];
+
+// ── Старые эмодзи-идентификаторы ────────────────────────────────────
+//
+// У аккаунтов, заведённых до перехода на SVG, в базе лежат эмодзи.
+// Сервер приводит их к новым идентификаторам при чтении пользователя
+// (internal/store/legacy.go), но ответы могли закешироваться в
+// localStorage, поэтому те же соответствия продублированы на клиенте.
+const LEGACY_AVATAR_IDS = {
+    '🐱':'cat', '🐶':'dog', '🦊':'fox', '🐼':'panda', '🐨':'koala', '🐻':'bear',
+    '🐸':'frog', '🦁':'lion', '🐯':'tiger', '🦄':'unicorn', '🐉':'dragon',
+    '🦋':'butterfly', '🦚':'peacock', '🦜':'parrot', '🦩':'flamingo', '🐬':'dolphin',
+    '🧙':'wizard', '🧛':'vampire', '🦸':'hero', '🧝':'elf', '🧜':'mermaid',
+    '👑':'crown', '🌟':'star', '💫':'comet', '🌈':'rainbow',
+};
+const LEGACY_BADGE_IDS = {
+    '📚':'book', '✏️':'pencil', '✏':'pencil', '📝':'notepad', '🎒':'backpack',
+    '⭐':'star', '🔥':'fire', '💡':'bulb', '🏆':'trophy', '💎':'diamond',
+    '👑':'crown', '🌳':'tree',
+    '🔰':'rank_a1', '📗':'rank_a2', '📘':'rank_b1', '🏅':'rank_b2',
+    '🔮':'rank_c1', '🦉':'rank_c2',
+    // До миграции 006 знаком C2 была радуга. Среди аватарок «🌈» —
+    // мифическая радуга, среди значков — уровень: списки разные,
+    // потому что и колонки разные.
+    '🌈':'rank_c2',
+};
+
+function avatarId(v)  { return LEGACY_AVATAR_IDS[v] || v || ''; }
+function badgeId(v)   { return LEGACY_BADGE_IDS[v] || v || ''; }
+
+/** Путь к картинке аватарки. */
+function avatarImg(id) { return 'img/avatars/' + avatarId(id) + '.png'; }
+
+/** Путь к картинке значка: обычного или знака уровня. */
+function badgeImg(id) {
+    const key = badgeId(id);
+    return (key.indexOf('rank_') === 0 ? 'img/ranks/' : 'img/badges/') + key + '.svg';
 }
 
-function findAvatarData(emoji) {
+/** Описание значка по идентификатору — для подписей и подсказок. */
+function badgeData(id) {
+    const key = badgeId(id);
+    return ALL_BADGES.find(b => b.id === key)
+        || RANK_BADGES.find(b => b.id === key)
+        || null;
+}
+
+/** Человекочитаемое название значка. */
+function badgeLabel(id) {
+    const d = badgeData(id);
+    return d ? d.label : badgeId(id);
+}
+
+// Картинка активной аватарки пользователя. Аватарка не выбрана или
+// незнакомая — показываем кота: он есть у всех с первого дня.
+function avatarSrc(user) {
+    const found = user && findAvatarData(user.active_avatar);
+    return avatarImg(found ? found.id : 'cat');
+}
+
+function findAvatarData(id) {
+    const key = avatarId(id);
     for (const rarity of RARITY_ORDER) {
-        const found = (ALL_AVATARS[rarity] || []).find(a => a.emoji === emoji);
+        const found = (ALL_AVATARS[rarity] || []).find(a => a.id === key);
         if (found) return found;
     }
     return null;
@@ -225,14 +317,25 @@ async function initHeader() {
     };
 
     applyUser(user);
+    addSoundToggle();
 
     // Обновляем в фоне полными данными с сервера.
     API.refreshUser().then(u => { if (u) applyUser(u); });
 }
 
-// Переключатель звука жил в шапке и висел на каждой странице ради
-// настройки, которую меняют один раз. Он переехал в профиль —
-// в блок «Настройки», где ему и место.
+
+// Кнопка «звук вкл/выкл» появляется в шапке на всех страницах.
+function addSoundToggle() {
+    const right = document.querySelector('.header-right');
+    if (!right || right.querySelector('.sound-toggle')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'sound-toggle';
+    btn.innerHTML = svgIcon(Sound.muted ? 'soundOff' : 'soundOn', { size: 18 });
+    btn.title = Sound.muted ? 'Включить звук' : 'Выключить звук';
+    btn.onclick = () => Sound.toggle();
+    right.appendChild(btn);
+}
 
 function showToast(msg, type = 'info') {
     let toast = document.getElementById('globalToast');
@@ -292,7 +395,14 @@ function showRewardNotification(lines) {
         notif.style.minWidth = '0';
     }
 
-    notif.innerHTML = lines.map(l => `<div style="margin:3px 0">${l}</div>`).join('');
+    // Строка — либо текст, либо { icon, text }: иконка рисуется вектором,
+    // текст экранируется, потому что в нём бывает название значка.
+    notif.innerHTML = lines.map(l => {
+        if (!l) return '<div style="height:6px"></div>';
+        if (typeof l === 'string') return `<div style="margin:3px 0">${esc(l)}</div>`;
+        return '<div style="margin:3px 0;display:flex;align-items:center;gap:7px">'
+            + svgIcon(l.icon, { size: 16 }) + '<span>' + esc(l.text) + '</span></div>';
+    }).join('');
     document.body.appendChild(notif);
 
     requestAnimationFrame(() => {
@@ -333,7 +443,8 @@ async function submitGameResult(gameType, score) {
                 // Keep games_won_today and daily_tasks_date in sync so shop shows correct quest progress
                 if (r.data.games_won_today !== undefined) {
                     u.games_won_today = r.data.games_won_today;
-                    u.daily_tasks_date = todayLocal();
+                    const today = todayLocal();
+                    u.daily_tasks_date = today;
                 }
                 if (r.data.quest_bonus_earned) {
                     u.daily_tasks_done = 1;
@@ -349,24 +460,23 @@ async function submitGameResult(gameType, score) {
             const gamesWon = r.data.games_won_today || 0;
 
             if (isWin) {
-                // Значки Font Awesome вместо эмодзи: одинаково выглядят
-                // на всех системах и наследуют цвет плашки.
-                const ic = n => `<i class="fa-solid ${n}" style="margin-right:6px;opacity:.85"></i>`;
                 const lines = [];
                 if (firstWin) {
-                    lines.push(`${ic('fa-coins')}+50 монет — первая победа в этой игре!`);
+                    lines.push({ icon:'coin', text:'+50 монет — первая победа в этой игре!' });
                 } else {
-                    lines.push(`${ic('fa-circle-check')}Игра пройдена`);
-                    lines.push(`${ic('fa-lightbulb')}50 монет уже получены ранее за эту игру`);
+                    lines.push({ icon:'check', text:'Игра пройдена' });
+                    lines.push({ icon:'bulb',  text:'50 монет уже получены ранее за эту игру' });
                 }
-                if (xp > 0) lines.push(`${ic('fa-bolt')}+${xp} XP`);
+                if (xp > 0) lines.push({ icon:'bolt', text:`+${xp} XP` });
                 if (questBonus) {
                     lines.push('');
-                    lines.push(`${ic('fa-bullseye')}Дейлик выполнен! +50 монет`);
+                    lines.push({ icon:'target', text:'Дейлик выполнен! +50 монет' });
                 } else if (firstWin && gamesWon < 5) {
-                    lines.push(`${ic('fa-chart-simple')}Побед в разных играх: ${gamesWon}/5`);
+                    lines.push({ icon:'chart', text:`Побед в разных играх: ${gamesWon}/5` });
                 }
-                if (r.data.badge_earned) lines.push(`${ic('fa-award')}Новый значок: ${r.data.badge_earned}`);
+                if (r.data.badge_earned) {
+                    lines.push({ icon:'medal', text:'Новый значок: ' + badgeLabel(r.data.badge_earned) });
+                }
                 if (lines.length) showRewardNotification(lines);
                 if (firstWin) Sound.win();
             }
@@ -399,6 +509,10 @@ const Sound = {
         this.muted = !this.muted;
         localStorage.setItem('soundMuted', this.muted ? '1' : '0');
         if (!this.muted) this.click();
+        document.querySelectorAll('.sound-toggle').forEach(b => {
+            b.innerHTML = svgIcon(this.muted ? 'soundOff' : 'soundOn', { size: 18 });
+            b.title = this.muted ? 'Включить звук' : 'Выключить звук';
+        });
         return this.muted;
     },
 
@@ -443,9 +557,7 @@ const Sound = {
 // Клик по любой кнопке или ссылке-вкладке звучит одинаково.
 document.addEventListener('click', e => {
     const el = e.target.closest('button, .tab-item, .lb-tab, .case-card');
-    // Переключатель звука сам решает, звучать ему или нет, — иначе при
-    // включении щелчок раздался бы дважды.
-    if (el && !el.disabled && !el.classList.contains('switch')) Sound.click();
+    if (el && !el.disabled && !el.classList.contains('sound-toggle')) Sound.click();
 }, true);
 
 // ── Монеты ──────────────────────────────────────────────────────────
@@ -492,7 +604,7 @@ function flyCoins(origin, count) {
     for (let i = 0; i < n; i++) {
         const coin = document.createElement('div');
         coin.className = 'flying-coin';
-        coin.innerHTML = '<i class="fa-solid fa-coins"></i>';
+        coin.innerHTML = svgIcon('coin', { size: 22, color: '#f0b429' });
         coin.style.left = (from.left + from.width / 2) + 'px';
         coin.style.top = (from.top + from.height / 2) + 'px';
         document.body.appendChild(coin);
@@ -528,8 +640,7 @@ function rewardCoins(amount, newBalance, origin) {
     const css = document.createElement('style');
     css.textContent = `
         .flying-coin {
-            position: fixed; z-index: 99998; font-size: 20px;
-            color: #fbbf24; text-shadow: 0 2px 6px rgba(180,120,0,.35);
+            position: fixed; z-index: 99998; font-size: 22px;
             pointer-events: none; will-change: transform, opacity;
         }
         .balance-bump { animation: balanceBump 0.45s cubic-bezier(0.34,1.56,0.64,1); }
@@ -538,6 +649,12 @@ function rewardCoins(amount, newBalance, origin) {
             45%  { transform: scale(1.35); color: #fcd34d; }
             100% { transform: scale(1); }
         }
+        .sound-toggle {
+            border: none; background: rgba(255,255,255,0.18); color: #fff;
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+            font-size: 15px; line-height: 1; transition: 0.2s;
+        }
+        .sound-toggle:hover { background: rgba(255,255,255,0.32); }
         @media (prefers-reduced-motion: reduce) {
             .flying-coin { display: none; }
             .balance-bump { animation: none; }
@@ -545,3 +662,208 @@ function rewardCoins(amount, newBalance, origin) {
     `;
     document.head.appendChild(css);
 })();
+
+/* ═══════════════════════════════════════════════════════════════════
+   Attempts — журнал ответов ученика.
+
+   Каждый ответ на каждое задание уходит на сервер: из этих записей
+   строится модель знаний (какие темы просели, что попало в тетрадь
+   ошибок, когда возвращать ученика к теме).
+
+   Отправка идёт очередью, а не напрямую из обработчика ответа, по трём
+   причинам. Во-первых, ответ не должен ждать сети: ученик нажал вариант
+   и сразу видит разбор. Во-вторых, ответы — это исследовательские
+   данные, и терять их при обрыве связи нельзя, поэтому очередь живёт в
+   localStorage и переживает перезагрузку страницы. В-третьих, ученик
+   часто закрывает вкладку сразу после последнего задания — очередь
+   дожимается на pagehide.
+   ═══════════════════════════════════════════════════════════════════ */
+const Attempts = {
+    KEY: 'attemptQueue',
+    MAX: 300,          // предел очереди: дальше теряем самые старые
+    _flushing: false,
+
+    _queue() {
+        try { return JSON.parse(localStorage.getItem(this.KEY)) || []; }
+        catch { return []; }
+    },
+
+    _save(q) {
+        try { localStorage.setItem(this.KEY, JSON.stringify(q)); } catch { /* переполнение — не беда */ }
+    },
+
+    /* Записать ответ. Ничего не ждёт и никогда не бросает исключений:
+       упавший журнал не должен ломать урок. */
+    record({ topic, item, source = 'lesson', correct, hints = 0, timeMs = 0 }) {
+        if (!topic || !item) return;
+        const q = this._queue();
+        q.push({
+            topic, item, source,
+            correct: !!correct,
+            hints: Math.max(0, hints | 0),
+            time_ms: Math.max(0, Math.min(timeMs | 0, 30 * 60 * 1000)),
+        });
+        this._save(q.slice(-this.MAX));
+        this.flush();
+    },
+
+    /* Отправить всё, что накопилось. Записи уходят по одной и удаляются
+       из очереди только после успеха: сервер может ответить ошибкой, и
+       тогда попытка повторится при следующем ответе или на следующей
+       странице. */
+    async flush() {
+        if (this._flushing || !API.token()) return;
+        this._flushing = true;
+        try {
+            let q = this._queue();
+            while (q.length) {
+                const item = q[0];
+                let res;
+                try { res = await API.post('/api/attempt', item); }
+                catch { break; }               // сети нет — оставляем очередь как есть
+
+                // 4xx означает, что запись битая: тема исчезла из реестра,
+                // формат устарел. Повторять её бессмысленно — очередь
+                // забилась бы навсегда одной и той же записью.
+                if (!res.ok && res.status >= 500) break;
+
+                q = this._queue();
+                q.shift();
+                this._save(q);
+            }
+        } finally {
+            this._flushing = false;
+        }
+    },
+};
+
+/* Дожать очередь, пока страница ещё жива. */
+window.addEventListener('pagehide', () => { Attempts.flush(); });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') Attempts.flush();
+});
+/* И на старте любой страницы — вдруг прошлая сессия оборвалась. */
+if (API.token()) setTimeout(() => Attempts.flush(), 1200);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Даты повторений.
+
+   Сервер отдаёт даты как YYYY-MM-DD. Показывать их ученику в таком
+   виде нельзя: «2026-09-14» не говорит ничего, а «через 3 дня» — всё.
+   ═══════════════════════════════════════════════════════════════════ */
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня',
+                    'июля','августа','сентября','октября','ноября','декабря'];
+
+/* Сколько дней осталось до даты. Отрицательное — просрочено. */
+function daysUntil(iso) {
+    if (!iso) return 0;
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return 0;
+    const target = new Date(y, m - 1, d);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((target - today) / 86400000);
+}
+
+/* Человеческая дата: «сегодня», «завтра», «через 3 дня», «14 сентября». */
+function formatDate(iso) {
+    if (!iso) return '';
+    const diff = daysUntil(iso);
+    if (diff === 0)  return 'сегодня';
+    if (diff === 1)  return 'завтра';
+    if (diff === 2)  return 'послезавтра';
+    if (diff === -1) return 'вчера';
+    if (diff < 0)    return `${plural(-diff, 'день', 'дня', 'дней')} назад`;
+    if (diff <= 6)   return `через ${plural(diff, 'день', 'дня', 'дней')}`;
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${d} ${MONTHS_GEN[m - 1]}`;
+}
+
+/* Русское склонение после числительного: 1 день, 2 дня, 5 дней. */
+function plural(n, one, few, many) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    let word = many;
+    if (abs < 11 || abs > 14) {
+        if (last === 1) word = one;
+        else if (last >= 2 && last <= 4) word = few;
+    }
+    return `${n} ${word}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Игры и модель знаний.
+
+   Игра тренирует конкретный раздел языка, но раньше её результат никуда
+   не шёл: сервер получал только «сыграл, набрал 340». Из-за этого игра
+   оставалась аттракционом рядом с учёбой, а не её частью.
+
+   Здесь игра привязывается к теме дерева, и каждый ответ в ней попадает
+   в тот же журнал, что и ответы в уроке. Ошибка в игре так же роняет
+   тему в первую коробку и так же возвращает ученика к ней завтра.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Тема дерева для каждой игры.
+
+   Ключ — идентификатор игры, который она сама передаёт в
+   submitGameResult. Значение — идентификатор темы из
+   internal/topics/topics.go; сервер принимает только темы из реестра,
+   так что опечатка обнаружится сразу, а не через месяц. */
+const GAME_TOPIC = {
+    grammar:    'orf-n-nn',            // «Минное поле» — Н и НН, чередующиеся корни
+    stress:     'fon-udarenie',        // «Ударный космос»
+    paronym:    'lex-otnosheniya',     // «Дуэль паронимов»
+    spelling:   'pun-zapyataya',       // «Запятая-ниндзя»
+    vocabulary: 'mrf-morfemy',         // «Алхимик слов» — сборка по морфемам
+    detective:  'mor-sushestvitelnoe', // «Детектив Падеж» — падежи существительных
+    syntax:     'sin-prostoe',         // «Строитель предложений»
+    dash:             'pun-tire',           // «Мастер тире»
+    phraseology:      'lex-frazeologiya',   // «Фразеологический архив»
+    style:            'sti-stili',          // «Стилист»
+    direct_speech:    'sin-pryamaya-rech',  // «Прямая речь»
+    slitno:           'orf-slitno',         // «Слитно или раздельно»
+    complex_sentence: 'sin-slozhnoe',       // «Сложное предложение»
+};
+
+/* У «Минного поля» пять уровней по разным правилам орфографии, и
+   валить их все в одну тему было бы неправдой: ученик может уверенно
+   знать Н/НН и не знать ПРЕ/ПРИ. Ключ — подпись уровня в самой игре. */
+const MINEFIELD_LEVEL_TOPIC = {
+    'Н и НН в словах':      'orf-n-nn',
+    'Чередующиеся корни':   'orf-glasnye',
+    'Приставки ПРЕ и ПРИ':  'orf-pristavki',
+    'Словарные слова':      'orf-glasnye',
+    'О и Ё после шипящих':  'orf-shipyashchie',
+};
+
+/**
+ * Записать один ответ в игре.
+ *
+ * @param {string} gameId    идентификатор игры (тот же, что в submitGameResult)
+ * @param {string} key       что именно решали: слово, номер задания
+ * @param {boolean} correct  верно ли ответил
+ * @param {number} timeMs    сколько думал
+ * @param {string} [topicId] тема, если игра знает её точнее общей
+ *
+ * Ничего не ждёт и не бросает исключений: сломанный журнал не должен
+ * ломать игру.
+ */
+function recordGameAnswer(gameId, key, correct, timeMs, topicId) {
+    const topic = topicId || GAME_TOPIC[gameId];
+    if (!topic) return;
+    // Идентификатор задания обязан начинаться с темы — сервер это проверяет.
+    // Префикс g- отделяет задания игр от заданий уроков: одно и то же
+    // правило в уроке и в игре — разные задания.
+    const item = `${topic}#g-${gameId}-${slugKey(key)}`;
+    Attempts.record({ topic, item, source: 'game', correct, timeMs });
+}
+
+/* Ключ задания приводится к безопасному виду: он уходит в базу как
+   часть идентификатора, и произвольный текст там не нужен. */
+function slugKey(key) {
+    return String(key ?? '')
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40) || 'x';
+}

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Мини-игры</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="home-style.css?v=20261022">
     <style>
@@ -318,14 +319,14 @@
                     <div class="tag-dropdown" id="tagDropdown">
                         <div class="tag-dropdown-title">Выбери хэштег</div>
                         <div class="tag-cloud" id="tagCloud"></div>
-                        <button class="tag-clear" onclick="clearTags()">✕ Сбросить фильтр</button>
+                        <button class="tag-clear" onclick="clearTags()"><i class="fa-solid fa-xmark"></i> Сбросить фильтр</button>
                     </div>
                 </div>
             </div>
 
             <!-- Любимые игры -->
             <div id="favSection" style="display:none;">
-                <div class="games-section-title">❤️ Любимые игры</div>
+                <div class="games-section-title"><i class="fa-solid fa-heart" style="color:#e74c3c;"></i> Любимые игры</div>
                 <div class="games-grid" id="favGrid"></div>
             </div>
 
@@ -345,14 +346,16 @@
 
     <nav class="bottom-tabbar">
         <a href="games.html" class="tab-item active"><i class="fa-solid fa-gamepad"></i><span>Игры</span></a>
+        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
+        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
+        <a href="assistant.html" class="tab-item"><i class="fa-solid fa-robot"></i><span>Ассистент</span></a>
         <a href="shop.html" class="tab-item"><i class="fa-solid fa-store"></i><span>Магазин</span></a>
         <a href="leaderboard.html" class="tab-item"><i class="fa-solid fa-trophy"></i><span>Топы</span></a>
         <a href="profile.html" class="tab-item"><i class="fa-solid fa-user"></i><span>Профиль</span></a>
-        <a href="tests.html" class="tab-item"><i class="fa-solid fa-file-invoice"></i><span>Тесты</span></a>
-        <a href="tree.html" class="tab-item"><i class="fa-solid fa-diagram-project"></i><span>Дерево</span></a>
         <a href="authors.html" class="tab-item"><i class="fa-solid fa-users"></i><span>Авторы</span></a>
     </nav>
 
+    <script src="icons.js"></script>
     <script src="api.js?v=20261022"></script>
     <script>
     // Fallback if api.js not loaded
@@ -364,8 +367,8 @@
         {
             id: 'comma_ninja',
             title: '«Запятая-ниндзя»',
-            icon: '🥷',
-            image: 'img/game_comma_ninja.png',
+            icon: 'fa-solid fa-user-ninja',
+            image: 'img/game_comma_ninja.svg',
             desc: 'Свайпом разруби предложение в правильных местах! Аркада по пунктуации в стиле Fruit Ninja.',
             fullDesc: 'На экране снизу вверх вылетают длинные предложения с причастными оборотами, вводными словами и однородными членами. Свайпни по предложению ровно там, где должна стоять запятая, двоеточие или тире. Ошибёшься — потеряешь жизнь!',
             rules: [
@@ -381,8 +384,8 @@
         {
             id: 'word_alchemist',
             title: '«Алхимик слов»',
-            icon: '⚗️',
-            image: 'img/game_word_alchemist.png',
+            icon: 'fa-solid fa-flask-vial',
+            image: 'img/game_word_alchemist.svg',
             desc: 'Собирай слова из падающих морфем! Головоломка в стиле Тетриса про словообразование.',
             fullDesc: 'В твоём распоряжении падающие блоки с приставками, корнями, суффиксами и окончаниями. Комбинируй их так, чтобы получались реальные русские слова. На старших уровнях нужно собирать слова по заданным схемам!',
             rules: [
@@ -398,8 +401,8 @@
         {
             id: 'stress_space',
             title: '«Ударный космос»',
-            icon: '🚀',
-            image: 'img/game_stress_space.png',
+            icon: 'fa-solid fa-rocket',
+            image: 'img/game_stress_space.svg',
             desc: 'Уничтожай астероиды-слова! Стреляй лазером точно в ударную гласную.',
             fullDesc: 'Управляй космическим кораблём — на тебя летят астероиды с трудными словами (ЖАЛЮЗИ, КАТАЛОГ, ЗВОНИТ, ТВОРОГ). Все гласные подсвечены. Выстрели лазером ровно в ту, на которую падает правильное ударение. Серия правильных ударений даёт защитный щит!',
             rules: [
@@ -415,8 +418,8 @@
         {
             id: 'detective_case',
             title: '«Детектив Падеж»',
-            icon: '🕵️',
-            image: 'img/game_detective_case.png',
+            icon: 'fa-solid fa-magnifying-glass',
+            image: 'img/game_detective_case.svg',
             desc: 'Детективный квест! Вставь слова в правильном падеже, чтобы раскрыть дело.',
             fullDesc: 'Ты — детектив. Чтобы получить показания свидетеля или открыть кодовый замок, нужно вставить в текст слова в правильном падеже, числе или роде. Например: «с пятьюстами шестьюдесятью тремя рублями». Ошибка пускает тебя по ложному следу!',
             rules: [
@@ -432,8 +435,8 @@
         {
             id: 'minefield',
             title: '«Минное поле»',
-            icon: '💣',
-            image: 'img/game_minefield.png',
+            icon: 'fa-solid fa-bomb',
+            image: 'img/game_minefield.svg',
             desc: 'Перейди пропасть по плитам с правильными словами. Ошибёшься — упадёшь в лаву!',
             fullDesc: 'Перед тобой пропасть. На каждой плите — слово (Н/НН, чередующиеся корни, ЖИ-ШИ и другие правила). Наступать можно только на плиты с правильным написанием — плиты с ошибками проваливаются в лаву. Чем дальше — тем сложнее!',
             rules: [
@@ -445,6 +448,142 @@
             tags: ['Платформер', '+50 монет'],
             hashtags: ['#орфография', '#НиНН', '#исключения', '#платформер'],
             file: 'game_minefield.html'
+        },
+        {
+            id: 'paronym_duel',
+            title: '«Дуэль паронимов»',
+            icon: 'fa-solid fa-scale-balanced',
+            image: 'img/game_paronym_duel.svg',
+            desc: 'Выбери слово, которое подходит по смыслу! Дуэль похожих по звучанию, но разных по значению слов.',
+            fullDesc: 'Паронимы — слова, похожие по звучанию, но разные по значению: «одеть» и «надеть», «эффектный» и «эффективный». В каждом раунде — предложение с пропуском и два похожих слова. Выбери верное по смыслу. После ответа — объяснение, чем слова отличаются.',
+            rules: [
+                'Выбери слово, подходящее по смыслу предложения',
+                'После ответа — объяснение разницы между словами',
+                '10 раундов с популярными парами паронимов ЕГЭ',
+                'Каждая ошибка объясняется подробно'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#паронимы', '#лексика', '#ЕГЭ'],
+            file: 'game_paronym_duel.html'
+        },
+        {
+            id: 'sentence_builder',
+            title: '«Строитель предложений»',
+            icon: 'fa-solid fa-puzzle-piece',
+            image: 'img/game_sentence_builder.svg',
+            desc: 'Собери слова в правильном порядке! Учись строить предложения без речевых ошибок.',
+            fullDesc: 'Слова в предложении перепутаны местами. Собери их в правильном порядке так, чтобы причастные и деепричастные обороты стояли на своих местах — это одна из самых частых ошибок на экзамене. После каждого ответа — объяснение правила порядка слов.',
+            rules: [
+                'Кликай на слова в правильном порядке',
+                'Причастный оборот стоит рядом со словом, к которому относится',
+                'Деепричастие относится к тому же лицу, что и сказуемое',
+                'После ответа — объяснение синтаксического правила'
+            ],
+            tags: ['Конструктор', '+50 монет'],
+            hashtags: ['#синтаксис', '#причастие', '#деепричастие', '#ЕГЭ'],
+            file: 'game_sentence_builder.html'
+        },
+        {
+            id: 'dash',
+            title: '«Мастер тире»',
+            icon: 'fa-solid fa-minus',
+            image: 'img/game_dash_master.svg',
+            desc: 'Реши, нужно ли тире в предложении! Быстрый тренажёр по одной из самых частых тем ЕГЭ.',
+            fullDesc: 'В каждом раунде — предложение с пропуском между подлежащим и сказуемым (или между частями сложного предложения). Реши, нужно ли здесь тире, и выбери верный вариант. После ответа — объяснение правила.',
+            rules: [
+                'Реши, нужен ли знак тире в предложении',
+                'После ответа — объяснение правила',
+                '8 раундов на разные случаи постановки тире',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#тире', '#пунктуация', '#синтаксис', '#ЕГЭ'],
+            file: 'game_dash_master.html'
+        },
+        {
+            id: 'phraseology',
+            title: '«Фразеологический архив»',
+            icon: 'fa-solid fa-book-bookmark',
+            image: 'img/game_phraseology.svg',
+            desc: 'Разгадай значения старинных выражений! Проверь, как хорошо ты знаешь фразеологизмы.',
+            fullDesc: 'Хранитель архива показывает устойчивое выражение — «бить баклуши», «зарубить на носу», «спустя рукава». Выбери, что оно означает на самом деле. После ответа — краткая история происхождения фразы.',
+            rules: [
+                'Выбери верное значение фразеологизма',
+                'После ответа — объяснение происхождения',
+                '8 популярных фразеологизмов из школьной программы',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#фразеологизмы', '#лексика', '#ЕГЭ'],
+            file: 'game_phraseology.html'
+        },
+        {
+            id: 'style',
+            title: '«Стилист»',
+            icon: 'fa-solid fa-feather-pointed',
+            image: 'img/game_style_detective.svg',
+            desc: 'Определи стиль текста! Научный, разговорный, публицистический, официально-деловой, художественный.',
+            fullDesc: 'Перед тобой отрывок текста — деловое письмо, научная статья, дружеский разговор или отрывок из художественного произведения. Определи, к какому стилю речи он относится, и узнай, по каким признакам это можно понять.',
+            rules: [
+                'Прочитай отрывок и определи его стиль',
+                'После ответа — объяснение признаков стиля',
+                '8 раундов на разные стили речи',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#стилистика', '#стилиречи', '#ЕГЭ'],
+            file: 'game_style_detective.html'
+        },
+        {
+            id: 'direct_speech',
+            title: '«Прямая речь»',
+            icon: 'fa-solid fa-quote-right',
+            image: 'img/game_direct_speech.svg',
+            desc: 'Выбери правильно оформленную прямую речь! Кавычки, тире и запятые — всё по правилам.',
+            fullDesc: 'В каждом раунде — два варианта одного и того же предложения с прямой речью. Один оформлен правильно, другой — с ошибкой в пунктуации. Выбери верный вариант и узнай точное правило постановки знаков.',
+            rules: [
+                'Выбери правильно оформленный вариант',
+                'После ответа — объяснение схемы пунктуации',
+                '8 раундов на разные схемы оформления прямой речи',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#прямаяречь', '#пунктуация', '#синтаксис', '#ЕГЭ'],
+            file: 'game_direct_speech.html'
+        },
+        {
+            id: 'slitno',
+            title: '«Слитно или раздельно»',
+            icon: 'fa-solid fa-link-slash',
+            image: 'img/game_slitno_razdelno.svg',
+            desc: 'Реши, как пишется «не» со словом — слитно или раздельно! Одна из самых коварных тем орфографии.',
+            fullDesc: 'В предложении пропущено слово с частицей «не». Реши, есть ли противопоставление, усилительное слово или другие условия раздельного написания, и выбери верный вариант.',
+            rules: [
+                'Выбери верный вариант написания слова с «не»',
+                'После ответа — объяснение правила',
+                '8 раундов на разные случаи слитного и раздельного написания',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#орфография', '#не', '#ЕГЭ'],
+            file: 'game_slitno_razdelno.html'
+        },
+        {
+            id: 'complex_sentence',
+            title: '«Сложное предложение»',
+            icon: 'fa-solid fa-diagram-project',
+            image: 'img/game_complex_sentence.svg',
+            desc: 'Реши, нужна ли запятая между частями сложного предложения! Общий член, общее придаточное и другие ловушки.',
+            fullDesc: 'В сложносочинённом или сложноподчинённом предложении пропущен знак перед союзом. Реши, нужна ли здесь запятая, учитывая общий второстепенный член, общее придаточное или тип союза.',
+            rules: [
+                'Реши, нужна ли запятая перед союзом',
+                'После ответа — объяснение правила',
+                '8 раундов на разные случаи пунктуации в сложном предложении',
+                'Побей свой рекорд правильных ответов'
+            ],
+            tags: ['Квиз', '+50 монет'],
+            hashtags: ['#синтаксис', '#сложноепредложение', '#пунктуация', '#ЕГЭ'],
+            file: 'game_complex_sentence.html'
         }
     ];
 
@@ -601,9 +740,9 @@
             img.style.display = 'none';
             const ph = document.createElement('div');
             ph.className = 'game-thumb-placeholder';
-            const iconSpan = document.createElement('span');
+            const iconSpan = document.createElement('i');
+            iconSpan.className = g.icon;
             iconSpan.style.fontSize = '36px';
-            iconSpan.textContent = g.icon;
             const lblSpan = document.createElement('span');
             lblSpan.textContent = 'Изображение';
             ph.appendChild(iconSpan);
@@ -664,9 +803,9 @@
             img.style.display = 'none';
             const ph = document.createElement('div');
             ph.className = 'detail-thumb-placeholder';
-            const iconSpan = document.createElement('span');
+            const iconSpan = document.createElement('i');
+            iconSpan.className = g.icon;
             iconSpan.style.fontSize = '56px';
-            iconSpan.textContent = g.icon;
             const lblSpan = document.createElement('span');
             lblSpan.textContent = 'Изображение';
             ph.appendChild(iconSpan);

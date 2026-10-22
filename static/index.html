@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootRy | Вход и Регистрация</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          onerror="this.onerror=null;this.href='vendor/fa/css/all.min.css'">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='%230099cc' d='M622.3 162.4l-296-120c-16.5-6.7-35.1-6.7-51.6 0l-296 120c-17.2 7-20.1 29.5-4.8 39.4l112 72.3c2.4 1.5 5.2 2.3 8 2.3H504c2.8 0 5.6-.8 8-2.3l112-72.3c15.2-10 12.3-32.4-4.8-39.4zM532.7 301.9l-20.7 13.4c-6 3.9-13 6-20.1 6H148.1c-7.1 0-14.1-2.1-20.1-6l-20.7-13.4c-4.4-2.9-10.3-1.6-13.2 2.9l-21.3 32.8c-4.6 7.1-1.6 16.5 6.2 19.8l197.4 82.5c24.6 10.3 52.6 10.3 77.2 0l197.4-82.5c7.8-3.3 10.8-12.7 6.2-19.8l-21.3-32.8c-2.9-4.5-8.8-5.8-13.2-2.9z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css?v=20261022">
     <style>
@@ -22,6 +23,15 @@
         .spinner { display: none; }
         .btn.loading .spinner { display: inline; }
         .btn.loading .btn-text { display: none; }
+        /* Вход через Google: блок скрыт, пока не известно, настроен ли он. */
+        .google-auth { display: none; }
+        .google-ready .google-auth { display: block; }
+        .google-btn { display: flex; justify-content: center; min-height: 44px; margin-top: 10px; }
+        .or-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 14px 0 4px; color: #8a9aa5; font-size: 13px;
+        }
+        .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #dbe4ea; }
     </style>
 </head>
 <body>
@@ -46,6 +56,10 @@
                     <span class="btn-text">Войти</span>
                     <span class="spinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
                 </button>
+                <div class="google-auth">
+                    <div class="or-divider">или</div>
+                    <div class="google-btn" id="googleLoginBtn"></div>
+                </div>
                 <div class="hint-box">Демо: <b>demo</b> / <b>demo123</b></div>
             </form>
         </div>
@@ -56,6 +70,10 @@
             </div>
             <form id="regForm">
                 <h1>Регистрация</h1>
+                <div class="google-auth">
+                    <div class="google-btn" id="googleRegBtn"></div>
+                    <div class="or-divider">или по логину</div>
+                </div>
                 <div class="input-box">
                     <span class="prefix">@</span>
                     <input type="text" id="regUser" placeholder="username (латиница)" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" title="Латиница, цифры и _" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
@@ -138,7 +156,7 @@
             if (res.ok) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('currentUser', JSON.stringify(data.user));
-                showMsg('Аккаунт создан! 🎉', 'success');
+                showMsg('Аккаунт создан', 'success');
                 setTimeout(() => window.location.href = 'games.html', 800);
             } else {
                 showMsg(data.error || 'Ошибка регистрации', 'error');
@@ -166,7 +184,7 @@
             if (res.ok) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('currentUser', JSON.stringify(data.user));
-                showMsg(`Добро пожаловать, ${data.user.nickname}! 👋`, 'success');
+                showMsg(`Добро пожаловать, ${data.user.nickname}!`, 'success');
                 setTimeout(() => window.location.href = 'games.html', 800);
             } else {
                 showMsg(data.error || 'Неверный логин или пароль', 'error');
@@ -178,9 +196,64 @@
         }
     });
 
-    // Redirect if already logged in
+    // ── Вход и регистрация через Google ──────────────────────────────
+    // Кнопку рисует Google Identity Services. Client ID берётся с
+    // сервера: не задан GOOGLE_CLIENT_ID — кнопки просто нет.
+    function onGoogleCredential(resp) {
+        const btns = document.querySelectorAll('.google-btn');
+        btns.forEach(b => b.style.opacity = '0.5');
+        fetch(`${API}/api/auth/google`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ credential: resp.credential })
+        })
+        .then(res => res.json().then(data => ({ res, data })))
+        .then(({ res, data }) => {
+            if (!res.ok) {
+                showMsg(data.error || 'Не удалось войти через Google', 'error');
+                return;
+            }
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            showMsg(res.status === 201 ? 'Аккаунт создан' : `Добро пожаловать, ${data.user.nickname}!`, 'success');
+            setTimeout(() => window.location.href = 'games.html', 800);
+        })
+        .catch(() => showMsg('Сервер недоступен', 'error'))
+        .finally(() => btns.forEach(b => b.style.opacity = ''));
+    }
+
+    function loadGoogleScript() {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://accounts.google.com/gsi/client';
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    async function initGoogleAuth() {
+        try {
+            const cfg = await fetch(`${API}/api/auth/google/config`).then(r => r.json());
+            if (!cfg.clientId) return;
+            await loadGoogleScript();
+            google.accounts.id.initialize({ client_id: cfg.clientId, callback: onGoogleCredential });
+            container.classList.add('google-ready');
+            const opts = { theme: 'outline', size: 'large', shape: 'pill', locale: 'ru' };
+            [['googleLoginBtn', 'signin_with'], ['googleRegBtn', 'signup_with']].forEach(([id, text]) => {
+                const el = document.getElementById(id);
+                google.accounts.id.renderButton(el, { ...opts, text, width: Math.min(el.offsetWidth || 320, 400) });
+            });
+        } catch (err) {
+            // Нет интернета или Google недоступен — остаётся обычный вход.
+        }
+    }
+
     if (localStorage.getItem('token')) {
         window.location.href = 'games.html';
+    } else {
+        initGoogleAuth();
     }
     </script>
 </body>

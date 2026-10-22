@@ -35,21 +35,40 @@ func New() *Store {
 	if dsn == "" {
 		log.Fatal("DATABASE_URL env var is not set")
 	}
+	s, err := NewWithDSN(dsn)
+	if err != nil {
+		log.Fatalf("store: %v", err)
+	}
+	return s
+}
+
+// NewWithDSN открывает хранилище по явной строке подключения.
+//
+// Отдельно от New, потому что New обязан валить процесс: приложение без
+// базы бессмысленно. Тестам же нужно подключиться к своей базе и получить
+// ошибку, а не убитый процесс.
+func NewWithDSN(dsn string) (*Store, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("store: sql.Open: %v", err)
+		return nil, fmt.Errorf("sql.Open: %w", err)
 	}
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	if err := db.Ping(); err != nil {
-		log.Fatalf("store: db.Ping: %v", err)
+		db.Close()
+		return nil, fmt.Errorf("db.Ping: %w", err)
 	}
 	s := &Store{db: db}
+	s.ensureGoogleTable()
 	s.seedPromos()
 	s.seedDemo()
-	return s
+	return s, nil
 }
+
+// Close закрывает пул соединений. Нужен тестам, которые поднимают
+// несколько хранилищ подряд.
+func (s *Store) Close() error { return s.db.Close() }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -71,6 +90,7 @@ func scanUser(row interface {
 		gamesWonTypes                    []byte
 		lastLogin, lastNickChange        sql.NullString
 		dailyTasksDate, lastDailyClaim   sql.NullString
+		studyGroup                       sql.NullString
 	)
 	err := row.Scan(
 		&u.ID, &u.Username, &u.Nickname, &u.PasswordHash,
@@ -82,6 +102,7 @@ func scanUser(row interface {
 		&dailyTasksDate, &u.DailyTasksDone,
 		&u.GamesWonToday, &gamesWonTypes,
 		&lastDailyClaim, &u.CreatedAt,
+		&u.IsTeacher, &u.ResearchConsent, &studyGroup,
 	)
 	if err != nil {
 		return nil, err
@@ -90,10 +111,18 @@ func scanUser(row interface {
 	u.LastNickChange = lastNickChange.String
 	u.DailyTasksDate = dailyTasksDate.String
 	u.LastDailyClaim = lastDailyClaim.String
+	u.StudyGroup = studyGroup.String
 
 	// Unmarshal JSONB arrays
 	json.Unmarshal(badges, &u.Badges)
 	json.Unmarshal(avatars, &u.Avatars)
+
+	// Аккаунты, заведённые до перехода на SVG, хранят аватарки и значки
+	// эмодзи. Приводим их к новым идентификаторам здесь — так остальному
+	// коду не нужно знать о старом формате (см. legacy.go).
+	u.Badges = NormalizeBadges(u.Badges)
+	u.Avatars = NormalizeAvatars(u.Avatars)
+	u.ActiveAvatar = NormalizeAvatar(u.ActiveAvatar)
 	json.Unmarshal(completedTopics, &u.CompletedTopics)
 	json.Unmarshal(promoUsed, &u.PromoUsed)
 	json.Unmarshal(favoriteGames, &u.FavoriteGames)
@@ -104,7 +133,7 @@ func scanUser(row interface {
 		u.Badges = []string{}
 	}
 	if u.Avatars == nil {
-		u.Avatars = []string{"🐱"}
+		u.Avatars = []string{"cat"}
 	}
 	if u.CompletedTopics == nil {
 		u.CompletedTopics = []string{}
@@ -130,7 +159,8 @@ const userSelect = `
 	       completed_topics, promo_used, favorite_games,
 	       to_char(daily_tasks_date,'YYYY-MM-DD'), daily_tasks_done,
 	       games_won_today, games_won_types,
-	       to_char(last_daily_claim,'YYYY-MM-DD'), created_at
+	       to_char(last_daily_claim,'YYYY-MM-DD'), created_at,
+	       is_teacher, research_consent, study_group
 	FROM users`
 
 // ── Seeds ─────────────────────────────────────────────────────────────────────
@@ -149,7 +179,7 @@ func (s *Store) seedDemo() {
 		   favorite_games, games_won_types, is_admin)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
 		"demo", "Демо Игрок", string(hash), 1500, 420, 7,
-		`["🎓","⭐"]`, `["🐱"]`, "🐱",
+		`["tree","star"]`, `["cat"]`, "cat",
 		`[]`, `[]`, `[]`, `[]`, false,
 	)
 	if err != nil {
@@ -213,7 +243,7 @@ func (s *Store) CreateUser(username, nickname, password string) (*models.User, e
 		  (username, nickname, password_hash, balance, xp, streak,
 		   badges, avatars, active_avatar,
 		   completed_topics, promo_used, favorite_games, games_won_types)
-		VALUES ($1,$2,$3, 500,0,0, '[]','["🐱"]','🐱', '[]','[]','[]','[]')
+		VALUES ($1,$2,$3, 500,0,0, '[]','["cat"]','cat', '[]','[]','[]','[]')
 		RETURNING id`,
 		username, nickname, string(hash),
 	)
@@ -418,6 +448,11 @@ func (s *Store) GetLeaderboard() []models.LeaderboardEntry {
 			log.Printf("GetLeaderboard scan: %v", err)
 			continue
 		}
+		// Рейтинг читает active_avatar прямо из SQL, минуя GetUser, где
+		// старые эмодзи переводятся в идентификаторы. Без этой строки
+		// аккаунты, заведённые до перехода на SVG, отдавали бы в рейтинг
+		// «🐱» — и картинку пришлось бы чинить на клиенте.
+		e.ActiveAvatar = NormalizeAvatar(e.ActiveAvatar)
 		e.Rank = rank
 		rank++
 		entries = append(entries, e)
