@@ -29,6 +29,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/register", h.Register)
 	mux.HandleFunc("/api/login", h.Login)
+	// Вход через Google: первый вход создаёт аккаунт, повторный — входит.
+	mux.HandleFunc("/api/auth/google/config", h.GoogleConfig)
+	mux.HandleFunc("/api/auth/google", h.GoogleAuth)
 	// Рейтинг закрыт авторизацией: раньше он был публичным и отдавал логины,
 	// ники, баланс и серии вообще всех зарегистрированных учеников.
 	mux.HandleFunc("/api/leaderboard", middleware.AuthMiddleware(h.Leaderboard))

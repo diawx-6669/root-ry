@@ -23,6 +23,15 @@
         .spinner { display: none; }
         .btn.loading .spinner { display: inline; }
         .btn.loading .btn-text { display: none; }
+        /* Вход через Google: блок скрыт, пока не известно, настроен ли он. */
+        .google-auth { display: none; }
+        .google-ready .google-auth { display: block; }
+        .google-btn { display: flex; justify-content: center; min-height: 44px; margin-top: 10px; }
+        .or-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 14px 0 4px; color: #8a9aa5; font-size: 13px;
+        }
+        .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #dbe4ea; }
     </style>
 </head>
 <body>
@@ -47,6 +56,10 @@
                     <span class="btn-text">Войти</span>
                     <span class="spinner"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
                 </button>
+                <div class="google-auth">
+                    <div class="or-divider">или</div>
+                    <div class="google-btn" id="googleLoginBtn"></div>
+                </div>
                 <div class="hint-box">Демо: <b>demo</b> / <b>demo123</b></div>
             </form>
         </div>
@@ -57,6 +70,10 @@
             </div>
             <form id="regForm">
                 <h1>Регистрация</h1>
+                <div class="google-auth">
+                    <div class="google-btn" id="googleRegBtn"></div>
+                    <div class="or-divider">или по логину</div>
+                </div>
                 <div class="input-box">
                     <span class="prefix">@</span>
                     <input type="text" id="regUser" placeholder="username (только латиница)" required minlength="3" autocomplete="username">
@@ -177,8 +194,64 @@
         }
     });
 
+    // ── Вход и регистрация через Google ──────────────────────────────
+    // Кнопку рисует Google Identity Services. Client ID берётся с
+    // сервера: не задан GOOGLE_CLIENT_ID — кнопки просто нет.
+    function onGoogleCredential(resp) {
+        const btns = document.querySelectorAll('.google-btn');
+        btns.forEach(b => b.style.opacity = '0.5');
+        fetch(`${API}/api/auth/google`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ credential: resp.credential })
+        })
+        .then(res => res.json().then(data => ({ res, data })))
+        .then(({ res, data }) => {
+            if (!res.ok) {
+                showMsg(data.error || 'Не удалось войти через Google', 'error');
+                return;
+            }
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            showMsg(res.status === 201 ? 'Аккаунт создан' : `Добро пожаловать, ${data.user.nickname}!`, 'success');
+            setTimeout(() => window.location.href = 'games.html', 800);
+        })
+        .catch(() => showMsg('Сервер недоступен', 'error'))
+        .finally(() => btns.forEach(b => b.style.opacity = ''));
+    }
+
+    function loadGoogleScript() {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://accounts.google.com/gsi/client';
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    async function initGoogleAuth() {
+        try {
+            const cfg = await fetch(`${API}/api/auth/google/config`).then(r => r.json());
+            if (!cfg.clientId) return;
+            await loadGoogleScript();
+            google.accounts.id.initialize({ client_id: cfg.clientId, callback: onGoogleCredential });
+            container.classList.add('google-ready');
+            const opts = { theme: 'outline', size: 'large', shape: 'pill', locale: 'ru' };
+            [['googleLoginBtn', 'signin_with'], ['googleRegBtn', 'signup_with']].forEach(([id, text]) => {
+                const el = document.getElementById(id);
+                google.accounts.id.renderButton(el, { ...opts, text, width: Math.min(el.offsetWidth || 320, 400) });
+            });
+        } catch (err) {
+            // Нет интернета или Google недоступен — остаётся обычный вход.
+        }
+    }
+
     if (localStorage.getItem('token')) {
         window.location.href = 'games.html';
+    } else {
+        initGoogleAuth();
     }
     </script>
 </body>
