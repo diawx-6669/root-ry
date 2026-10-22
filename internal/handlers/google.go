@@ -52,16 +52,24 @@ type googleAuthRequest struct {
 	Credential string `json:"credential"`
 }
 
+// defaultGoogleClientID — Client ID прода (root-ry.onrender.com). Берётся,
+// когда GOOGLE_CLIENT_ID не задан, чтобы вход через Google работал без
+// ручной настройки Render. Для локальной разработки или другого домена
+// переменная его перекрывает.
+const defaultGoogleClientID = "601052756488-02htlat2dlmkvkrg3uoie7ohullv3cht.apps.googleusercontent.com"
+
 func googleClientID() string {
-	return strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
+	if id := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")); id != "" {
+		return id
+	}
+	return defaultGoogleClientID
 }
 
 // GET /api/auth/google/config — Client ID для кнопки на странице входа.
 //
 // Client ID не секрет (он и так виден в коде любой страницы с кнопкой
 // Google), но держать его в переменной окружения удобнее, чем вшивать
-// в HTML: у локальной разработки и прода он разный. Пустой — значит,
-// вход через Google не настроен, и страница кнопку не показывает.
+// в HTML: у локальной разработки и прода он может быть разный.
 func (h *Handler) GoogleConfig(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodGet) {
 		return

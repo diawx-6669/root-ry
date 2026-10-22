@@ -59,6 +59,7 @@ func NewWithDSN(dsn string) (*Store, error) {
 		return nil, fmt.Errorf("db.Ping: %w", err)
 	}
 	s := &Store{db: db}
+	s.ensureGoogleTable()
 	s.seedPromos()
 	s.seedDemo()
 	return s, nil

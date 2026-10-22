@@ -16,6 +16,23 @@ import (
 	"rootry/internal/models"
 )
 
+// ensureGoogleTable создаёт таблицу из migrations/008_google.sql, если её
+// ещё нет. Запрос тот же и так же безопасен при повторе, зато вход через
+// Google работает сразу после деплоя, без ручного запуска миграции.
+// Ошибку только пишем в лог: без этой таблицы не работает один Google,
+// остальной сайт поднимать надо.
+func (s *Store) ensureGoogleTable() {
+	if _, err := s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS google_accounts (
+		    google_sub TEXT        PRIMARY KEY,
+		    user_id    BIGINT      NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+		    email      TEXT        NOT NULL DEFAULT '',
+		    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`); err != nil {
+		log.Printf("ensureGoogleTable: %v", err)
+	}
+}
+
 // GetUserByGoogleSub находит ученика по идентификатору аккаунта Google.
 func (s *Store) GetUserByGoogleSub(sub string) (*models.User, bool) {
 	row := s.db.QueryRow(userSelect+`
