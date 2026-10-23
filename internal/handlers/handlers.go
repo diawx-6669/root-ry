@@ -552,7 +552,8 @@ func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prices := map[string]int{"common": 600, "rare": 1500, "epic": 3000, "legendary": 10000, "badge": 300}
+	prices := map[string]int{"common": 600, "rare": 1500, "epic": 3000, "legendary": 10000, "badge": 300,
+		"xp": store.XPCasePrice}
 	expectedPrice, ok2 := prices[req.CaseType]
 	if !ok2 {
 		writeError(w, http.StatusBadRequest, "Неверный тип кейса")
@@ -564,6 +565,28 @@ func (h *Handler) CaseOpen(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Balance -= expectedPrice
+
+	// Кейс опыта: ни аватарки, ни дубликатов — только XP.
+	if req.CaseType == "xp" {
+		xpGained, rarity := store.RollXPCase()
+		user.XP += xpGained
+		h.store.UpdateUser(user)
+		h.store.SaveCaseResult(models.CaseResult{
+			UserID: user.ID, CaseType: req.CaseType,
+			ItemEmoji: "xp", ItemRarity: rarity,
+			PlayedAt: time.Now().Format(time.RFC3339),
+		})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"item_emoji":   "xp",
+			"item_rarity":  rarity,
+			"is_duplicate": false,
+			"compensation": 0,
+			"xp_gained":    xpGained,
+			"new_balance":  user.Balance,
+			"new_xp":       user.XP,
+		})
+		return
+	}
 
 	// Server-side roll
 	isBadgeCase := req.CaseType == "badge"

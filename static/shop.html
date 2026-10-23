@@ -150,11 +150,12 @@
         /* ===== КЕЙСЫ ===== */
         .cases-scroll {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 18px;
             margin-bottom: 36px;
             width: 100%;
         }
+        @media (max-width: 1400px) { .cases-scroll { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1100px) { .cases-scroll { grid-template-columns: repeat(3, 1fr); overflow-x: auto; } }
         @media (max-width: 700px)  { .cases-scroll { grid-template-columns: repeat(2, 1fr); } }
 
@@ -204,6 +205,7 @@
         .cn-epic      { color: var(--c-epic); text-shadow: 0 0 14px rgba(168,85,247,.5); }
         .cn-legendary { color: var(--c-legendary); animation: goldPulse 2.4s ease-in-out infinite alternate; }
         .cn-badge     { color: #0099cc; }
+        .cn-xp        { color: #059669; text-shadow: 0 0 14px rgba(16,185,129,.45); }
         @keyframes goldPulse {
             from { text-shadow: 0 0 6px rgba(245,158,11,.5); }
             to   { text-shadow: 0 0 22px rgba(245,158,11,1), 0 0 40px rgba(245,158,11,.5); color: #fbbf24; }
@@ -370,6 +372,28 @@
             object-fit: cover;
             border-radius: 50%;
             border: 3px solid rgba(255,255,255,.15);
+        }
+
+        /* Слот кейса опыта: вместо картинки — сумма XP */
+        .rl-slot .xp-slot {
+            font-size: 22px;
+            font-weight: 900;
+            color: #fff;
+            text-align: center;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+        .rl-slot .xp-slot small { display: block; font-size: 13px; opacity: .7; }
+        /* Суммы XP и цена в 9 млн длиннее обычных подписей — не переносим */
+        .type-xp .odd-name { width: auto; min-width: 54px; white-space: nowrap; }
+        .type-xp .buy-btn  { white-space: nowrap; }
+        @media (max-width: 700px) { .type-xp .buy-btn { font-size: 13px; letter-spacing: 0; padding-left: 4px; padding-right: 4px; } }
+        .result-xp {
+            font-size: 56px;
+            font-weight: 900;
+            color: #34d399;
+            text-shadow: 0 0 30px rgba(52,211,153,.6);
+            animation: popIn .6s cubic-bezier(.34,1.56,.64,1) both;
         }
 
         .rl-slot.rs-common    { background: #1e2533; }
@@ -784,6 +808,35 @@
                         <button class="buy-btn" onclick="openCase('badge', 300, this)">300 <i class="fa-solid fa-coins coin-icon"></i></button>
                     </div>
 
+                    <!-- КЕЙС ОПЫТА -->
+                    <div class="case-card type-xp">
+                        <div class="case-icon-wrap">
+                            <!-- SVG: зелёный ящик с молнией -->
+                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="10" y="50" width="100" height="62" rx="12" fill="#d1fae5"/>
+                                <rect x="10" y="50" width="100" height="62" rx="12" stroke="#6ee7b7" stroke-width="2"/>
+                                <rect x="10" y="44" width="100" height="20" rx="8" fill="#34d399"/>
+                                <rect x="10" y="44" width="100" height="20" rx="8" stroke="#059669" stroke-width="1.5"/>
+                                <path d="M52 44V34a8 8 0 0116 0v10" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+                                <rect x="18" y="56" width="84" height="4" rx="2" fill="rgba(255,255,255,.4)"/>
+                                <!-- Молния -->
+                                <path d="M64 64 L50 84 H60 L56 100 L72 78 H62 Z" fill="#059669" stroke="#047857" stroke-width="1.5" stroke-linejoin="round"/>
+                                <circle cx="24" cy="74" r="3" fill="#6ee7b7" opacity=".8"/>
+                                <circle cx="96" cy="68" r="2.5" fill="#6ee7b7" opacity=".7"/>
+                                <circle cx="92" cy="96" r="3" fill="#6ee7b7" opacity=".6"/>
+                            </svg>
+                        </div>
+                        <div class="case-name cn-xp">Опыт</div>
+                        <div class="odds-box">
+                            <div class="odd-row"><span class="odd-name oc">5 000</span><div class="odd-track"><div class="odd-fill bc" style="width:50%"></div></div><span class="odd-pct oc">50%</span></div>
+                            <div class="odd-row"><span class="odd-name or">10 000</span><div class="odd-track"><div class="odd-fill br" style="width:30%"></div></div><span class="odd-pct or">30%</span></div>
+                            <div class="odd-row"><span class="odd-name oe">25 000</span><div class="odd-track"><div class="odd-fill be" style="width:14%"></div></div><span class="odd-pct oe">14%</span></div>
+                            <div class="odd-row"><span class="odd-name ol">50 000</span><div class="odd-track"><div class="odd-fill bl" style="width:5%"></div></div><span class="odd-pct ol">5%</span></div>
+                            <div class="odd-row"><span class="odd-name om">100 000</span><div class="odd-track"><div class="odd-fill bm" style="width:1%"></div></div><span class="odd-pct om">1%</span></div>
+                        </div>
+                        <button class="buy-btn" onclick="openCase('xp', 9000000, this)">9 000 000 <i class="fa-solid fa-coins coin-icon"></i></button>
+                    </div>
+
                 </div>
             </div>
 
@@ -954,7 +1007,8 @@
 
     const CASE_NAMES = {
         common: 'Обычный кейс', rare: 'Редкий кейс',
-        epic: 'Эпический кейс', legendary: 'Легендарный кейс', badge: 'Кейс значков'
+        epic: 'Эпический кейс', legendary: 'Легендарный кейс', badge: 'Кейс значков',
+        xp: 'Кейс опыта'
     };
     const CHANCES = {
         common:    { common:70, rare:18,   epic:10,   legendary:2,   mythic:0   },
@@ -963,7 +1017,11 @@
         // кейса обычная редкость — 15%, а витрина обещала 20% (в сумме 105%).
         epic:      { common:15, rare:52.5, epic:22.5, legendary:9,   mythic:1   },
         legendary: { common:0,  rare:20,   epic:40,   legendary:35,  mythic:5   },
+        // Кейс опыта: совпадает с XPCaseChances / XPCasePrize в cases.go.
+        xp:        { common:50, rare:30,   epic:14,   legendary:5,   mythic:1   },
     };
+    const XP_PRIZE = { common: 5000, rare: 10000, epic: 25000, legendary: 50000, mythic: 100000 };
+    const fmtXP = n => n.toLocaleString('ru-RU') + ' XP';
     const ORDER = ['common','rare','epic','legendary','mythic'];
 
     function randRarity(caseType, isBadge) {
@@ -996,6 +1054,9 @@
         for (let i = 0; i < TOTAL; i++) {
             if (i === WIN_POS) {
                 strip.push({ item: winItem, rarity: winRarity, isWin: true });
+            } else if (caseType === 'xp') {
+                const r = randRarity(caseType, false);
+                strip.push({ item: { text: XP_PRIZE[r].toLocaleString('ru-RU') }, rarity: r, isWin: false });
             } else {
                 const r = randRarity(caseType, isBadge);
                 const p = pool[r] || pool.common;
@@ -1008,7 +1069,15 @@
     function renderSlot(slotData, isBadge) {
         const div = document.createElement('div');
         div.className = 'rl-slot rs-' + slotData.rarity + (slotData.isWin ? ' winner-slot' : '');
-        if (slotData.item?.img) {
+        if (slotData.item?.text) {
+            const t = document.createElement('div');
+            t.className = 'xp-slot';
+            t.textContent = slotData.item.text;
+            const unit = document.createElement('small');
+            unit.textContent = 'XP';
+            t.appendChild(unit);
+            div.appendChild(t);
+        } else if (slotData.item?.img) {
             const img = document.createElement('img');
             img.src = slotData.item.img;
             img.alt = slotData.item.label || '';
@@ -1065,7 +1134,8 @@
             return;
         }
 
-        const { item_emoji, item_rarity, is_duplicate, compensation, new_balance, new_xp } = r.data;
+        const { item_emoji, item_rarity, is_duplicate, compensation, new_balance, new_xp, xp_gained } = r.data;
+        const isXP = type === 'xp';
         Sound.open();
         // Списание за кейс показываем сразу, компенсацию — вместе с монетами
         // ниже, когда станет ясно, что выпал дубликат.
@@ -1082,8 +1152,8 @@
         // значило бы ломать совместимость с уже открытыми вкладками;
         // содержит оно теперь идентификатор ("dragon", "trophy").
         const wonId = isBadge ? badgeId(item_emoji) : avatarId(item_emoji);
-        let winItem = null;
-        for (const rItems of Object.values(pool)) {
+        let winItem = isXP ? { text: xp_gained.toLocaleString('ru-RU'), label: '+' + fmtXP(xp_gained) } : null;
+        if (!isXP) for (const rItems of Object.values(pool)) {
             const found = rItems.items.find(x => x.id === wonId);
             if (found) { winItem = found; break; }
         }
@@ -1111,11 +1181,18 @@
                 const result = document.getElementById('rlResult');
                 result.innerHTML = '';
 
-                const img = document.createElement('img');
-                img.className = 'result-avatar';
-                img.src = winItem.img;
-                img.alt = winItem.label || '';
-                result.appendChild(img);
+                if (isXP) {
+                    const big = document.createElement('div');
+                    big.className = 'result-xp';
+                    big.textContent = winItem.label;
+                    result.appendChild(big);
+                } else {
+                    const img = document.createElement('img');
+                    img.className = 'result-avatar';
+                    img.src = winItem.img;
+                    img.alt = winItem.label || '';
+                    result.appendChild(img);
+                }
 
                 const rar = document.createElement('div');
                 rar.className = 'result-rarity';
@@ -1126,11 +1203,12 @@
                 const title = document.createElement('div');
                 title.className = 'result-title';
                 title.textContent = winItem?.label || (is_duplicate ? 'Дубликат' : 'Новый предмет!');
-                result.appendChild(title);
+                if (!isXP) result.appendChild(title);
 
                 const sub = document.createElement('div');
                 sub.className = 'result-sub';
-                sub.textContent = is_duplicate ? 'Уже есть в коллекции' : 'Добавлено в профиль!';
+                sub.textContent = isXP ? 'Опыт начислен!'
+                    : is_duplicate ? 'Уже есть в коллекции' : 'Добавлено в профиль!';
                 result.appendChild(sub);
 
                 if (item_rarity === 'legendary' || item_rarity === 'mythic') Sound.levelUp();

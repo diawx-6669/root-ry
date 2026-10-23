@@ -17,6 +17,7 @@ func TestChanceTablesSumTo100(t *testing.T) {
 		"кейс epic":      CaseChances["epic"],
 		"кейс legendary": CaseChances["legendary"],
 		"кейс значков":   BadgeCaseChances,
+		"кейс опыта":     XPCaseChances,
 	}
 
 	for name, table := range tables {
@@ -140,6 +141,22 @@ func TestBadgeCaseUsesBadgePool(t *testing.T) {
 		}
 		if !found {
 			t.Fatalf("значок %q не принадлежит редкости %q", item, rarity)
+		}
+	}
+}
+
+// У каждой ступени кейса опыта, которая может выпасть, должна быть
+// ненулевая награда, иначе ученик заплатит 9 млн и получит 0 XP.
+func TestXPCasePrizes(t *testing.T) {
+	for rarity, chance := range XPCaseChances {
+		if chance > 0 && XPCasePrize[rarity] <= 0 {
+			t.Errorf("кейс опыта: у ступени %s нет награды", rarity)
+		}
+	}
+	for i := 0; i < 1000; i++ {
+		xp, rarity := RollXPCase()
+		if xp != XPCasePrize[rarity] || xp < 5_000 {
+			t.Fatalf("RollXPCase() = %d, %q", xp, rarity)
 		}
 	}
 }

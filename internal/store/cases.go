@@ -29,6 +29,26 @@ var BadgeCaseChances = map[string]float64{
 	"common": 40, "rare": 30, "epic": 20, "legendary": 10, "mythic": 0,
 }
 
+// Кейс опыта: стоит XPCasePrice монет и выдаёт не предмет, а опыт.
+// Редкость здесь — просто ступень выигрыша: от неё зависят сумма XP
+// (XPCasePrize) и цвет слота в рулетке. Сумма шансов — ровно 100, как
+// и у остальных таблиц.
+const XPCasePrice = 9_000_000
+
+var XPCaseChances = map[string]float64{
+	"common": 50, "rare": 30, "epic": 14, "legendary": 5, "mythic": 1,
+}
+
+var XPCasePrize = map[string]int{
+	"common": 5_000, "rare": 10_000, "epic": 25_000, "legendary": 50_000, "mythic": 100_000,
+}
+
+// RollXPCase разыгрывает кейс опыта: сколько XP выпало и какой ступени.
+func RollXPCase() (int, string) {
+	rarity := rollRarity(caseRand(), XPCaseChances)
+	return XPCasePrize[rarity], rarity
+}
+
 // AvatarPool — аватарки по редкости.
 // Идентификаторы обязаны совпадать с ALL_AVATARS в static/api.js и с
 // файлами static/img/avatars/<id>.png: выпавшую аватарку, которой нет в
