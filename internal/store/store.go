@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -48,7 +49,7 @@ func New() *Store {
 // базы бессмысленно. Тестам же нужно подключиться к своей базе и получить
 // ошибку, а не убитый процесс.
 func NewWithDSN(dsn string) (*Store, error) {
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("postgres", withBinaryParameters(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("sql.Open: %w", err)
 	}
@@ -64,6 +65,35 @@ func NewWithDSN(dsn string) (*Store, error) {
 	s.seedPromos()
 	s.seedDemo()
 	return s, nil
+}
+
+// withBinaryParameters включает в строке подключения binary_parameters=yes.
+//
+// На проде база стоит за пулером Supabase в режиме Transaction (порт 6543).
+// Без этой опции lib/pq отправляет запрос с параметрами в два захода:
+// сначала Parse+Describe+Sync, потом Bind+Execute+Sync. Пулер вправе отдать
+// второй заход другому соединению с базой, и запрос падает с «bind message
+// supplies 1 parameters, but prepared statement "" requires 2». Наружу это
+// выглядело как случайно пустые рейтинги и пропавшие данные: то есть, то
+// нет. С binary_parameters запрос уходит одним пакетом с одним Sync, и
+// пулер держит его на одном соединении.
+//
+// Если опцию уже задали в DATABASE_URL, строку не трогаем.
+func withBinaryParameters(dsn string) string {
+	if strings.Contains(dsn, "binary_parameters") {
+		return dsn
+	}
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		u, err := url.Parse(dsn)
+		if err != nil {
+			return dsn // пусть ошибку покажет сам драйвер
+		}
+		q := u.Query()
+		q.Set("binary_parameters", "yes")
+		u.RawQuery = q.Encode()
+		return u.String()
+	}
+	return strings.TrimSpace(dsn) + " binary_parameters=yes"
 }
 
 // Close закрывает пул соединений. Нужен тестам, которые поднимают
