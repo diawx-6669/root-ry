@@ -28,6 +28,10 @@ const (
 	passwordMin = 6
 )
 
+// kspoyaBanResetWord — слово в поле ника, которым админ снимает с себя
+// блокировку античита КСПОЯ.
+const kspoyaBanResetWord = "ZAMIRA"
+
 // maxBodyBytes — предел размера тела запроса. Без него отправка гигабайтного
 // JSON заставляла сервер съесть всю память.
 const maxBodyBytes = 64 << 10
@@ -682,6 +686,29 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var req struct {
+		Nickname string `json:"nickname"`
+	}
+	if err := h.parseBody(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+	nick := strings.TrimSpace(req.Nickname)
+
+	// Служебное слово админа: снимает блокировку античита КСПОЯ, ник
+	// не меняется. Права проверяются по базе, у остальных это обычный ник.
+	if strings.EqualFold(nick, kspoyaBanResetWord) && h.store.IsAdmin(username) {
+		if err := h.store.ResetKspoyaBan(username); err != nil {
+			writeError(w, http.StatusInternalServerError, "Не удалось снять блокировку")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ban_reset": true,
+			"message":   "Блокировка КСПОЯ снята",
+		})
+		return
+	}
+
 	// Per PDF: nickname can be changed no more than once per week
 	if user.LastNickChange != "" {
 		last, err := time.ParseInLocation("2006-01-02", user.LastNickChange, timeutil.Location())
@@ -691,14 +718,6 @@ func (h *Handler) UpdateNickname(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var req struct {
-		Nickname string `json:"nickname"`
-	}
-	if err := h.parseBody(r, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-	nick := strings.TrimSpace(req.Nickname)
 	if msg := validateNickname(nick); msg != "" {
 		writeError(w, http.StatusBadRequest, msg)
 		return

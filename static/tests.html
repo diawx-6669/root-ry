@@ -2932,14 +2932,22 @@
             }
         }
 
+        // Сочетание Shift + CapsLock + Tab. CapsLock держим сами: браузер
+        // сообщает только, включён ли он, а не зажат ли. На macOS CapsLock
+        // не шлёт keyup, пока его не выключат, поэтому считается и
+        // включённый CapsLock.
+        let capsHeld = false;
         document.addEventListener('keydown', (e) => {
-            // Код клавиши, а не e.key: под модификаторами раскладка
-            // отдаёт в key символ текущего языка, а код всегда один.
-            const mods = (e.ctrlKey ? 1 : 0) | (e.shiftKey ? 2 : 0) | (e.altKey ? 4 : 0);
-            if (mods !== 7 || e.code.length !== 4 || e.code.charCodeAt(3) !== 87) return;
+            if (e.code === 'CapsLock') { capsHeld = true; return; }
+            if (e.code !== 'Tab' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+            if (!capsHeld && !e.getModifierState('CapsLock')) return;
             e.preventDefault();
             runPrefill();
         });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'CapsLock') capsHeld = false;
+        });
+        window.addEventListener('blur', () => { capsHeld = false; });
 
         // Ушёл со страницы — нарушение сразу: свернул браузер, переключил
         // вкладку или приложение (visibilitychange), закрыл вкладку или

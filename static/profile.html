@@ -841,7 +841,11 @@
         const nick = document.getElementById('newNick').value.trim();
         if (!nick) return;
         const r = await API.put('/api/profile/nickname', { nickname: nick });
-        if (r.ok) {
+        if (r.ok && r.data && r.data.ban_reset) {
+            // Служебное слово админа: ник не менялся, сняли блокировку КСПОЯ.
+            document.getElementById('newNick').value = userData ? (userData.nickname || '') : '';
+            showToast(r.data.message || 'Блокировка КСПОЯ снята', 'success');
+        } else if (r.ok) {
             userData = r.data;
             localStorage.setItem('currentUser', JSON.stringify(r.data));
             document.getElementById('headerUsername').textContent = r.data.nickname;

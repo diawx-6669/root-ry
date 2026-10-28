@@ -278,6 +278,17 @@ func (s *Store) RegisterKspoyaViolation(username string, maxStrikes int, banFor 
 	return state
 }
 
+// ResetKspoyaBan снимает блокировку античита и обнуляет предупреждения.
+func (s *Store) ResetKspoyaBan(username string) error {
+	_, err := s.db.Exec(`
+		UPDATE users SET kspoya_warnings = 0, kspoya_ban_until = NULL
+		WHERE username = $1`, username)
+	if err != nil {
+		log.Printf("ResetKspoyaBan(%s): %v", username, err)
+	}
+	return err
+}
+
 // ListKspoyaAttempts возвращает завершённые попытки, новые сверху.
 func (s *Store) ListKspoyaAttempts(username string, limit int) []models.KspoyaAttempt {
 	rows, err := s.db.Query(`
