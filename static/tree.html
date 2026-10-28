@@ -756,9 +756,50 @@ const nodesG = d3.select('#nodesG');
 const treeWrap = document.getElementById('treeWrap');
 const tooltip = document.getElementById('tooltip');
 
-const NODE_W = 158, NODE_H = 42;
-const DX = 184;  // расстояние между соседними узлами по горизонтали
+const NODE_H = 42;
 const DY = 104;  // расстояние между уровнями по вертикали
+const GAP = 26;  // зазор между соседними узлами по горизонтали
+
+/* Ширина узла считается по его подписи. Раньше все узлы были по 158 px,
+   и рядом с кнопкой урока и стрелкой текст не помещался: обрезалась
+   больше трети подписей, вплоть до «Звуки речи» и самого корня.
+
+   Шрифт берётся тот, что браузер реально применил к подписи: в CSS узла
+   указан Segoe UI, но общее правило «*» из home-style.css перебивает его
+   на Montserrat, а он заметно шире. */
+const NODE_W_MIN = 96, NODE_W_MAX = 320;
+const measureCtx = document.createElement('canvas').getContext('2d');
+const labelFonts = {};
+
+function labelFont(depth) {
+  const cls = nodeClass(depth);
+  if (!labelFonts[cls]) {
+    const box = document.createElement('div');
+    box.className = 'node-box ' + cls;
+    box.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;width:auto';
+    const label = document.createElement('span');
+    label.className = 'node-label';
+    box.appendChild(label);
+    document.body.appendChild(box);
+    const c = getComputedStyle(label);
+    labelFonts[cls] = {
+      font: `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`,
+      spacing: parseFloat(c.letterSpacing) || 0,
+    };
+    box.remove();
+  }
+  return labelFonts[cls];
+}
+
+function nodeWidth(d) {
+  const f = labelFont(d.depth);
+  measureCtx.font = f.font;
+  let w = measureCtx.measureText(d.data.label).width + d.data.label.length * f.spacing;
+  w += 28 + 4 + 8;                                    // поля, рамка, запас
+  if (lessonFor(d)) w += 22 + 6;                      // кнопка урока
+  if (d.children || d._children) w += 14 + 6;         // стрелка
+  return Math.round(Math.min(NODE_W_MAX, Math.max(NODE_W_MIN, w)));
+}
 
 let counter = 0;
 const root = d3.hierarchy(TREE);
@@ -775,7 +816,11 @@ function collapseAll(d) {
 }
 collapseAll(root); // изначально виден только корень
 
-const treeLayout = d3.tree().nodeSize([DX, DY]);
+// Горизонтальный шаг — 1 px, а расстояние между соседями задаёт
+// separation: половины их ширин плюс зазор (между разными ветками — двойной).
+const treeLayout = d3.tree()
+    .nodeSize([1, DY])
+    .separation((a, b) => (a.w + b.w) / 2 + (a.parent === b.parent ? GAP : GAP * 2));
 const diagonal = d3.linkVertical().x(d => d.x).y(d => d.y);
 
 function nodeClass(depth) {
@@ -915,7 +960,12 @@ function toggle(d) {
   else if (d._children) { d.children = d._children; d._children = null; }
 }
 
+function measureNodes() {
+  allNodes(root).forEach(d => { d.w = nodeWidth(d); });
+}
+
 function update(source) {
+  if (root.w === undefined) measureNodes();
   const treeData = treeLayout(root);
   const nodes = treeData.descendants();
   const links = treeData.links();
@@ -929,8 +979,8 @@ function update(source) {
       .style('opacity', 0);
 
   const fo = nodeEnter.append('foreignObject')
-      .attr('width', NODE_W).attr('height', NODE_H)
-      .attr('x', -NODE_W / 2).attr('y', -NODE_H / 2)
+      .attr('width', d => d.w).attr('height', NODE_H)
+      .attr('x', d => -d.w / 2).attr('y', -NODE_H / 2)
       .style('overflow', 'visible');
 
   const div = fo.append('xhtml:div')
@@ -987,6 +1037,9 @@ function update(source) {
   nodeMerge.select('.lesson-btn')
       .html(d => STATUS_ICON[statusOf(lessonFor(d).id)] || STATUS_ICON.new);
 
+  nodeMerge.select('foreignObject')
+      .attr('width', d => d.w).attr('x', d => -d.w / 2);
+
   nodeMerge.transition().duration(380)
       .attr('transform', d => `translate(${d.x},${d.y})`)
       .style('opacity', 1);
@@ -1015,7 +1068,14 @@ function update(source) {
 // ===== ZOOM / PAN (жестами — пинч, скролл, перетаскивание) =====
 const zoomBehavior = d3.zoom()
     .scaleExtent([0.35, 2.2])
-    .on('start', () => treeWrap.classList.add('grabbing'))
+    .on('start', (event) => {
+      treeWrap.classList.add('grabbing');
+      // На телефоне касание узла показывает подсказку, а mouseleave не
+      // приходит никогда: без этого она висела поверх дерева до ухода
+      // со страницы. Прячем при новом касании или перетаскивании, но не
+      // при программном центрировании (у него нет sourceEvent).
+      if (event.sourceEvent) tooltip.classList.remove('show');
+    })
     .on('zoom', (event) => viewport.attr('transform', event.transform))
     .on('end', () => treeWrap.classList.remove('grabbing'));
 
@@ -1041,6 +1101,12 @@ function centerOn(d, instant = false) {
 update(root);
 requestAnimationFrame(() => centerOn(root, true));
 loadProgress();
+
+// Montserrat приходит с Google Fonts уже после первой отрисовки, и до него
+// ширины посчитаны по запасному шрифту. Догрузился — пересчитываем.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => { measureNodes(); update(root); });
+}
 
 // Небольшая подсказка про жесты — показываем один раз и прячем
 const hint = document.getElementById('treeHint');
